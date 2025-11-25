@@ -1,0 +1,216 @@
+Quiero que me generes un prototipo funcional (aunque sea con mock data) de una aplicación web llamada Reactivación Clínicas. Esta app replica el MVP de un sistema tipo Brevium, enfocado al mercado español y latinoamericano.
+
+💻 Requisitos técnicos:
+
+Usa TailwindCSS básico para el frontend (sin frameworks UI externos).
+
+Usa mock data para todos los datos de pacientes, campañas, KPIs, etc.
+
+Arquitectura simple: frontend + lógica interna ficticia.
+
+No implementar backend real — solo mocks.
+
+Diseño limpio + minimalista + profesional.
+
+🎯 OBJETIVO DEL PROTOTIPO
+
+Construir una app que permite a una clínica:
+
+Subir datos de pacientes (mock).
+
+Calcular automáticamente qué pacientes están “perdidos” (overdue).
+
+Segmentar y priorizar pacientes.
+
+Configurar una campaña de reactivación multicanal (SMS, email, llamada).
+
+Ver un dashboard con KPIs de reactivación generados con datos mock.
+
+📌 FUNCIONALIDADES — Implementar EXACTAMENTE las siguientes
+1. Pantalla: Importación de pacientes
+
+Mock de un formulario para subir/visualizar un archivo CSV.
+
+Al cargarlo, mostrar una tabla mock con:
+
+Nombre
+
+Última visita
+
+Diagnóstico
+
+Teléfono
+
+Email
+
+Estado: “activo / perdido / sin cita”
+
+Botón: “Calcular pacientes perdidos”
+
+Regla mock para marcar como “perdido”:
+
+Más de 6 meses sin visita
+
+Y sin cita futura
+
+Mostrar un contador: “Pacientes perdidos detectados: X”
+
+2. Pantalla: Segmentación y scoring
+
+Mostrar una tabla de pacientes "perdidos" con columnas:
+
+Nombre
+
+Última visita
+
+Prioridad (Alta / Media / Baja) → generada mock según:
+
+Alta = >12 meses sin visita
+
+Media = 6–12 meses
+
+Baja = 3–6 meses (mock)
+
+Filtros laterales:
+
+Por prioridad
+
+Por tipo de diagnóstico
+
+Por edad (mock)
+
+Botón: “Añadir seleccionados a campaña”
+
+3. Pantalla: Configuración de campaña
+
+Aquí quiero una página simple para crear una campaña de reactivación:
+
+Campos:
+
+Nombre de campaña
+
+Seleccionar canales a usar (checkboxes):
+
+SMS
+
+Email
+
+Llamadas del staff
+
+Cadencia mock (dropdown):
+
+Opción 1: SMS → Email → Llamada
+
+Opción 2: SMS → SMS → Llamada
+
+Opción 3: Email → Llamada
+
+Vista de mensaje
+
+Plantilla editable para SMS
+
+Plantilla editable para email
+
+Mostrar ejemplo de llamada (texto guion)
+
+Botón: “Iniciar campaña (mock)”
+
+4. Pantalla: Dashboard
+
+Crear un dashboard principal con datos mock y tarjetas KPI:
+
+Tarjetas KPI:
+
+Pacientes perdidos detectados: 178
+
+Pacientes incluidos en campañas: 52
+
+Contactos enviados: 340
+
+Citas generadas: 14
+
+Conversión paciente → cita: 26%
+
+ROI estimado (mock): 5.4x
+
+Gráficos mock (pueden ser cajas estilo “placeholder”):
+
+Gráfico de conversión por canal
+
+Gráfico de reactivación por semana
+
+Ranking de efectividad por canal:
+
+Staff call: 14%
+
+SMS: 7%
+
+Email: 7%
+
+5. Pantalla: Lista de tareas para llamadas de staff
+
+Tabla con pacientes asignados para llamar:
+
+Nombre
+
+Teléfono
+
+Motivo
+
+Prioridad
+
+Botón “Marcar como contactado”
+
+Botón “Agendar cita (mock)”
+
+6. Navegación
+
+Barra lateral con links:
+
+Dashboard
+
+Importar pacientes
+
+Segmentación
+
+Campañas
+
+Staff calls
+
+Configuración
+
+🎨 Estilo visual
+
+Minimalista, tipo SaaS moderno.
+
+Encabezados y botones simples.
+
+Tailwind básico, sin componentes complejos.
+
+Mucho espacio en blanco.
+
+Tarjetas con borde sutil y sombras suaves.
+
+📦 Mock Data
+
+Genera mock data internamente:
+
+200 pacientes
+
+Fechas diversas de última visita
+
+Diagnósticos ficticios
+
+Teléfonos y emails mock válidos
+
+20–40 clasificados como “perdidos” según las reglas mock
+
+KPIs del dashboard generados automáticamente
+
+🎯 Resultado esperado
+
+Una app navegable que simula el flujo completo:
+importar pacientes → detectar perdidos → segmentar → crear campaña → ver dashboard → ejecutar llamadas.
+
+FIN DEL PROMPT
+(Genera directamente el prototipo completo con mock data y navegación funcional.)
