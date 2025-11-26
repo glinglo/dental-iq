@@ -1,6 +1,5 @@
 import { 
   LayoutDashboard, 
-  Upload, 
   Users, 
   Megaphone, 
   Phone, 
@@ -12,7 +11,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -24,11 +22,6 @@ const menuItems = [
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
-  },
-  {
-    title: "Importar Pacientes",
-    url: "/importar",
-    icon: Upload,
   },
   {
     title: "Segmentación",
@@ -73,10 +66,7 @@ export function AppSidebar() {
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wide px-4 py-2">
-            Aplicación
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="pt-4">
             <SidebarMenu>
               {menuItems.map((item) => {
                 const isActive = location === item.url;

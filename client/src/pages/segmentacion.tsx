@@ -26,7 +26,8 @@ export default function Segmentacion() {
   const { data: pacientesPerdidos = [], isLoading } = useQuery<Paciente[]>({
     queryKey: ["/api/pacientes/perdidos", filtros],
     queryFn: async () => {
-      return await apiRequest("POST", "/api/pacientes/perdidos", filtros);
+      const response = await apiRequest("POST", "/api/pacientes/perdidos", filtros);
+      return response.json();
     },
   });
 
@@ -52,7 +53,9 @@ export default function Segmentacion() {
     },
   });
 
-  const diagnosticosUnicos = [...new Set(pacientesPerdidos.map(p => p.diagnostico))].sort();
+  const diagnosticosUnicos = Array.isArray(pacientesPerdidos) 
+    ? [...new Set(pacientesPerdidos.map(p => p.diagnostico))].sort() 
+    : [];
 
   const handleToggleSeleccion = (id: string) => {
     const nuevaSeleccion = new Set(seleccionados);
