@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Megaphone, Plus, Play, Pause, Mail, MessageSquare, Phone, ArrowDown, GripVertical } from "lucide-react";
+import { Megaphone, Plus, Play, Pause, Mail, MessageSquare, Phone, GripVertical, TrendingUp, Users, CalendarCheck, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -52,15 +53,63 @@ const tratamientosDisponibles = [
 
 const plantillasDefault: Record<string, string> = {
   SMS: "Hola {nombre}, hace tiempo que no te vemos. ¿Te gustaría agendar una cita? Responde SÍ para confirmar.",
-  WhatsApp: "¡Hola {nombre}! 👋\n\nDesde la Clínica Dental queremos recordarte que hace {meses} meses que no nos visitas.\n\n¿Te gustaría agendar una cita de revisión? Responde a este mensaje y te ayudamos.",
+  WhatsApp: "¡Hola {nombre}!\n\nDesde la Clínica Dental queremos recordarte que hace {meses} meses que no nos visitas.\n\n¿Te gustaría agendar una cita de revisión? Responde a este mensaje y te ayudamos.",
   Email: "Estimado/a {nombre},\n\nEsperamos que se encuentre bien. Hemos notado que hace {meses} meses que no nos visita y queremos invitarle a agendar una revisión.\n\nUn saludo,\nClínica Dental",
   Llamadas: "Buenos días, ¿hablo con {nombre}? Le llamamos de la Clínica Dental para ofrecerle una cita de revisión. ¿Le vendría bien la próxima semana?",
 };
+
+function generarDetallesCampana(campana: Campana) {
+  const totalPacientes = campana.pacientesIncluidos;
+  const contactados = campana.contactosEnviados;
+  const citasGeneradas = campana.citasGeneradas;
+  
+  const pendientes = Math.max(0, totalPacientes - contactados);
+  const sinRespuesta = Math.floor(contactados * 0.35);
+  const respondieron = contactados - sinRespuesta;
+  const rechazaron = Math.floor(respondieron * 0.2);
+  
+  const tasaConversion = totalPacientes > 0 ? ((citasGeneradas / totalPacientes) * 100).toFixed(1) : "0";
+  const tasaRespuesta = contactados > 0 ? ((respondieron / contactados) * 100).toFixed(1) : "0";
+  
+  const resultadosPorCanal = campana.canales.map((canal, index) => {
+    const enviados = Math.floor(contactados / campana.canales.length) + (index === 0 ? contactados % campana.canales.length : 0);
+    const entregados = Math.floor(enviados * (0.85 + Math.random() * 0.1));
+    const abiertos = canal === "Email" ? Math.floor(entregados * (0.4 + Math.random() * 0.2)) : entregados;
+    const respondidos = Math.floor(abiertos * (0.15 + Math.random() * 0.15));
+    const citas = Math.floor(respondidos * (0.4 + Math.random() * 0.2));
+    
+    return {
+      canal,
+      enviados,
+      entregados,
+      abiertos: canal === "Email" ? abiertos : null,
+      respondidos,
+      citas,
+      tasaConversion: enviados > 0 ? ((citas / enviados) * 100).toFixed(1) : "0",
+    };
+  });
+
+  return {
+    totalPacientes,
+    contactados,
+    pendientes,
+    citasGeneradas,
+    sinRespuesta,
+    respondieron,
+    rechazaron,
+    tasaConversion,
+    tasaRespuesta,
+    progreso: totalPacientes > 0 ? Math.round((contactados / totalPacientes) * 100) : 0,
+    resultadosPorCanal,
+  };
+}
 
 export default function Campanas() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [dialogAbierto, setDialogAbierto] = useState(false);
+  const [dialogDetalles, setDialogDetalles] = useState(false);
+  const [campanaSeleccionada, setCampanaSeleccionada] = useState<Campana | null>(null);
   const [tabActiva, setTabActiva] = useState("canales");
   
   const [nuevaCampana, setNuevaCampana] = useState({
@@ -202,6 +251,11 @@ export default function Campanas() {
     });
   };
 
+  const handleVerDetalles = (campana: Campana) => {
+    setCampanaSeleccionada(campana);
+    setDialogDetalles(true);
+  };
+
   const getEstadoBadge = (estado: string) => {
     const variants = {
       activa: { variant: "default" as const, label: "Activa" },
@@ -225,7 +279,18 @@ export default function Campanas() {
     });
   };
 
+  const getCanalIcon = (canal: string) => {
+    const icons: Record<string, any> = {
+      SMS: MessageSquare,
+      WhatsApp: SiWhatsapp,
+      Email: Mail,
+      Llamadas: Phone,
+    };
+    return icons[canal] || MessageSquare;
+  };
+
   const canalesActivos = getCanalesActivos();
+  const detallesCampana = campanaSeleccionada ? generarDetallesCampana(campanaSeleccionada) : null;
 
   return (
     <div className="flex-1 overflow-auto">
@@ -517,6 +582,206 @@ export default function Campanas() {
           </Dialog>
         </div>
 
+        {/* Dialog Ver Detalles */}
+        <Dialog open={dialogDetalles} onOpenChange={setDialogDetalles}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            {campanaSeleccionada && detallesCampana && (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <DialogTitle className="text-xl">{campanaSeleccionada.nombre}</DialogTitle>
+                      <DialogDescription className="mt-1">
+                        Creada el {format(new Date(campanaSeleccionada.fechaCreacion), "d 'de' MMMM, yyyy", { locale: es })}
+                      </DialogDescription>
+                    </div>
+                    {getEstadoBadge(campanaSeleccionada.estado)}
+                  </div>
+                </DialogHeader>
+
+                <div className="space-y-6 py-4">
+                  {/* Progreso General */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Progreso de la campaña</span>
+                      <span className="text-sm text-muted-foreground">{detallesCampana.progreso}%</span>
+                    </div>
+                    <Progress value={detallesCampana.progreso} className="h-2" />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{detallesCampana.contactados} contactados</span>
+                      <span>{detallesCampana.pendientes} pendientes</span>
+                    </div>
+                  </div>
+
+                  {/* KPIs Principales */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                          <Users className="w-4 h-4" />
+                          <span className="text-xs">Pacientes</span>
+                        </div>
+                        <div className="text-2xl font-bold">{detallesCampana.totalPacientes}</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                          <MessageSquare className="w-4 h-4" />
+                          <span className="text-xs">Contactados</span>
+                        </div>
+                        <div className="text-2xl font-bold">{detallesCampana.contactados}</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                          <CalendarCheck className="w-4 h-4" />
+                          <span className="text-xs">Citas</span>
+                        </div>
+                        <div className="text-2xl font-bold text-primary">{detallesCampana.citasGeneradas}</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                          <TrendingUp className="w-4 h-4" />
+                          <span className="text-xs">Conversión</span>
+                        </div>
+                        <div className="text-2xl font-bold text-chart-1">{detallesCampana.tasaConversion}%</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Estado de los pacientes */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Estado de los pacientes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold">{detallesCampana.citasGeneradas}</div>
+                            <div className="text-xs text-muted-foreground">Cita agendada</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-chart-2/10 flex items-center justify-center">
+                            <MessageSquare className="w-5 h-5 text-chart-2" />
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold">{detallesCampana.respondieron}</div>
+                            <div className="text-xs text-muted-foreground">Respondieron</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold">{detallesCampana.sinRespuesta}</div>
+                            <div className="text-xs text-muted-foreground">Sin respuesta</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                            <XCircle className="w-5 h-5 text-destructive" />
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold">{detallesCampana.rechazaron}</div>
+                            <div className="text-xs text-muted-foreground">Rechazaron</div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Resultados por Canal */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Resultados por canal</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {detallesCampana.resultadosPorCanal.map((resultado) => {
+                          const Icon = getCanalIcon(resultado.canal);
+                          return (
+                            <div key={resultado.canal} className="border border-border rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Icon className="w-5 h-5 text-primary" />
+                                <span className="font-medium">{resultado.canal}</span>
+                                <Badge variant="outline" className="ml-auto">
+                                  {resultado.tasaConversion}% conversión
+                                </Badge>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                                <div>
+                                  <div className="text-muted-foreground text-xs">Enviados</div>
+                                  <div className="font-semibold">{resultado.enviados}</div>
+                                </div>
+                                <div>
+                                  <div className="text-muted-foreground text-xs">Entregados</div>
+                                  <div className="font-semibold">{resultado.entregados}</div>
+                                </div>
+                                {resultado.abiertos !== null && (
+                                  <div>
+                                    <div className="text-muted-foreground text-xs">Abiertos</div>
+                                    <div className="font-semibold">{resultado.abiertos}</div>
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="text-muted-foreground text-xs">Respondidos</div>
+                                  <div className="font-semibold">{resultado.respondidos}</div>
+                                </div>
+                                <div>
+                                  <div className="text-muted-foreground text-xs">Citas</div>
+                                  <div className="font-semibold text-primary">{resultado.citas}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Secuencia de comunicación */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Secuencia de comunicación</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {campanaSeleccionada.canales.map((canal, index) => {
+                          const Icon = getCanalIcon(canal);
+                          return (
+                            <div key={canal} className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                                <Badge variant="outline" className="w-5 h-5 flex items-center justify-center p-0 text-xs">
+                                  {index + 1}
+                                </Badge>
+                                <Icon className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-medium">{canal}</span>
+                              </div>
+                              {index < campanaSeleccionada.canales.length - 1 && (
+                                <span className="text-muted-foreground">→</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Campaigns List */}
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -596,7 +861,14 @@ export default function Campanas() {
                         Reanudar
                       </Button>
                     )}
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleVerDetalles(campana)}
+                      data-testid={`button-ver-detalles-${index}`}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
                       Ver Detalles
                     </Button>
                   </div>
