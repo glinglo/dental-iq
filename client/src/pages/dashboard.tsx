@@ -118,7 +118,7 @@ export default function Dashboard() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Users className="w-5 h-5 text-chart-1" />
-                    <span className="text-sm font-medium">Pacientes dormidos encontrados</span>
+                    <span className="text-sm font-medium">Pacientes reactivados</span>
                   </div>
                   <div className="text-5xl font-bold text-foreground" data-testid="text-kpi-pacientes">
                     {pacientesPerdidos}
