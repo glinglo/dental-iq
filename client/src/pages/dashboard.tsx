@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import type { DashboardKPIs } from "@shared/schema";
 
 type TimeFrame = "7d" | "14d" | "30d" | "trimestre" | "semestre" | "año";
@@ -40,18 +41,33 @@ export default function Dashboard() {
   const beneficioEstimado = citasGeneradas * 85;
 
   const forecastData = [
-    { mes: "Mes 1", actual: beneficioEstimado, proyectado: Math.round(beneficioEstimado * 1.2) },
-    { mes: "Mes 2", actual: null, proyectado: Math.round(beneficioEstimado * 1.5) },
-    { mes: "Mes 3", actual: null, proyectado: Math.round(beneficioEstimado * 1.9) },
-    { mes: "Mes 4", actual: null, proyectado: Math.round(beneficioEstimado * 2.4) },
-    { mes: "Mes 5", actual: null, proyectado: Math.round(beneficioEstimado * 3.0) },
-    { mes: "Mes 6", actual: null, proyectado: Math.round(beneficioEstimado * 3.7) },
+    { mes: "Actual", actual: beneficioEstimado, forecast: beneficioEstimado },
+    { mes: "Mes 1", actual: null, forecast: Math.round(beneficioEstimado * 1.2) },
+    { mes: "Mes 2", actual: null, forecast: Math.round(beneficioEstimado * 1.5) },
+    { mes: "Mes 3", actual: null, forecast: Math.round(beneficioEstimado * 1.9) },
+    { mes: "Mes 4", actual: null, forecast: Math.round(beneficioEstimado * 2.4) },
+    { mes: "Mes 5", actual: null, forecast: Math.round(beneficioEstimado * 3.0) },
+    { mes: "Mes 6", actual: null, forecast: Math.round(beneficioEstimado * 3.7) },
   ];
-
-  const maxProyectado = Math.max(...forecastData.map(d => d.proyectado));
 
   const getTimeFrameLabel = () => {
     return timeFrameOptions.find(opt => opt.value === timeFrame)?.label.toLowerCase() || "";
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border rounded-lg shadow-lg p-3">
+          <p className="text-sm font-medium text-foreground">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.value?.toLocaleString('es-ES')}€
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -166,7 +182,7 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Forecast Chart */}
+        {/* Forecast Line Chart */}
         <Card data-testid="card-forecast">
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -179,44 +195,49 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-72 w-full" />
             ) : (
               <div className="space-y-6">
-                {/* Chart */}
-                <div className="h-56 flex items-end justify-between gap-4">
-                  {forecastData.map((data, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                      <div className="w-full flex flex-col items-center gap-1">
-                        <span className="text-xs font-medium text-primary">
-                          {data.proyectado.toLocaleString('es-ES')}€
-                        </span>
-                        <div 
-                          className={`w-full rounded-md transition-all ${
-                            data.actual !== null 
-                              ? 'bg-primary' 
-                              : 'bg-primary/30 border-2 border-dashed border-primary'
-                          }`}
-                          style={{ height: `${(data.proyectado / maxProyectado) * 160}px` }}
-                          data-testid={`forecast-bar-${index}`}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {data.mes}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Legend */}
-                <div className="flex items-center justify-center gap-6 pt-2 border-t border-border">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-primary" />
-                    <span className="text-xs text-muted-foreground">Actual</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-primary/30 border border-dashed border-primary" />
-                    <span className="text-xs text-muted-foreground">Proyectado</span>
-                  </div>
+                {/* Line Chart */}
+                <div className="h-72" data-testid="forecast-chart">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={forecastData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis 
+                        dataKey="mes" 
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) => `${(value / 1000).toFixed(1)}k€`}
+                        className="text-muted-foreground"
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: 20 }}
+                        formatter={(value) => <span className="text-sm text-muted-foreground">{value}</span>}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="actual" 
+                        name="Conseguido"
+                        stroke="hsl(var(--chart-2))" 
+                        strokeWidth={3}
+                        dot={{ fill: "hsl(var(--chart-2))", strokeWidth: 2, r: 6 }}
+                        connectNulls={false}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="forecast" 
+                        name="Previsión"
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
 
                 {/* Summary */}
@@ -225,7 +246,7 @@ export default function Dashboard() {
                     En 6 meses podrías alcanzar hasta
                   </p>
                   <p className="text-3xl font-bold text-primary mt-1" data-testid="text-forecast-total">
-                    {forecastData[5].proyectado.toLocaleString('es-ES')}€
+                    {forecastData[6].forecast.toLocaleString('es-ES')}€
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     de beneficio mensual con nuestro sistema
