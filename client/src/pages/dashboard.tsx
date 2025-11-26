@@ -1,27 +1,83 @@
-import { Users, Calendar, DollarSign } from "lucide-react";
+import { useState } from "react";
+import { Users, Calendar, DollarSign, CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import type { DashboardKPIs } from "@shared/schema";
 
+type TimeFrame = "7d" | "14d" | "30d" | "trimestre" | "semestre" | "año";
+
+const timeFrameOptions: { value: TimeFrame; label: string }[] = [
+  { value: "7d", label: "Últimos 7 días" },
+  { value: "14d", label: "Últimos 14 días" },
+  { value: "30d", label: "Últimos 30 días" },
+  { value: "trimestre", label: "Último trimestre" },
+  { value: "semestre", label: "Último semestre" },
+  { value: "año", label: "Último año" },
+];
+
+const timeFrameMultipliers: Record<TimeFrame, number> = {
+  "7d": 0.5,
+  "14d": 1,
+  "30d": 2,
+  "trimestre": 6,
+  "semestre": 12,
+  "año": 24,
+};
+
 export default function Dashboard() {
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>("14d");
+
   const { data: kpis, isLoading } = useQuery<DashboardKPIs>({
     queryKey: ["/api/dashboard/kpis"],
   });
 
-  const beneficioEstimado = kpis ? kpis.citasGeneradas * 85 : 0;
+  const multiplier = timeFrameMultipliers[timeFrame];
+  
+  const pacientesPerdidos = kpis ? Math.round(kpis.pacientesPerdidos * multiplier) : 0;
+  const citasGeneradas = kpis ? Math.round(kpis.citasGeneradas * multiplier) : 0;
+  const beneficioEstimado = citasGeneradas * 85;
+
+  const getTimeFrameLabel = () => {
+    return timeFrameOptions.find(opt => opt.value === timeFrame)?.label.toLowerCase() || "";
+  };
 
   return (
     <div className="flex-1 overflow-auto">
       <div className="max-w-5xl mx-auto p-6 space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground" data-testid="text-page-title">
-            Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Resumen de resultados de reactivación
-          </p>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground" data-testid="text-page-title">
+              Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Resumen de resultados de reactivación
+            </p>
+          </div>
+        </div>
+
+        {/* Time Frame Selector */}
+        <div className="flex items-center gap-3">
+          <CalendarDays className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Período:</span>
+          <Select value={timeFrame} onValueChange={(value) => setTimeFrame(value as TimeFrame)}>
+            <SelectTrigger className="w-48" data-testid="select-timeframe">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {timeFrameOptions.map((option) => (
+                <SelectItem 
+                  key={option.value} 
+                  value={option.value}
+                  data-testid={`option-${option.value}`}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* 3 KPIs Principales */}
@@ -41,10 +97,10 @@ export default function Dashboard() {
                     <span className="text-sm font-medium">Pacientes perdidos</span>
                   </div>
                   <div className="text-5xl font-bold text-foreground" data-testid="text-kpi-pacientes">
-                    {kpis?.pacientesPerdidos || 0}
+                    {pacientesPerdidos}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    detectados en tu base de datos
+                    detectados en {getTimeFrameLabel()}
                   </p>
                 </div>
               )}
@@ -66,10 +122,10 @@ export default function Dashboard() {
                     <span className="text-sm font-medium">Citas creadas</span>
                   </div>
                   <div className="text-5xl font-bold text-foreground" data-testid="text-kpi-citas">
-                    {kpis?.citasGeneradas || 0}
+                    {citasGeneradas}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    gracias a las campañas activas
+                    en {getTimeFrameLabel()}
                   </p>
                 </div>
               )}
@@ -94,7 +150,7 @@ export default function Dashboard() {
                     {beneficioEstimado.toLocaleString('es-ES')}€
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    estimado de las citas generadas
+                    en {getTimeFrameLabel()}
                   </p>
                 </div>
               )}
