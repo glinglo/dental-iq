@@ -1,4 +1,4 @@
-import type { Paciente, Campana, TareaLlamada } from "@shared/schema";
+import type { Paciente, Campana, TareaLlamada, Conversacion, Mensaje } from "@shared/schema";
 
 // Nombres y apellidos españoles/latinoamericanos
 const nombres = [
@@ -210,4 +210,131 @@ export function generarTareasLlamadasMock(pacientes: Paciente[]): TareaLlamada[]
     return prioridadOrden[a.prioridad as keyof typeof prioridadOrden] - 
            prioridadOrden[b.prioridad as keyof typeof prioridadOrden];
   });
+}
+
+// Mensajes de ejemplo para conversaciones
+const mensajesEjemplo = {
+  whatsapp: {
+    entrantes: [
+      "Hola, me gustaría saber si tienen citas disponibles",
+      "Buenos días, ¿cuánto cuesta una limpieza dental?",
+      "Necesito reagendar mi cita",
+      "¿Tienen horario de tarde?",
+      "Me duele una muela, ¿pueden atenderme hoy?",
+      "Gracias por la información",
+      "Perfecto, confirmo la cita",
+      "¿Aceptan tarjeta de crédito?",
+      "¿Cuánto dura el tratamiento de ortodoncia?",
+      "Quisiera información sobre blanqueamiento",
+    ],
+    salientes: [
+      "¡Hola! Claro, tenemos disponibilidad mañana a las 10:00 o 16:00. ¿Cuál le viene mejor?",
+      "Buenos días. La limpieza dental tiene un precio de 60€. ¿Le gustaría agendar una cita?",
+      "Sin problema. ¿Para qué día le gustaría reprogramar?",
+      "Sí, atendemos de lunes a viernes de 9:00 a 20:00",
+      "Entendemos su urgencia. Podemos atenderle hoy a las 18:00. ¿Le parece bien?",
+      "¡De nada! Estamos para ayudarle",
+      "Perfecto, queda confirmada su cita. Le enviaremos un recordatorio",
+      "Sí, aceptamos todas las tarjetas y también financiación",
+      "El tratamiento de ortodoncia suele durar entre 12 y 24 meses dependiendo del caso",
+      "El blanqueamiento dental cuesta 250€ e incluye dos sesiones",
+    ],
+  },
+  sms: {
+    entrantes: [
+      "OK confirmo",
+      "Sí, ahí estaré",
+      "Necesito cambiar la hora",
+      "¿Pueden llamarme?",
+      "Gracias",
+    ],
+    salientes: [
+      "Recordatorio: Tiene cita mañana a las 10:00 en Clínica Dental. Responda OK para confirmar.",
+      "Su cita ha sido confirmada para el día 15 a las 16:00. ¡Le esperamos!",
+      "Oferta especial: Limpieza dental + revisión por 45€. Reserve al 900 123 456",
+      "Le llamaremos en breve. Gracias por contactarnos.",
+      "Gracias por su visita. Recuerde su próxima cita en 6 meses.",
+    ],
+  },
+  email: {
+    entrantes: [
+      "Estimados, solicito información sobre tratamientos de ortodoncia para mi hijo de 14 años.",
+      "Buenos días, adjunto mis radiografías para valoración.",
+      "Confirmo mi asistencia a la cita del viernes.",
+      "Necesito factura de mi última visita.",
+      "¿Podrían enviarme los horarios disponibles para la próxima semana?",
+    ],
+    salientes: [
+      "Estimado/a paciente,\n\nGracias por contactarnos. Le informamos que ofrecemos ortodoncia invisible y tradicional para adolescentes. Le adjuntamos nuestro catálogo de tratamientos.\n\nSaludos cordiales,\nClínica Dental",
+      "Buenos días,\n\nHemos recibido sus radiografías. Nuestro especialista las revisará y le contactaremos en 24-48h con la valoración.\n\nGracias por confiar en nosotros.",
+      "Gracias por confirmar. Le esperamos el viernes a las 11:00.\n\nRecuerde traer su tarjeta de seguro si dispone de uno.",
+      "Adjunta encontrará la factura solicitada (Nº 2024-1234).\n\nPara cualquier consulta, no dude en contactarnos.",
+      "Buenos días,\n\nLe informamos de nuestra disponibilidad:\n- Lunes: 10:00, 16:00\n- Martes: 09:00, 12:00, 17:00\n- Miércoles: 11:00, 15:00\n\n¿Qué horario le vendría mejor?",
+    ],
+  },
+};
+
+export function generarConversacionesMock(pacientes: Paciente[]): { conversaciones: Conversacion[]; mensajes: Mensaje[] } {
+  const conversaciones: Conversacion[] = [];
+  const mensajes: Mensaje[] = [];
+  
+  const canales: ("whatsapp" | "sms" | "email")[] = ["whatsapp", "sms", "email"];
+  
+  // Seleccionar 40 pacientes aleatorios para tener conversaciones
+  const pacientesConConversacion = pacientes
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 40);
+  
+  pacientesConConversacion.forEach((paciente, index) => {
+    const canal = canales[Math.floor(Math.random() * canales.length)];
+    const convId = `conv-${index + 1}`;
+    
+    // Generar entre 2 y 8 mensajes por conversación
+    const numMensajes = 2 + Math.floor(Math.random() * 7);
+    const horasAtras = Math.floor(Math.random() * 72); // Hasta 3 días atrás
+    
+    let ultimoMensaje = "";
+    let fechaUltimoMensaje = new Date();
+    
+    for (let i = 0; i < numMensajes; i++) {
+      const esEntrante = i % 2 === 0; // Alternar entrante/saliente
+      const direccion = esEntrante ? "entrante" : "saliente";
+      const mensajesPool = esEntrante 
+        ? mensajesEjemplo[canal].entrantes 
+        : mensajesEjemplo[canal].salientes;
+      const contenido = mensajesPool[Math.floor(Math.random() * mensajesPool.length)];
+      
+      const fechaEnvio = new Date();
+      fechaEnvio.setHours(fechaEnvio.getHours() - horasAtras + i);
+      
+      if (i === numMensajes - 1) {
+        ultimoMensaje = contenido;
+        fechaUltimoMensaje = fechaEnvio;
+      }
+      
+      mensajes.push({
+        id: `msg-${convId}-${i + 1}`,
+        conversacionId: convId,
+        contenido,
+        direccion,
+        fechaEnvio,
+        leido: i < numMensajes - 1 || !esEntrante, // El último mensaje entrante puede estar sin leer
+      });
+    }
+    
+    // Algunos tienen mensajes no leídos
+    const noLeidos = Math.random() < 0.3 ? Math.floor(Math.random() * 3) + 1 : 0;
+    
+    conversaciones.push({
+      id: convId,
+      pacienteId: paciente.id,
+      canal,
+      ultimoMensaje,
+      fechaUltimoMensaje,
+      noLeidos,
+      estado: "activa",
+    });
+  });
+  
+  return { conversaciones, mensajes };
 }

@@ -7,10 +7,15 @@ import type {
   InsertTareaLlamada,
   DashboardKPIs,
   ConversionPorCanal,
-  FiltrosSegmentacion
+  FiltrosSegmentacion,
+  Conversacion,
+  InsertConversacion,
+  ConversacionConPaciente,
+  Mensaje,
+  InsertMensaje
 } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { generarPacientesMock, generarCampanasMock, generarTareasLlamadasMock } from "./mockData";
+import { generarPacientesMock, generarCampanasMock, generarTareasLlamadasMock, generarConversacionesMock } from "./mockData";
 
 export interface IStorage {
   // Pacientes
@@ -34,17 +39,28 @@ export interface IStorage {
   // Dashboard
   getDashboardKPIs(): Promise<DashboardKPIs>;
   getConversionPorCanal(): Promise<ConversionPorCanal[]>;
+  
+  // Conversaciones
+  getConversaciones(): Promise<ConversacionConPaciente[]>;
+  getConversacion(id: string): Promise<ConversacionConPaciente | undefined>;
+  getMensajes(conversacionId: string): Promise<Mensaje[]>;
+  createMensaje(mensaje: InsertMensaje): Promise<Mensaje>;
+  marcarComoLeido(conversacionId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
   private pacientes: Map<string, Paciente>;
   private campanas: Map<string, Campana>;
   private tareas: Map<string, TareaLlamada>;
+  private conversaciones: Map<string, Conversacion>;
+  private mensajes: Map<string, Mensaje>;
 
   constructor() {
     this.pacientes = new Map();
     this.campanas = new Map();
     this.tareas = new Map();
+    this.conversaciones = new Map();
+    this.mensajes = new Map();
     
     // Inicializar con mock data
     this.inicializarMockData();
@@ -67,6 +83,15 @@ export class MemStorage implements IStorage {
     const tareas = generarTareasLlamadasMock(pacientes);
     tareas.forEach((tarea: TareaLlamada) => {
       this.tareas.set(tarea.id, tarea);
+    });
+    
+    // Generar y cargar conversaciones y mensajes
+    const { conversaciones, mensajes } = generarConversacionesMock(pacientes);
+    conversaciones.forEach((conversacion: Conversacion) => {
+      this.conversaciones.set(conversacion.id, conversacion);
+    });
+    mensajes.forEach((mensaje: Mensaje) => {
+      this.mensajes.set(mensaje.id, mensaje);
     });
   }
 
@@ -245,6 +270,88 @@ export class MemStorage implements IStorage {
       { canal: "SMS", conversion: 7, contactos: 150, citas: 11 },
       { canal: "Email", conversion: 7, contactos: 90, citas: 6 },
     ];
+  }
+
+  // Conversaciones
+  async getConversaciones(): Promise<ConversacionConPaciente[]> {
+    const conversaciones = Array.from(this.conversaciones.values());
+    return conversaciones
+      .map(conv => {
+        const paciente = this.pacientes.get(conv.pacienteId);
+        if (!paciente) return null;
+        return {
+          ...conv,
+          pacienteNombre: paciente.nombre,
+          pacienteTelefono: paciente.telefono,
+          pacienteEmail: paciente.email,
+        };
+      })
+      .filter((c): c is ConversacionConPaciente => c !== null)
+      .sort((a, b) => {
+        const fechaA = a.fechaUltimoMensaje?.getTime() || 0;
+        const fechaB = b.fechaUltimoMensaje?.getTime() || 0;
+        return fechaB - fechaA;
+      });
+  }
+
+  async getConversacion(id: string): Promise<ConversacionConPaciente | undefined> {
+    const conv = this.conversaciones.get(id);
+    if (!conv) return undefined;
+    
+    const paciente = this.pacientes.get(conv.pacienteId);
+    if (!paciente) return undefined;
+    
+    return {
+      ...conv,
+      pacienteNombre: paciente.nombre,
+      pacienteTelefono: paciente.telefono,
+      pacienteEmail: paciente.email,
+    };
+  }
+
+  async getMensajes(conversacionId: string): Promise<Mensaje[]> {
+    return Array.from(this.mensajes.values())
+      .filter(m => m.conversacionId === conversacionId)
+      .sort((a, b) => a.fechaEnvio.getTime() - b.fechaEnvio.getTime());
+  }
+
+  async createMensaje(insertMensaje: InsertMensaje): Promise<Mensaje> {
+    const id = randomUUID();
+    const mensaje: Mensaje = {
+      ...insertMensaje,
+      id,
+      leido: insertMensaje.direccion === "saliente" ? true : false,
+    };
+    this.mensajes.set(id, mensaje);
+    
+    // Actualizar ultimo mensaje de la conversación
+    const conv = this.conversaciones.get(insertMensaje.conversacionId);
+    if (conv) {
+      conv.ultimoMensaje = insertMensaje.contenido;
+      conv.fechaUltimoMensaje = insertMensaje.fechaEnvio;
+      if (insertMensaje.direccion === "entrante") {
+        conv.noLeidos = (conv.noLeidos || 0) + 1;
+      }
+      this.conversaciones.set(conv.id, conv);
+    }
+    
+    return mensaje;
+  }
+
+  async marcarComoLeido(conversacionId: string): Promise<void> {
+    const conv = this.conversaciones.get(conversacionId);
+    if (conv) {
+      conv.noLeidos = 0;
+      this.conversaciones.set(conv.id, conv);
+    }
+    
+    // Marcar todos los mensajes como leídos
+    const mensajes = Array.from(this.mensajes.values())
+      .filter(m => m.conversacionId === conversacionId);
+    mensajes.forEach(m => {
+      m.leido = true;
+      this.mensajes.set(m.id, m);
+    });
   }
 }
 
