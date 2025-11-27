@@ -10,6 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { ConversacionConPaciente, Mensaje } from "@shared/schema";
 
@@ -139,6 +146,7 @@ function ChatMessage({ mensaje, canal }: { mensaje: Mensaje; canal: string }) {
 export default function Conversaciones() {
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filtroLectura, setFiltroLectura] = useState<"all" | "sin-leer">("all");
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [showMobileChat, setShowMobileChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -204,10 +212,12 @@ export default function Conversaciones() {
     }
   };
 
-  const conversacionesFiltradas = conversaciones?.filter(conv =>
-    conv.pacienteNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.ultimoMensaje?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const conversacionesFiltradas = conversaciones?.filter(conv => {
+    const matchSearch = conv.pacienteNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.ultimoMensaje?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchFiltro = filtroLectura === "all" || (conv.noLeidos ?? 0) > 0;
+    return matchSearch && matchFiltro;
+  });
 
   const selectedConv = chatData?.conversacion;
   const selectedCanal = selectedConv ? canalConfig[selectedConv.canal as keyof typeof canalConfig] : null;
@@ -219,15 +229,29 @@ export default function Conversaciones() {
         {/* Header del sidebar */}
         <div className="p-4 border-b border-border">
           <h1 className="text-xl font-semibold mb-3">Conversaciones</h1>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar conversaciones..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-              data-testid="input-buscar-conversaciones"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+                data-testid="input-buscar-conversaciones"
+              />
+            </div>
+            <Select 
+              value={filtroLectura} 
+              onValueChange={(v) => setFiltroLectura(v as "all" | "sin-leer")}
+            >
+              <SelectTrigger className="w-28" data-testid="select-filtro-lectura">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="sin-leer">Sin leer</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
