@@ -20,6 +20,7 @@ import Dashboard from "@/pages/dashboard";
 import Importar from "@/pages/importar";
 import Segmentacion from "@/pages/segmentacion";
 import Campanas from "@/pages/campanas";
+import CampanaDetalle from "@/pages/campana-detalle";
 import StaffCalls from "@/pages/staff-calls";
 import Configuracion from "@/pages/configuracion";
 import NotFound from "@/pages/not-found";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/importar" component={Importar} />
       <Route path="/segmentacion" component={Segmentacion} />
       <Route path="/campanas" component={Campanas} />
+      <Route path="/campanas/:id" component={CampanaDetalle} />
       <Route path="/staff-calls" component={StaffCalls} />
       <Route path="/configuracion" component={Configuracion} />
       <Route component={NotFound} />
