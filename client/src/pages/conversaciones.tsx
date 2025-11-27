@@ -51,6 +51,7 @@ function ConversacionItem({
     .map(n => n[0])
     .join("")
     .toUpperCase();
+  const tieneNoLeidos = (conversacion.noLeidos ?? 0) > 0;
 
   return (
     <button
@@ -61,6 +62,16 @@ function ConversacionItem({
       data-testid={`conversation-item-${conversacion.id}`}
     >
       <div className="flex items-start gap-3">
+        {/* Bullet indicador de no leído */}
+        <div className="flex items-center justify-center w-2 pt-4">
+          {tieneNoLeidos && (
+            <div 
+              className="w-2 h-2 rounded-full bg-blue-500" 
+              data-testid={`unread-indicator-${conversacion.id}`}
+            />
+          )}
+        </div>
+        
         <div className="relative">
           <Avatar className="h-10 w-10">
             <AvatarFallback className="bg-primary/10 text-primary text-sm">
@@ -74,10 +85,10 @@ function ConversacionItem({
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-medium text-sm truncate">
+            <span className={`text-sm truncate ${tieneNoLeidos ? "font-semibold" : "font-medium"}`}>
               {conversacion.pacienteNombre}
             </span>
-            {(conversacion.noLeidos ?? 0) > 0 && (
+            {tieneNoLeidos && (
               <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs">
                 {conversacion.noLeidos}
               </Badge>
