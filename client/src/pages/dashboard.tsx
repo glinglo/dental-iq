@@ -198,6 +198,19 @@ export default function Dashboard() {
               <Skeleton className="h-72 w-full" />
             ) : (
               <div className="space-y-6">
+                {/* Summary - above chart */}
+                <div className="bg-muted/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    En 6 meses podrías alcanzar hasta
+                  </p>
+                  <p className="text-3xl font-bold text-primary mt-1" data-testid="text-forecast-total">
+                    {forecastData[6].forecast.toLocaleString('es-ES')}€
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    de beneficio mensual con nuestro sistema
+                  </p>
+                </div>
+
                 {/* Line Chart */}
                 <div className="h-72" data-testid="forecast-chart">
                   <ResponsiveContainer width="100%" height="100%">
@@ -239,34 +252,10 @@ export default function Dashboard() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-
-                {/* Summary */}
-                <div className="bg-muted/50 rounded-lg p-4 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    En 6 meses podrías alcanzar hasta
-                  </p>
-                  <p className="text-3xl font-bold text-primary mt-1" data-testid="text-forecast-total">
-                    {forecastData[6].forecast.toLocaleString('es-ES')}€
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    de beneficio mensual con nuestro sistema
-                  </p>
-                </div>
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Última actualización */}
-        <div className="text-center text-xs text-muted-foreground pt-4">
-          Última actualización: {new Date().toLocaleString('es-ES', { 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </div>
       </div>
     </div>
   );
