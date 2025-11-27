@@ -23,8 +23,8 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Segmentación",
-    url: "/segmentacion",
+    title: "Pacientes",
+    url: "/pacientes",
     icon: Users,
   },
   {

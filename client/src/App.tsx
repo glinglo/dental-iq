@@ -18,7 +18,7 @@ import { Settings, User, LogOut } from "lucide-react";
 // Pages
 import Dashboard from "@/pages/dashboard";
 import Importar from "@/pages/importar";
-import Segmentacion from "@/pages/segmentacion";
+import Pacientes from "@/pages/pacientes";
 import Campanas from "@/pages/campanas";
 import CampanaDetalle from "@/pages/campana-detalle";
 import StaffCalls from "@/pages/staff-calls";
@@ -30,7 +30,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/importar" component={Importar} />
-      <Route path="/segmentacion" component={Segmentacion} />
+      <Route path="/pacientes" component={Pacientes} />
       <Route path="/campanas" component={Campanas} />
       <Route path="/campanas/:id" component={CampanaDetalle} />
       <Route path="/staff-calls" component={StaffCalls} />

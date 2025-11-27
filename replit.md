@@ -23,7 +23,7 @@ Preferred communication style: Simple, everyday language.
 **Routing**: Wouter for lightweight client-side routing with the following main routes:
 - `/` - Dashboard with KPIs
 - `/importar` - Patient data import interface
-- `/segmentacion` - Patient segmentation and filtering
+- `/pacientes` - Patient list with segmentation and filtering
 - `/campanas` - Campaign creation and management
 - `/staff-calls` - Call task management for staff
 - `/configuracion` - System configuration
