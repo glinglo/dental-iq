@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Megaphone, Plus, Play, Pause, Mail, MessageSquare, Phone, TrendingUp, Users, CalendarCheck, CheckCircle2, Clock, XCircle, Eye, Trash2, ArrowRight } from "lucide-react";
+import { Megaphone, Plus, Play, Pause, Mail, MessageSquare, Phone, TrendingUp, Users, CalendarCheck, CheckCircle2, Clock, XCircle, Eye, Trash2, Bot, UserRound } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ type PasoSecuencia = {
   id: string;
   canal: string;
   mensaje: string;
+  diasEspera: number;
 };
 
 type SegmentacionConfig = {
@@ -31,10 +32,11 @@ type SegmentacionConfig = {
 };
 
 const canalesDisponibles = [
-  { id: "SMS", label: "SMS", icon: MessageSquare },
-  { id: "WhatsApp", label: "WhatsApp", icon: SiWhatsapp },
-  { id: "Email", label: "Email", icon: Mail },
-  { id: "Llamadas", label: "Llamadas", icon: Phone },
+  { id: "SMS", label: "SMS", icon: MessageSquare, color: "text-blue-500" },
+  { id: "WhatsApp", label: "WhatsApp", icon: SiWhatsapp, color: "text-green-500" },
+  { id: "Email", label: "Email", icon: Mail, color: "text-orange-500" },
+  { id: "AutoLlamadas", label: "Auto-llamadas", icon: Bot, color: "text-purple-500", description: "Llamadas automatizadas con robot" },
+  { id: "LlamadasStaff", label: "Llamadas Staff", icon: UserRound, color: "text-rose-500", description: "Llamadas realizadas por personal" },
 ];
 
 const tratamientosDisponibles = [
@@ -50,11 +52,24 @@ const tratamientosDisponibles = [
   "Prótesis dental",
 ];
 
+const opcionesEspera = [
+  { value: 0, label: "Inmediato" },
+  { value: 1, label: "1 día" },
+  { value: 2, label: "2 días" },
+  { value: 3, label: "3 días" },
+  { value: 5, label: "5 días" },
+  { value: 7, label: "1 semana" },
+  { value: 14, label: "2 semanas" },
+  { value: 21, label: "3 semanas" },
+  { value: 30, label: "1 mes" },
+];
+
 const plantillasDefault: Record<string, string> = {
   SMS: "Hola {nombre}, hace tiempo que no te vemos. ¿Te gustaría agendar una cita? Responde SÍ para confirmar.",
   WhatsApp: "¡Hola {nombre}!\n\nDesde la Clínica Dental queremos recordarte que hace {meses} meses que no nos visitas.\n\n¿Te gustaría agendar una cita de revisión? Responde a este mensaje y te ayudamos.",
   Email: "Estimado/a {nombre},\n\nEsperamos que se encuentre bien. Hemos notado que hace {meses} meses que no nos visita y queremos invitarle a agendar una revisión.\n\nUn saludo,\nClínica Dental",
-  Llamadas: "Buenos días, ¿hablo con {nombre}? Le llamamos de la Clínica Dental para ofrecerle una cita de revisión. ¿Le vendría bien la próxima semana?",
+  AutoLlamadas: "Mensaje automatizado: Buenos días, le llamamos de la Clínica Dental para recordarle que hace tiempo que no nos visita. Pulse 1 para agendar una cita o 2 para hablar con un asistente.",
+  LlamadasStaff: "Buenos días, ¿hablo con {nombre}? Le llamamos de la Clínica Dental para ofrecerle una cita de revisión. ¿Le vendría bien la próxima semana?",
 };
 
 function generarId() {
@@ -119,7 +134,6 @@ export default function Campanas() {
   const [nuevaCampana, setNuevaCampana] = useState({
     nombre: "",
     secuencia: [] as PasoSecuencia[],
-    espacioEntreComunicaciones: "3",
     segmentacion: {
       mesesSinVisita: 12,
       tratamiento: "Cualquier tratamiento",
@@ -156,7 +170,6 @@ export default function Campanas() {
     setNuevaCampana({
       nombre: "",
       secuencia: [],
-      espacioEntreComunicaciones: "3",
       segmentacion: {
         mesesSinVisita: 12,
         tratamiento: "Cualquier tratamiento",
@@ -170,6 +183,7 @@ export default function Campanas() {
       id: generarId(),
       canal: canalId,
       mensaje: plantillasDefault[canalId],
+      diasEspera: 3,
     };
     setNuevaCampana(prev => ({
       ...prev,
@@ -189,6 +203,15 @@ export default function Campanas() {
       ...prev,
       secuencia: prev.secuencia.map(p => 
         p.id === pasoId ? { ...p, mensaje } : p
+      ),
+    }));
+  };
+
+  const handleDiasEsperaChange = (pasoId: string, dias: number) => {
+    setNuevaCampana(prev => ({
+      ...prev,
+      secuencia: prev.secuencia.map(p => 
+        p.id === pasoId ? { ...p, diasEspera: dias } : p
       ),
     }));
   };
@@ -221,7 +244,7 @@ export default function Campanas() {
       cadencia: cadencia,
       plantillaSMS: nuevaCampana.secuencia.find(p => p.canal === "SMS")?.mensaje || null,
       plantillaEmail: nuevaCampana.secuencia.find(p => p.canal === "Email")?.mensaje || null,
-      guionLlamada: nuevaCampana.secuencia.find(p => p.canal === "Llamadas")?.mensaje || null,
+      guionLlamada: nuevaCampana.secuencia.find(p => p.canal === "LlamadasStaff" || p.canal === "AutoLlamadas")?.mensaje || null,
       estado: "activa",
     });
   };
@@ -241,27 +264,23 @@ export default function Campanas() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getCanalesIcons = (canales: string[]) => {
-    return canales.map((canal, index) => {
-      const icons: Record<string, any> = {
-        SMS: MessageSquare,
-        WhatsApp: SiWhatsapp,
-        Email: Mail,
-        Llamadas: Phone,
-      };
-      const Icon = icons[canal];
-      return Icon ? <Icon key={index} className="w-4 h-4" /> : null;
-    });
+  const getCanalInfo = (canalId: string) => {
+    return canalesDisponibles.find(c => c.id === canalId) || canalesDisponibles[0];
   };
 
   const getCanalIcon = (canal: string) => {
-    const icons: Record<string, any> = {
-      SMS: MessageSquare,
-      WhatsApp: SiWhatsapp,
-      Email: Mail,
-      Llamadas: Phone,
-    };
-    return icons[canal] || MessageSquare;
+    const info = getCanalInfo(canal);
+    return info.icon;
+  };
+
+  const formatDiasEspera = (dias: number) => {
+    if (dias === 0) return "Inmediato";
+    if (dias === 1) return "1 día";
+    if (dias === 7) return "1 semana";
+    if (dias === 14) return "2 semanas";
+    if (dias === 21) return "3 semanas";
+    if (dias === 30) return "1 mes";
+    return `${dias} días`;
   };
 
   const detallesCampana = campanaSeleccionada ? generarDetallesCampana(campanaSeleccionada) : null;
@@ -330,24 +349,32 @@ export default function Campanas() {
                       <div>
                         <Label>Construye tu secuencia de comunicación</Label>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Haz clic en un canal para agregarlo a la secuencia. Puedes usar el mismo canal varias veces.
+                          Haz clic en un canal para agregarlo. Puedes usar el mismo canal varias veces y configurar el tiempo de espera entre cada paso.
                         </p>
                       </div>
                       
                       {/* Botones para agregar canales */}
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                         {canalesDisponibles.map((canal) => {
                           const Icon = canal.icon;
                           return (
                             <Button
                               key={canal.id}
                               variant="outline"
+                              className="h-auto py-3 flex flex-col items-center gap-1"
                               onClick={() => handleAgregarPaso(canal.id)}
                               data-testid={`button-agregar-${canal.id.toLowerCase()}`}
                             >
-                              <Plus className="w-4 h-4 mr-1" />
-                              <Icon className="w-4 h-4 mr-2" />
-                              {canal.label}
+                              <div className="flex items-center gap-2">
+                                <Plus className="w-3 h-3" />
+                                <Icon className={`w-4 h-4 ${canal.color}`} />
+                                <span className="font-medium">{canal.label}</span>
+                              </div>
+                              {canal.description && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  {canal.description}
+                                </span>
+                              )}
                             </Button>
                           );
                         })}
@@ -357,32 +384,56 @@ export default function Campanas() {
                       {nuevaCampana.secuencia.length > 0 ? (
                         <div className="space-y-3 mt-6">
                           <Label>Secuencia actual ({nuevaCampana.secuencia.length} pasos)</Label>
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {nuevaCampana.secuencia.map((paso, index) => {
-                              const canal = canalesDisponibles.find(c => c.id === paso.canal);
-                              if (!canal) return null;
+                              const canal = getCanalInfo(paso.canal);
                               const Icon = canal.icon;
+                              const isFirst = index === 0;
                               return (
-                                <div key={paso.id} className="flex items-center gap-2">
-                                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30 flex-1">
-                                    <Badge variant="default" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
-                                      {index + 1}
-                                    </Badge>
-                                    <Icon className="w-4 h-4 text-primary" />
-                                    <span className="font-medium">{canal.label}</span>
-                                    {index < nuevaCampana.secuencia.length - 1 && (
-                                      <ArrowRight className="w-4 h-4 text-muted-foreground ml-auto" />
-                                    )}
+                                <div key={paso.id} className="space-y-2">
+                                  {/* Selector de tiempo de espera (excepto para el primer paso) */}
+                                  {!isFirst && (
+                                    <div className="flex items-center gap-2 pl-8">
+                                      <div className="h-px flex-1 bg-border"></div>
+                                      <Select
+                                        value={String(paso.diasEspera)}
+                                        onValueChange={(value) => handleDiasEsperaChange(paso.id, parseInt(value))}
+                                      >
+                                        <SelectTrigger className="w-auto h-8 text-xs" data-testid={`select-espera-${index}`}>
+                                          <Clock className="w-3 h-3 mr-1 text-muted-foreground" />
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {opcionesEspera.map(opt => (
+                                            <SelectItem key={opt.value} value={String(opt.value)}>
+                                              {opt.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <div className="h-px flex-1 bg-border"></div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Paso */}
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30 flex-1">
+                                      <Badge variant="default" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
+                                        {index + 1}
+                                      </Badge>
+                                      <Icon className={`w-4 h-4 ${canal.color}`} />
+                                      <span className="font-medium">{canal.label}</span>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEliminarPaso(paso.id)}
+                                      className="text-muted-foreground hover:text-destructive"
+                                      data-testid={`button-eliminar-paso-${index}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEliminarPaso(paso.id)}
-                                    className="text-muted-foreground hover:text-destructive"
-                                    data-testid={`button-eliminar-paso-${index}`}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
                                 </div>
                               );
                             })}
@@ -391,20 +442,22 @@ export default function Campanas() {
                           {/* Vista previa de la secuencia */}
                           <div className="bg-primary/5 rounded-lg p-4 mt-4">
                             <p className="text-sm font-medium text-foreground mb-2">Vista previa:</p>
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1 flex-wrap">
                               {nuevaCampana.secuencia.map((paso, index) => {
-                                const canal = canalesDisponibles.find(c => c.id === paso.canal);
-                                if (!canal) return null;
+                                const canal = getCanalInfo(paso.canal);
                                 const Icon = canal.icon;
+                                const isFirst = index === 0;
                                 return (
                                   <div key={paso.id} className="flex items-center gap-1">
+                                    {!isFirst && (
+                                      <span className="text-xs text-muted-foreground px-1">
+                                        ({formatDiasEspera(paso.diasEspera)}) →
+                                      </span>
+                                    )}
                                     <div className="flex items-center gap-1 px-2 py-1 rounded bg-background border border-border">
-                                      <Icon className="w-3 h-3 text-primary" />
+                                      <Icon className={`w-3 h-3 ${canal.color}`} />
                                       <span className="text-xs font-medium">{canal.label}</span>
                                     </div>
-                                    {index < nuevaCampana.secuencia.length - 1 && (
-                                      <span className="text-muted-foreground text-sm">→</span>
-                                    )}
                                   </div>
                                 );
                               })}
@@ -417,29 +470,6 @@ export default function Campanas() {
                           <p className="text-muted-foreground">
                             Haz clic en los botones de arriba para agregar pasos a tu secuencia
                           </p>
-                        </div>
-                      )}
-
-                      {/* Espacio entre comunicaciones */}
-                      {nuevaCampana.secuencia.length > 1 && (
-                        <div className="space-y-2 pt-4 border-t border-border">
-                          <Label>Espacio entre comunicaciones</Label>
-                          <Select
-                            value={nuevaCampana.espacioEntreComunicaciones}
-                            onValueChange={(value) => setNuevaCampana({ ...nuevaCampana, espacioEntreComunicaciones: value })}
-                          >
-                            <SelectTrigger data-testid="select-espacio">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="1">1 día entre cada comunicación</SelectItem>
-                              <SelectItem value="2">2 días entre cada comunicación</SelectItem>
-                              <SelectItem value="3">3 días entre cada comunicación</SelectItem>
-                              <SelectItem value="5">5 días entre cada comunicación</SelectItem>
-                              <SelectItem value="7">1 semana entre cada comunicación</SelectItem>
-                              <SelectItem value="14">2 semanas entre cada comunicación</SelectItem>
-                            </SelectContent>
-                          </Select>
                         </div>
                       )}
                     </div>
@@ -457,8 +487,7 @@ export default function Campanas() {
                           Personaliza el mensaje para cada paso. Variables disponibles: {"{nombre}"}, {"{meses}"}
                         </p>
                         {nuevaCampana.secuencia.map((paso, index) => {
-                          const canal = canalesDisponibles.find(c => c.id === paso.canal);
-                          if (!canal) return null;
+                          const canal = getCanalInfo(paso.canal);
                           const Icon = canal.icon;
                           return (
                             <div key={paso.id} className="space-y-2">
@@ -466,8 +495,13 @@ export default function Campanas() {
                                 <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
                                   {index + 1}
                                 </Badge>
-                                <Icon className="w-4 h-4 text-primary" />
+                                <Icon className={`w-4 h-4 ${canal.color}`} />
                                 <Label>{canal.label}</Label>
+                                {index > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    (espera: {formatDiasEspera(paso.diasEspera)})
+                                  </span>
+                                )}
                               </div>
                               <Textarea
                                 value={paso.mensaje}
@@ -550,10 +584,10 @@ export default function Campanas() {
                 {nuevaCampana.secuencia.length > 0 && (
                   <div className="bg-muted/30 rounded-lg p-4 border border-border space-y-3">
                     <p className="text-sm font-medium text-foreground">Resumen de la campaña:</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="text-sm space-y-2">
                       <div>
                         <span className="text-muted-foreground">Secuencia:</span>
-                        <span className="ml-2 text-foreground">{nuevaCampana.secuencia.map(p => p.canal).join(" → ")}</span>
+                        <span className="ml-2 text-foreground">{nuevaCampana.secuencia.map(p => getCanalInfo(p.canal).label).join(" → ")}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Pasos:</span>
@@ -561,8 +595,10 @@ export default function Campanas() {
                       </div>
                       {nuevaCampana.secuencia.length > 1 && (
                         <div>
-                          <span className="text-muted-foreground">Espacio:</span>
-                          <span className="ml-2 text-foreground">{nuevaCampana.espacioEntreComunicaciones} días entre pasos</span>
+                          <span className="text-muted-foreground">Duración total:</span>
+                          <span className="ml-2 text-foreground">
+                            {nuevaCampana.secuencia.slice(1).reduce((acc, p) => acc + p.diasEspera, 0)} días
+                          </span>
                         </div>
                       )}
                     </div>
@@ -709,15 +745,16 @@ export default function Campanas() {
                     <CardContent>
                       <div className="space-y-4">
                         {detallesCampana.resultadosPorCanal.map((resultado) => {
-                          const Icon = getCanalIcon(resultado.canal);
+                          const canalInfo = getCanalInfo(resultado.canal);
+                          const Icon = canalInfo.icon;
                           return (
                             <div key={resultado.index} className="border border-border rounded-lg p-4">
                               <div className="flex items-center gap-2 mb-3">
                                 <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
                                   {resultado.index + 1}
                                 </Badge>
-                                <Icon className="w-5 h-5 text-primary" />
-                                <span className="font-medium">{resultado.canal}</span>
+                                <Icon className={`w-5 h-5 ${canalInfo.color}`} />
+                                <span className="font-medium">{canalInfo.label}</span>
                                 <Badge variant="outline" className="ml-auto">
                                   {resultado.tasaConversion}% conversión
                                 </Badge>
@@ -761,15 +798,16 @@ export default function Campanas() {
                     <CardContent>
                       <div className="flex items-center gap-2 flex-wrap">
                         {campanaSeleccionada.canales.map((canal, index) => {
-                          const Icon = getCanalIcon(canal);
+                          const canalInfo = getCanalInfo(canal);
+                          const Icon = canalInfo.icon;
                           return (
                             <div key={index} className="flex items-center gap-2">
                               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
                                 <Badge variant="outline" className="w-5 h-5 flex items-center justify-center p-0 text-xs">
                                   {index + 1}
                                 </Badge>
-                                <Icon className="w-4 h-4 text-primary" />
-                                <span className="text-sm font-medium">{canal}</span>
+                                <Icon className={`w-4 h-4 ${canalInfo.color}`} />
+                                <span className="text-sm font-medium">{canalInfo.label}</span>
                               </div>
                               {index < campanaSeleccionada.canales.length - 1 && (
                                 <span className="text-muted-foreground">→</span>
@@ -830,11 +868,12 @@ export default function Campanas() {
                     <span className="text-sm text-muted-foreground">Secuencia:</span>
                     <div className="flex items-center gap-1">
                       {campana.canales.map((canal, i) => {
-                        const Icon = getCanalIcon(canal);
+                        const canalInfo = getCanalInfo(canal);
+                        const Icon = canalInfo.icon;
                         return (
                           <div key={i} className="flex items-center gap-1">
                             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/50">
-                              <Icon className="w-3 h-3" />
+                              <Icon className={`w-3 h-3 ${canalInfo.color}`} />
                             </div>
                             {i < campana.canales.length - 1 && (
                               <span className="text-muted-foreground text-xs">→</span>
