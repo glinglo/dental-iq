@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCampanaSchema } from "@shared/schema";
+import { insertCampanaSchema, insertCitaSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -253,6 +253,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ count });
     } catch (error) {
       res.status(500).json({ error: "Error al obtener conteo" });
+    }
+  });
+
+  // ============= CITAS =============
+  
+  // Obtener todas las citas
+  app.get("/api/citas", async (req, res) => {
+    try {
+      const citas = await storage.getCitas();
+      res.json(citas);
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener citas" });
+    }
+  });
+
+  // Obtener citas por semana
+  app.get("/api/citas/semana", async (req, res) => {
+    try {
+      const { inicio, fin } = req.query;
+      if (!inicio || !fin) {
+        res.status(400).json({ error: "Se requieren las fechas inicio y fin" });
+        return;
+      }
+      const citas = await storage.getCitasPorSemana(new Date(inicio as string), new Date(fin as string));
+      res.json(citas);
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener citas de la semana" });
+    }
+  });
+
+  // Obtener una cita por ID
+  app.get("/api/citas/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const cita = await storage.getCita(id);
+      
+      if (!cita) {
+        res.status(404).json({ error: "Cita no encontrada" });
+        return;
+      }
+      
+      res.json(cita);
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener cita" });
+    }
+  });
+
+  // Crear una nueva cita
+  app.post("/api/citas", async (req, res) => {
+    try {
+      const citaData = insertCitaSchema.parse(req.body);
+      const cita = await storage.createCita(citaData);
+      res.status(201).json(cita);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Error al crear cita" });
+      }
+    }
+  });
+
+  // Actualizar estado de cita
+  app.patch("/api/citas/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const schema = z.object({
+        estado: z.string(),
+      });
+      const { estado } = schema.parse(req.body);
+      const cita = await storage.updateCitaEstado(id, estado);
+      
+      if (!cita) {
+        res.status(404).json({ error: "Cita no encontrada" });
+        return;
+      }
+      
+      res.json(cita);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Error al actualizar cita" });
+      }
     }
   });
 
