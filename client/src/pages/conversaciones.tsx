@@ -77,7 +77,7 @@ function ConversacionItem({
             <span className="font-medium text-sm truncate">
               {conversacion.pacienteNombre}
             </span>
-            {conversacion.noLeidos > 0 && (
+            {(conversacion.noLeidos ?? 0) > 0 && (
               <Badge variant="default" className="h-5 min-w-5 px-1.5 text-xs">
                 {conversacion.noLeidos}
               </Badge>
@@ -146,10 +146,7 @@ export default function Conversaciones() {
 
   const enviarMensajeMutation = useMutation({
     mutationFn: async (contenido: string) => {
-      return apiRequest(`/api/conversaciones/${selectedConvId}/mensajes`, {
-        method: "POST",
-        body: JSON.stringify({ contenido }),
-      });
+      return apiRequest("POST", `/api/conversaciones/${selectedConvId}/mensajes`, { contenido });
     },
     onSuccess: () => {
       setNuevoMensaje("");
@@ -160,9 +157,7 @@ export default function Conversaciones() {
 
   const marcarLeidoMutation = useMutation({
     mutationFn: async (convId: string) => {
-      return apiRequest(`/api/conversaciones/${convId}/leer`, {
-        method: "PATCH",
-      });
+      return apiRequest("PATCH", `/api/conversaciones/${convId}/leer`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversaciones"] });

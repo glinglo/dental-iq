@@ -21,6 +21,7 @@ import Importar from "@/pages/importar";
 import Pacientes from "@/pages/pacientes";
 import Campanas from "@/pages/campanas";
 import CampanaDetalle from "@/pages/campana-detalle";
+import Conversaciones from "@/pages/conversaciones";
 import StaffCalls from "@/pages/staff-calls";
 import Configuracion from "@/pages/configuracion";
 import NotFound from "@/pages/not-found";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/pacientes" component={Pacientes} />
       <Route path="/campanas" component={Campanas} />
       <Route path="/campanas/:id" component={CampanaDetalle} />
+      <Route path="/conversaciones" component={Conversaciones} />
       <Route path="/staff-calls" component={StaffCalls} />
       <Route path="/configuracion" component={Configuracion} />
       <Route component={NotFound} />

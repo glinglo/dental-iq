@@ -2,6 +2,7 @@ import {
   LayoutDashboard, 
   Users, 
   Megaphone, 
+  MessageCircle,
   Phone 
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -31,6 +32,11 @@ const menuItems = [
     title: "Campañas",
     url: "/campanas",
     icon: Megaphone,
+  },
+  {
+    title: "Conversaciones",
+    url: "/conversaciones",
+    icon: MessageCircle,
   },
   {
     title: "Staff Calls",
