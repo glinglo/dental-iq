@@ -97,3 +97,45 @@ export interface FiltrosSegmentacion {
   edadMin?: number;
   edadMax?: number;
 }
+
+// Conversaciones
+export const conversaciones = pgTable("conversaciones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pacienteId: varchar("paciente_id").notNull(),
+  canal: text("canal").notNull(), // "whatsapp", "sms", "email"
+  ultimoMensaje: text("ultimo_mensaje"),
+  fechaUltimoMensaje: timestamp("fecha_ultimo_mensaje"),
+  noLeidos: integer("no_leidos").default(0),
+  estado: text("estado").notNull(), // "activa", "archivada"
+});
+
+export const insertConversacionSchema = createInsertSchema(conversaciones).omit({
+  id: true,
+});
+
+export type InsertConversacion = z.infer<typeof insertConversacionSchema>;
+export type Conversacion = typeof conversaciones.$inferSelect;
+
+// Conversación con datos del paciente para mostrar en la lista
+export interface ConversacionConPaciente extends Conversacion {
+  pacienteNombre: string;
+  pacienteTelefono: string;
+  pacienteEmail: string;
+}
+
+// Mensajes
+export const mensajes = pgTable("mensajes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversacionId: varchar("conversacion_id").notNull(),
+  contenido: text("contenido").notNull(),
+  direccion: text("direccion").notNull(), // "entrante", "saliente"
+  fechaEnvio: timestamp("fecha_envio").notNull(),
+  leido: boolean("leido").default(false),
+});
+
+export const insertMensajeSchema = createInsertSchema(mensajes).omit({
+  id: true,
+});
+
+export type InsertMensaje = z.infer<typeof insertMensajeSchema>;
+export type Mensaje = typeof mensajes.$inferSelect;
