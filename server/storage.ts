@@ -46,6 +46,7 @@ export interface IStorage {
   getMensajes(conversacionId: string): Promise<Mensaje[]>;
   createMensaje(mensaje: InsertMensaje): Promise<Mensaje>;
   marcarComoLeido(conversacionId: string): Promise<void>;
+  getConversacionesSinLeerCount(): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -352,6 +353,12 @@ export class MemStorage implements IStorage {
       m.leido = true;
       this.mensajes.set(m.id, m);
     });
+  }
+
+  async getConversacionesSinLeerCount(): Promise<number> {
+    return Array.from(this.conversaciones.values())
+      .filter(c => (c.noLeidos || 0) > 0)
+      .length;
   }
 }
 

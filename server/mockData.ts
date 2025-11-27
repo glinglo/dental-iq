@@ -322,8 +322,8 @@ export function generarConversacionesMock(pacientes: Paciente[]): { conversacion
       });
     }
     
-    // Algunos tienen mensajes no leídos
-    const noLeidos = Math.random() < 0.3 ? Math.floor(Math.random() * 3) + 1 : 0;
+    // Aproximadamente 50% tienen mensajes no leídos para mostrar variedad
+    const noLeidos = Math.random() < 0.5 ? Math.floor(Math.random() * 4) + 1 : 0;
     
     conversaciones.push({
       id: convId,

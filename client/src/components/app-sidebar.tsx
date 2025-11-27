@@ -6,6 +6,7 @@ import {
   Phone 
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +17,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 const menuItems = [
   {
@@ -37,6 +39,7 @@ const menuItems = [
     title: "Conversaciones",
     url: "/conversaciones",
     icon: MessageCircle,
+    showBadge: true,
   },
   {
     title: "Staff Calls",
@@ -47,6 +50,13 @@ const menuItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/conversaciones/sin-leer/count"],
+    refetchInterval: 30000,
+  });
+  
+  const unreadCount = unreadData?.count ?? 0;
 
   return (
     <Sidebar>
@@ -75,7 +85,16 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild isActive={isActive}>
                       <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
                         <item.icon className="w-4 h-4" />
-                        <span>{item.title}</span>
+                        <span className="flex-1">{item.title}</span>
+                        {item.showBadge && unreadCount > 0 && (
+                          <Badge 
+                            variant="default" 
+                            className="h-5 min-w-5 px-1.5 text-xs"
+                            data-testid="badge-conversaciones-sin-leer"
+                          >
+                            {unreadCount}
+                          </Badge>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

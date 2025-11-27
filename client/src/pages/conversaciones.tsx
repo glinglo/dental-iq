@@ -161,6 +161,7 @@ export default function Conversaciones() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/conversaciones"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversaciones/sin-leer/count"] });
     },
   });
 

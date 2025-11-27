@@ -246,6 +246,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obtener conteo de conversaciones sin leer
+  app.get("/api/conversaciones/sin-leer/count", async (req, res) => {
+    try {
+      const count = await storage.getConversacionesSinLeerCount();
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener conteo" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
