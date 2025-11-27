@@ -23,6 +23,7 @@ import Campanas from "@/pages/campanas";
 import CampanaDetalle from "@/pages/campana-detalle";
 import Conversaciones from "@/pages/conversaciones";
 import StaffCalls from "@/pages/staff-calls";
+import Citas from "@/pages/citas";
 import Configuracion from "@/pages/configuracion";
 import NotFound from "@/pages/not-found";
 
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/campanas/:id" component={CampanaDetalle} />
       <Route path="/conversaciones" component={Conversaciones} />
       <Route path="/staff-calls" component={StaffCalls} />
+      <Route path="/citas" component={Citas} />
       <Route path="/configuracion" component={Configuracion} />
       <Route component={NotFound} />
     </Switch>

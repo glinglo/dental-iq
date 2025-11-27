@@ -3,7 +3,8 @@ import {
   Users, 
   Megaphone, 
   MessageCircle,
-  Phone 
+  Phone,
+  Calendar
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -45,6 +46,11 @@ const menuItems = [
     title: "Staff Calls",
     url: "/staff-calls",
     icon: Phone,
+  },
+  {
+    title: "Citas",
+    url: "/citas",
+    icon: Calendar,
   },
 ];
 

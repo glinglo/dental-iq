@@ -403,7 +403,11 @@ export class MemStorage implements IStorage {
     const cita: Cita = {
       ...insertCita,
       id,
-      duracionMinutos: insertCita.duracionMinutos || 30,
+      duracionMinutos: insertCita.duracionMinutos ?? 30,
+      notas: insertCita.notas ?? null,
+      doctor: insertCita.doctor ?? null,
+      sala: insertCita.sala ?? null,
+      origen: insertCita.origen ?? null,
     };
     this.citas.set(id, cita);
     return cita;
