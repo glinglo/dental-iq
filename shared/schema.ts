@@ -139,3 +139,26 @@ export const insertMensajeSchema = createInsertSchema(mensajes).omit({
 
 export type InsertMensaje = z.infer<typeof insertMensajeSchema>;
 export type Mensaje = typeof mensajes.$inferSelect;
+
+// Citas (Agenda)
+export const citas = pgTable("citas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pacienteId: varchar("paciente_id").notNull(),
+  pacienteNombre: text("paciente_nombre").notNull(),
+  telefono: text("telefono").notNull(),
+  fechaHora: timestamp("fecha_hora").notNull(),
+  duracionMinutos: integer("duracion_minutos").default(30),
+  tipo: text("tipo").notNull(), // "revision", "limpieza", "tratamiento", "consulta", "urgencia"
+  estado: text("estado").notNull(), // "programada", "confirmada", "completada", "cancelada", "no_asistio"
+  notas: text("notas"),
+  doctor: text("doctor"),
+  sala: text("sala"),
+  origen: text("origen"), // "reactivacion", "web", "telefono", "presencial"
+});
+
+export const insertCitaSchema = createInsertSchema(citas).omit({
+  id: true,
+});
+
+export type InsertCita = z.infer<typeof insertCitaSchema>;
+export type Cita = typeof citas.$inferSelect;
