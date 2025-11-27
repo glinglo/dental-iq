@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Megaphone, Plus, Play, Pause, Mail, MessageSquare, Phone, GripVertical, TrendingUp, Users, CalendarCheck, CheckCircle2, Clock, XCircle, Eye } from "lucide-react";
+import { Megaphone, Plus, Play, Pause, Mail, MessageSquare, Phone, TrendingUp, Users, CalendarCheck, CheckCircle2, Clock, XCircle, Eye, Trash2, ArrowRight } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,10 +19,10 @@ import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import type { Campana } from "@shared/schema";
 
-type CanalConfig = {
-  activo: boolean;
+type PasoSecuencia = {
+  id: string;
+  canal: string;
   mensaje: string;
-  orden: number;
 };
 
 type SegmentacionConfig = {
@@ -58,6 +57,10 @@ const plantillasDefault: Record<string, string> = {
   Llamadas: "Buenos días, ¿hablo con {nombre}? Le llamamos de la Clínica Dental para ofrecerle una cita de revisión. ¿Le vendría bien la próxima semana?",
 };
 
+function generarId() {
+  return Math.random().toString(36).substring(2, 9);
+}
+
 function generarDetallesCampana(campana: Campana) {
   const totalPacientes = campana.pacientesIncluidos;
   const contactados = campana.contactosEnviados;
@@ -80,6 +83,7 @@ function generarDetallesCampana(campana: Campana) {
     
     return {
       canal,
+      index,
       enviados,
       entregados,
       abiertos: canal === "Email" ? abiertos : null,
@@ -110,16 +114,11 @@ export default function Campanas() {
   const [dialogAbierto, setDialogAbierto] = useState(false);
   const [dialogDetalles, setDialogDetalles] = useState(false);
   const [campanaSeleccionada, setCampanaSeleccionada] = useState<Campana | null>(null);
-  const [tabActiva, setTabActiva] = useState("canales");
+  const [tabActiva, setTabActiva] = useState("secuencia");
   
   const [nuevaCampana, setNuevaCampana] = useState({
     nombre: "",
-    canales: {
-      SMS: { activo: false, mensaje: plantillasDefault.SMS, orden: 1 },
-      WhatsApp: { activo: false, mensaje: plantillasDefault.WhatsApp, orden: 2 },
-      Email: { activo: false, mensaje: plantillasDefault.Email, orden: 3 },
-      Llamadas: { activo: false, mensaje: plantillasDefault.Llamadas, orden: 4 },
-    } as Record<string, CanalConfig>,
+    secuencia: [] as PasoSecuencia[],
     espacioEntreComunicaciones: "3",
     segmentacion: {
       mesesSinVisita: 12,
@@ -156,70 +155,45 @@ export default function Campanas() {
   const resetFormulario = () => {
     setNuevaCampana({
       nombre: "",
-      canales: {
-        SMS: { activo: false, mensaje: plantillasDefault.SMS, orden: 1 },
-        WhatsApp: { activo: false, mensaje: plantillasDefault.WhatsApp, orden: 2 },
-        Email: { activo: false, mensaje: plantillasDefault.Email, orden: 3 },
-        Llamadas: { activo: false, mensaje: plantillasDefault.Llamadas, orden: 4 },
-      },
+      secuencia: [],
       espacioEntreComunicaciones: "3",
       segmentacion: {
         mesesSinVisita: 12,
         tratamiento: "Cualquier tratamiento",
       },
     });
-    setTabActiva("canales");
+    setTabActiva("secuencia");
   };
 
-  const handleToggleCanal = (canalId: string) => {
+  const handleAgregarPaso = (canalId: string) => {
+    const nuevoPaso: PasoSecuencia = {
+      id: generarId(),
+      canal: canalId,
+      mensaje: plantillasDefault[canalId],
+    };
     setNuevaCampana(prev => ({
       ...prev,
-      canales: {
-        ...prev.canales,
-        [canalId]: {
-          ...prev.canales[canalId],
-          activo: !prev.canales[canalId].activo,
-        },
-      },
+      secuencia: [...prev.secuencia, nuevoPaso],
     }));
   };
 
-  const handleMensajeChange = (canalId: string, mensaje: string) => {
+  const handleEliminarPaso = (pasoId: string) => {
     setNuevaCampana(prev => ({
       ...prev,
-      canales: {
-        ...prev.canales,
-        [canalId]: {
-          ...prev.canales[canalId],
-          mensaje,
-        },
-      },
+      secuencia: prev.secuencia.filter(p => p.id !== pasoId),
     }));
   };
 
-  const handleOrdenChange = (canalId: string, nuevoOrden: number) => {
+  const handleMensajeChange = (pasoId: string, mensaje: string) => {
     setNuevaCampana(prev => ({
       ...prev,
-      canales: {
-        ...prev.canales,
-        [canalId]: {
-          ...prev.canales[canalId],
-          orden: nuevoOrden,
-        },
-      },
+      secuencia: prev.secuencia.map(p => 
+        p.id === pasoId ? { ...p, mensaje } : p
+      ),
     }));
-  };
-
-  const getCanalesActivos = () => {
-    return Object.entries(nuevaCampana.canales)
-      .filter(([_, config]) => config.activo)
-      .sort((a, b) => a[1].orden - b[1].orden)
-      .map(([id]) => id);
   };
 
   const handleIniciarCampana = () => {
-    const canalesActivos = getCanalesActivos();
-    
     if (!nuevaCampana.nombre) {
       toast({
         title: "Nombre requerido",
@@ -229,24 +203,25 @@ export default function Campanas() {
       return;
     }
 
-    if (canalesActivos.length === 0) {
+    if (nuevaCampana.secuencia.length === 0) {
       toast({
-        title: "Canales requeridos",
-        description: "Selecciona al menos un canal de comunicación",
+        title: "Secuencia requerida",
+        description: "Agrega al menos un paso a la secuencia de comunicación",
         variant: "destructive",
       });
       return;
     }
 
-    const cadencia = canalesActivos.join(" → ");
+    const canales = nuevaCampana.secuencia.map(p => p.canal);
+    const cadencia = canales.join(" → ");
 
     crearCampanaMutation.mutate({
       nombre: nuevaCampana.nombre,
-      canales: canalesActivos,
+      canales: canales,
       cadencia: cadencia,
-      plantillaSMS: nuevaCampana.canales.SMS.activo ? nuevaCampana.canales.SMS.mensaje : null,
-      plantillaEmail: nuevaCampana.canales.Email.activo ? nuevaCampana.canales.Email.mensaje : null,
-      guionLlamada: nuevaCampana.canales.Llamadas.activo ? nuevaCampana.canales.Llamadas.mensaje : null,
+      plantillaSMS: nuevaCampana.secuencia.find(p => p.canal === "SMS")?.mensaje || null,
+      plantillaEmail: nuevaCampana.secuencia.find(p => p.canal === "Email")?.mensaje || null,
+      guionLlamada: nuevaCampana.secuencia.find(p => p.canal === "Llamadas")?.mensaje || null,
       estado: "activa",
     });
   };
@@ -289,7 +264,6 @@ export default function Campanas() {
     return icons[canal] || MessageSquare;
   };
 
-  const canalesActivos = getCanalesActivos();
   const detallesCampana = campanaSeleccionada ? generarDetallesCampana(campanaSeleccionada) : null;
 
   return (
@@ -339,8 +313,8 @@ export default function Campanas() {
 
                 <Tabs value={tabActiva} onValueChange={setTabActiva}>
                   <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="canales" data-testid="tab-canales">
-                      1. Canales
+                    <TabsTrigger value="secuencia" data-testid="tab-secuencia">
+                      1. Secuencia
                     </TabsTrigger>
                     <TabsTrigger value="mensajes" data-testid="tab-mensajes">
                       2. Mensajes
@@ -350,81 +324,105 @@ export default function Campanas() {
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Tab Canales */}
-                  <TabsContent value="canales" className="space-y-6 mt-6">
+                  {/* Tab Secuencia */}
+                  <TabsContent value="secuencia" className="space-y-6 mt-6">
                     <div className="space-y-4">
-                      <Label>Selecciona los canales de comunicación</Label>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Construye tu secuencia de comunicación</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Haz clic en un canal para agregarlo a la secuencia. Puedes usar el mismo canal varias veces.
+                        </p>
+                      </div>
+                      
+                      {/* Botones para agregar canales */}
+                      <div className="flex flex-wrap gap-2">
                         {canalesDisponibles.map((canal) => {
                           const Icon = canal.icon;
-                          const isActivo = nuevaCampana.canales[canal.id].activo;
                           return (
-                            <div
+                            <Button
                               key={canal.id}
-                              onClick={() => handleToggleCanal(canal.id)}
-                              className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                isActivo 
-                                  ? 'border-primary bg-primary/5' 
-                                  : 'border-border hover-elevate'
-                              }`}
-                              data-testid={`canal-${canal.id.toLowerCase()}`}
+                              variant="outline"
+                              onClick={() => handleAgregarPaso(canal.id)}
+                              data-testid={`button-agregar-${canal.id.toLowerCase()}`}
                             >
-                              <Checkbox
-                                checked={isActivo}
-                                onCheckedChange={() => handleToggleCanal(canal.id)}
-                              />
-                              <Icon className={`w-5 h-5 ${isActivo ? 'text-primary' : 'text-muted-foreground'}`} />
-                              <span className={`font-medium ${isActivo ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                {canal.label}
-                              </span>
-                            </div>
+                              <Plus className="w-4 h-4 mr-1" />
+                              <Icon className="w-4 h-4 mr-2" />
+                              {canal.label}
+                            </Button>
                           );
                         })}
                       </div>
-                    </div>
 
-                    {canalesActivos.length > 0 && (
-                      <div className="space-y-4">
-                        <Label>Orden de comunicación</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Define en qué orden se contactará a los pacientes
-                        </p>
-                        <div className="space-y-2">
-                          {canalesActivos.map((canalId, index) => {
-                            const canal = canalesDisponibles.find(c => c.id === canalId);
-                            if (!canal) return null;
-                            const Icon = canal.icon;
-                            return (
-                              <div key={canalId} className="flex items-center gap-3">
-                                <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30 flex-1">
-                                  <GripVertical className="w-4 h-4 text-muted-foreground" />
-                                  <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0">
-                                    {index + 1}
-                                  </Badge>
-                                  <Icon className="w-4 h-4 text-primary" />
-                                  <span className="font-medium">{canal.label}</span>
+                      {/* Secuencia actual */}
+                      {nuevaCampana.secuencia.length > 0 ? (
+                        <div className="space-y-3 mt-6">
+                          <Label>Secuencia actual ({nuevaCampana.secuencia.length} pasos)</Label>
+                          <div className="space-y-2">
+                            {nuevaCampana.secuencia.map((paso, index) => {
+                              const canal = canalesDisponibles.find(c => c.id === paso.canal);
+                              if (!canal) return null;
+                              const Icon = canal.icon;
+                              return (
+                                <div key={paso.id} className="flex items-center gap-2">
+                                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30 flex-1">
+                                    <Badge variant="default" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
+                                      {index + 1}
+                                    </Badge>
+                                    <Icon className="w-4 h-4 text-primary" />
+                                    <span className="font-medium">{canal.label}</span>
+                                    {index < nuevaCampana.secuencia.length - 1 && (
+                                      <ArrowRight className="w-4 h-4 text-muted-foreground ml-auto" />
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEliminarPaso(paso.id)}
+                                    className="text-muted-foreground hover:text-destructive"
+                                    data-testid={`button-eliminar-paso-${index}`}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
                                 </div>
-                                <Select
-                                  value={String(nuevaCampana.canales[canalId].orden)}
-                                  onValueChange={(value) => handleOrdenChange(canalId, parseInt(value))}
-                                >
-                                  <SelectTrigger className="w-24">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {canalesActivos.map((_, i) => (
-                                      <SelectItem key={i} value={String(i + 1)}>
-                                        Paso {i + 1}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
 
-                        <div className="space-y-2 pt-4">
+                          {/* Vista previa de la secuencia */}
+                          <div className="bg-primary/5 rounded-lg p-4 mt-4">
+                            <p className="text-sm font-medium text-foreground mb-2">Vista previa:</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {nuevaCampana.secuencia.map((paso, index) => {
+                                const canal = canalesDisponibles.find(c => c.id === paso.canal);
+                                if (!canal) return null;
+                                const Icon = canal.icon;
+                                return (
+                                  <div key={paso.id} className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 px-2 py-1 rounded bg-background border border-border">
+                                      <Icon className="w-3 h-3 text-primary" />
+                                      <span className="text-xs font-medium">{canal.label}</span>
+                                    </div>
+                                    {index < nuevaCampana.secuencia.length - 1 && (
+                                      <span className="text-muted-foreground text-sm">→</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+                          <MessageSquare className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-muted-foreground">
+                            Haz clic en los botones de arriba para agregar pasos a tu secuencia
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Espacio entre comunicaciones */}
+                      {nuevaCampana.secuencia.length > 1 && (
+                        <div className="space-y-2 pt-4 border-t border-border">
                           <Label>Espacio entre comunicaciones</Label>
                           <Select
                             value={nuevaCampana.espacioEntreComunicaciones}
@@ -443,42 +441,39 @@ export default function Campanas() {
                             </SelectContent>
                           </Select>
                         </div>
-                      </div>
-                    )}
-
-                    {canalesActivos.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        Selecciona al menos un canal para continuar
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </TabsContent>
 
                   {/* Tab Mensajes */}
                   <TabsContent value="mensajes" className="space-y-6 mt-6">
-                    {canalesActivos.length === 0 ? (
+                    {nuevaCampana.secuencia.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        Primero selecciona los canales en la pestaña anterior
+                        Primero agrega pasos a la secuencia en la pestaña anterior
                       </div>
                     ) : (
                       <div className="space-y-6">
                         <p className="text-sm text-muted-foreground">
-                          Personaliza el mensaje para cada canal. Variables disponibles: {"{nombre}"}, {"{meses}"}
+                          Personaliza el mensaje para cada paso. Variables disponibles: {"{nombre}"}, {"{meses}"}
                         </p>
-                        {canalesActivos.map((canalId) => {
-                          const canal = canalesDisponibles.find(c => c.id === canalId);
+                        {nuevaCampana.secuencia.map((paso, index) => {
+                          const canal = canalesDisponibles.find(c => c.id === paso.canal);
                           if (!canal) return null;
                           const Icon = canal.icon;
                           return (
-                            <div key={canalId} className="space-y-2">
+                            <div key={paso.id} className="space-y-2">
                               <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
+                                  {index + 1}
+                                </Badge>
                                 <Icon className="w-4 h-4 text-primary" />
                                 <Label>{canal.label}</Label>
                               </div>
                               <Textarea
-                                value={nuevaCampana.canales[canalId].mensaje}
-                                onChange={(e) => handleMensajeChange(canalId, e.target.value)}
-                                rows={canalId === "Email" ? 6 : 4}
-                                data-testid={`textarea-${canalId.toLowerCase()}`}
+                                value={paso.mensaje}
+                                onChange={(e) => handleMensajeChange(paso.id, e.target.value)}
+                                rows={paso.canal === "Email" ? 6 : 4}
+                                data-testid={`textarea-paso-${index}`}
                               />
                             </div>
                           );
@@ -552,25 +547,31 @@ export default function Campanas() {
                 </Tabs>
 
                 {/* Resumen antes de crear */}
-                {canalesActivos.length > 0 && (
+                {nuevaCampana.secuencia.length > 0 && (
                   <div className="bg-muted/30 rounded-lg p-4 border border-border space-y-3">
                     <p className="text-sm font-medium text-foreground">Resumen de la campaña:</p>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Canales:</span>
-                        <span className="ml-2 text-foreground">{canalesActivos.join(" → ")}</span>
+                        <span className="text-muted-foreground">Secuencia:</span>
+                        <span className="ml-2 text-foreground">{nuevaCampana.secuencia.map(p => p.canal).join(" → ")}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Espacio:</span>
-                        <span className="ml-2 text-foreground">{nuevaCampana.espacioEntreComunicaciones} días</span>
+                        <span className="text-muted-foreground">Pasos:</span>
+                        <span className="ml-2 text-foreground">{nuevaCampana.secuencia.length}</span>
                       </div>
+                      {nuevaCampana.secuencia.length > 1 && (
+                        <div>
+                          <span className="text-muted-foreground">Espacio:</span>
+                          <span className="ml-2 text-foreground">{nuevaCampana.espacioEntreComunicaciones} días entre pasos</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
                 <Button 
                   onClick={handleIniciarCampana}
-                  disabled={crearCampanaMutation.isPending || canalesActivos.length === 0}
+                  disabled={crearCampanaMutation.isPending || nuevaCampana.secuencia.length === 0}
                   className="w-full"
                   data-testid="button-iniciar-campana"
                 >
@@ -703,15 +704,18 @@ export default function Campanas() {
                   {/* Resultados por Canal */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Resultados por canal</CardTitle>
+                      <CardTitle className="text-base">Resultados por paso</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         {detallesCampana.resultadosPorCanal.map((resultado) => {
                           const Icon = getCanalIcon(resultado.canal);
                           return (
-                            <div key={resultado.canal} className="border border-border rounded-lg p-4">
+                            <div key={resultado.index} className="border border-border rounded-lg p-4">
                               <div className="flex items-center gap-2 mb-3">
+                                <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
+                                  {resultado.index + 1}
+                                </Badge>
                                 <Icon className="w-5 h-5 text-primary" />
                                 <span className="font-medium">{resultado.canal}</span>
                                 <Badge variant="outline" className="ml-auto">
@@ -759,7 +763,7 @@ export default function Campanas() {
                         {campanaSeleccionada.canales.map((canal, index) => {
                           const Icon = getCanalIcon(canal);
                           return (
-                            <div key={canal} className="flex items-center gap-2">
+                            <div key={index} className="flex items-center gap-2">
                               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
                                 <Badge variant="outline" className="w-5 h-5 flex items-center justify-center p-0 text-xs">
                                   {index + 1}
@@ -823,13 +827,25 @@ export default function Campanas() {
                 <CardContent className="space-y-4">
                   {/* Canales */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-muted-foreground">Canales:</span>
-                    <div className="flex items-center gap-2">
-                      {getCanalesIcons(campana.canales)}
+                    <span className="text-sm text-muted-foreground">Secuencia:</span>
+                    <div className="flex items-center gap-1">
+                      {campana.canales.map((canal, i) => {
+                        const Icon = getCanalIcon(canal);
+                        return (
+                          <div key={i} className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted/50">
+                              <Icon className="w-3 h-3" />
+                            </div>
+                            {i < campana.canales.length - 1 && (
+                              <span className="text-muted-foreground text-xs">→</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                    <span className="text-sm text-foreground">
-                      {campana.canales.join(" → ")}
-                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {campana.canales.length} pasos
+                    </Badge>
                   </div>
 
                   {/* Métricas */}
