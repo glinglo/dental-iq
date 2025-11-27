@@ -178,6 +178,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============= CONVERSACIONES =============
+  
+  // Obtener todas las conversaciones
+  app.get("/api/conversaciones", async (req, res) => {
+    try {
+      const conversaciones = await storage.getConversaciones();
+      res.json(conversaciones);
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener conversaciones" });
+    }
+  });
+
+  // Obtener una conversación con sus mensajes
+  app.get("/api/conversaciones/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const conversacion = await storage.getConversacion(id);
+      
+      if (!conversacion) {
+        res.status(404).json({ error: "Conversación no encontrada" });
+        return;
+      }
+      
+      const mensajes = await storage.getMensajes(id);
+      res.json({ conversacion, mensajes });
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener conversación" });
+    }
+  });
+
+  // Enviar un mensaje en una conversación
+  app.post("/api/conversaciones/:id/mensajes", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const schema = z.object({
+        contenido: z.string().min(1),
+      });
+      const { contenido } = schema.parse(req.body);
+      
+      const mensaje = await storage.createMensaje({
+        conversacionId: id,
+        contenido,
+        direccion: "saliente",
+        fechaEnvio: new Date(),
+        leido: true,
+      });
+      
+      res.status(201).json(mensaje);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Contenido inválido", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Error al enviar mensaje" });
+      }
+    }
+  });
+
+  // Marcar conversación como leída
+  app.patch("/api/conversaciones/:id/leer", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.marcarComoLeido(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Error al marcar como leída" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
