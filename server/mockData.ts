@@ -1,4 +1,4 @@
-import type { Paciente, Campana, TareaLlamada, Conversacion, Mensaje } from "@shared/schema";
+import type { Paciente, Campana, TareaLlamada, Conversacion, Mensaje, Cita } from "@shared/schema";
 
 // Nombres y apellidos españoles/latinoamericanos
 const nombres = [
@@ -337,4 +337,85 @@ export function generarConversacionesMock(pacientes: Paciente[]): { conversacion
   });
   
   return { conversaciones, mensajes };
+}
+
+// Tipos y salas para citas
+const tiposCita = ["revision", "limpieza", "tratamiento", "consulta", "urgencia"];
+const doctores = ["Dr. García", "Dra. Martínez", "Dr. López", "Dra. Fernández"];
+const salas = ["Sala 1", "Sala 2", "Sala 3", "Consultorio A", "Consultorio B"];
+const origenesCita = ["reactivacion", "web", "telefono", "presencial"];
+
+export function generarCitasMock(pacientes: Paciente[]): Cita[] {
+  const citas: Cita[] = [];
+  const ahora = new Date();
+  
+  // Obtener inicio y fin de la semana actual (lunes a domingo)
+  const inicioSemana = new Date(ahora);
+  inicioSemana.setDate(ahora.getDate() - ahora.getDay() + 1); // Lunes
+  inicioSemana.setHours(0, 0, 0, 0);
+  
+  const finSemana = new Date(inicioSemana);
+  finSemana.setDate(inicioSemana.getDate() + 6); // Domingo
+  
+  // Horarios de trabajo: 9:00 a 20:00
+  const horariosDisponibles = [9, 10, 11, 12, 13, 16, 17, 18, 19];
+  
+  // Generar citas para esta semana y la próxima
+  const pacientesSeleccionados = pacientes
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 60);
+  
+  let citaIndex = 0;
+  
+  for (let semana = 0; semana < 2; semana++) {
+    for (let dia = 0; dia < 6; dia++) { // Lunes a sábado
+      const fechaDia = new Date(inicioSemana);
+      fechaDia.setDate(inicioSemana.getDate() + dia + (semana * 7));
+      
+      // Generar 4-8 citas por día
+      const citasPorDia = 4 + Math.floor(Math.random() * 5);
+      const horariosDelDia = [...horariosDisponibles].sort(() => Math.random() - 0.5).slice(0, citasPorDia);
+      
+      horariosDelDia.forEach(hora => {
+        if (citaIndex >= pacientesSeleccionados.length) return;
+        
+        const paciente = pacientesSeleccionados[citaIndex];
+        const fechaHora = new Date(fechaDia);
+        fechaHora.setHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
+        
+        const tipo = tiposCita[Math.floor(Math.random() * tiposCita.length)];
+        const duracion = tipo === "urgencia" ? 45 : tipo === "tratamiento" ? 60 : 30;
+        
+        // Estado basado en si la cita es pasada o futura
+        let estado: "programada" | "confirmada" | "completada" | "cancelada" | "no_asistio";
+        if (fechaHora < ahora) {
+          const rand = Math.random();
+          if (rand < 0.7) estado = "completada";
+          else if (rand < 0.85) estado = "no_asistio";
+          else estado = "cancelada";
+        } else {
+          estado = Math.random() < 0.6 ? "confirmada" : "programada";
+        }
+        
+        citas.push({
+          id: `cita-${citaIndex + 1}`,
+          pacienteId: paciente.id,
+          pacienteNombre: paciente.nombre,
+          telefono: paciente.telefono,
+          fechaHora,
+          duracionMinutos: duracion,
+          tipo,
+          estado,
+          notas: Math.random() < 0.3 ? "Paciente con historial de ortodoncia" : null,
+          doctor: doctores[Math.floor(Math.random() * doctores.length)],
+          sala: salas[Math.floor(Math.random() * salas.length)],
+          origen: origenesCita[Math.floor(Math.random() * origenesCita.length)],
+        });
+        
+        citaIndex++;
+      });
+    }
+  }
+  
+  return citas.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
 }

@@ -12,10 +12,12 @@ import type {
   InsertConversacion,
   ConversacionConPaciente,
   Mensaje,
-  InsertMensaje
+  InsertMensaje,
+  Cita,
+  InsertCita
 } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { generarPacientesMock, generarCampanasMock, generarTareasLlamadasMock, generarConversacionesMock } from "./mockData";
+import { generarPacientesMock, generarCampanasMock, generarTareasLlamadasMock, generarConversacionesMock, generarCitasMock } from "./mockData";
 
 export interface IStorage {
   // Pacientes
@@ -47,6 +49,13 @@ export interface IStorage {
   createMensaje(mensaje: InsertMensaje): Promise<Mensaje>;
   marcarComoLeido(conversacionId: string): Promise<void>;
   getConversacionesSinLeerCount(): Promise<number>;
+  
+  // Citas
+  getCitas(): Promise<Cita[]>;
+  getCitasPorSemana(inicio: Date, fin: Date): Promise<Cita[]>;
+  getCita(id: string): Promise<Cita | undefined>;
+  createCita(cita: InsertCita): Promise<Cita>;
+  updateCitaEstado(id: string, estado: string): Promise<Cita | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -55,6 +64,7 @@ export class MemStorage implements IStorage {
   private tareas: Map<string, TareaLlamada>;
   private conversaciones: Map<string, Conversacion>;
   private mensajes: Map<string, Mensaje>;
+  private citas: Map<string, Cita>;
 
   constructor() {
     this.pacientes = new Map();
@@ -62,6 +72,7 @@ export class MemStorage implements IStorage {
     this.tareas = new Map();
     this.conversaciones = new Map();
     this.mensajes = new Map();
+    this.citas = new Map();
     
     // Inicializar con mock data
     this.inicializarMockData();
@@ -93,6 +104,12 @@ export class MemStorage implements IStorage {
     });
     mensajes.forEach((mensaje: Mensaje) => {
       this.mensajes.set(mensaje.id, mensaje);
+    });
+    
+    // Generar y cargar citas
+    const citas = generarCitasMock(pacientes);
+    citas.forEach((cita: Cita) => {
+      this.citas.set(cita.id, cita);
     });
   }
 
@@ -359,6 +376,46 @@ export class MemStorage implements IStorage {
     return Array.from(this.conversaciones.values())
       .filter(c => (c.noLeidos || 0) > 0)
       .length;
+  }
+
+  // Citas
+  async getCitas(): Promise<Cita[]> {
+    return Array.from(this.citas.values()).sort((a, b) => 
+      a.fechaHora.getTime() - b.fechaHora.getTime()
+    );
+  }
+
+  async getCitasPorSemana(inicio: Date, fin: Date): Promise<Cita[]> {
+    return Array.from(this.citas.values())
+      .filter(cita => {
+        const fechaCita = cita.fechaHora.getTime();
+        return fechaCita >= inicio.getTime() && fechaCita <= fin.getTime();
+      })
+      .sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+  }
+
+  async getCita(id: string): Promise<Cita | undefined> {
+    return this.citas.get(id);
+  }
+
+  async createCita(insertCita: InsertCita): Promise<Cita> {
+    const id = randomUUID();
+    const cita: Cita = {
+      ...insertCita,
+      id,
+      duracionMinutos: insertCita.duracionMinutos || 30,
+    };
+    this.citas.set(id, cita);
+    return cita;
+  }
+
+  async updateCitaEstado(id: string, estado: string): Promise<Cita | undefined> {
+    const cita = this.citas.get(id);
+    if (cita) {
+      cita.estado = estado;
+      this.citas.set(id, cita);
+    }
+    return cita;
   }
 }
 
