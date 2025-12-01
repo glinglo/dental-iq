@@ -24,8 +24,12 @@ Preferred communication style: Simple, everyday language.
 - `/` - Dashboard with KPIs
 - `/importar` - Patient data import interface
 - `/pacientes` - Patient list with segmentation and filtering
-- `/campanas` - Campaign creation and management
+- `/campanas` - Campaign management with two tabs:
+  - "Reactivación" - Multi-channel campaign creation for lost patients
+  - "Recordatorios" - Appointment reminder configuration
+- `/agenda` - Weekly calendar view for appointments
 - `/staff-calls` - Call task management for staff
+- `/conversaciones` - Unified inbox for patient communications
 - `/configuracion` - System configuration
 
 **Design System**: Typography uses Inter/Work Sans for UI and JetBrains Mono for numerical data. Spacing follows Tailwind's standard scale (units of 4, 6, 8, 12, 16). Component hierarchy emphasizes scannable tables and clear information architecture suitable for healthcare data.
@@ -43,6 +47,9 @@ Preferred communication style: Simple, everyday language.
 **API Design**: RESTful API structure with endpoints organized by resource:
 - `/api/pacientes` - Patient CRUD and calculations
 - `/api/campanas` - Campaign management
+- `/api/citas` - Appointment CRUD operations
+- `/api/recordatorios` - Appointment reminder configuration (CRUD)
+- `/api/conversaciones` - Patient communication threads
 - `/api/tareas` - Call task tracking
 - `/api/dashboard` - Aggregated KPI endpoints
 
@@ -60,6 +67,9 @@ Preferred communication style: Simple, everyday language.
 - `pacientes` table: Patient records with demographics, visit history, status, and priority
 - `campanas` table: Campaign configurations with multi-channel settings
 - `tareas_llamadas` table: Phone call tasks with staff assignment and outcome tracking
+- `conversaciones` / `mensajes` tables: Patient communication threads and messages
+- `citas` table: Appointment scheduling with date, time, status and origin
+- `recordatorios` table: Appointment reminder configurations with channel, message template, and lead time
 
 **Database Migration Strategy**: Drizzle Kit configured for schema push to PostgreSQL (`drizzle.config.ts`). The `IStorage` interface allows seamless transition from mock data to live database without changing application logic.
 
