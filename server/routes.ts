@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCampanaSchema, insertCitaSchema } from "@shared/schema";
+import { insertCampanaSchema, insertCitaSchema, insertRecordatorioSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -337,6 +337,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Error al actualizar cita" });
       }
+    }
+  });
+
+  // ============= RECORDATORIOS =============
+  
+  // Obtener todos los recordatorios
+  app.get("/api/recordatorios", async (req, res) => {
+    try {
+      const recordatorios = await storage.getRecordatorios();
+      res.json(recordatorios);
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener recordatorios" });
+    }
+  });
+
+  // Crear un nuevo recordatorio
+  app.post("/api/recordatorios", async (req, res) => {
+    try {
+      const recordatorioData = insertRecordatorioSchema.parse(req.body);
+      const recordatorio = await storage.createRecordatorio(recordatorioData);
+      res.status(201).json(recordatorio);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Datos inválidos", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Error al crear recordatorio" });
+      }
+    }
+  });
+
+  // Actualizar un recordatorio
+  app.patch("/api/recordatorios/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const recordatorio = await storage.updateRecordatorio(id, req.body);
+      
+      if (!recordatorio) {
+        res.status(404).json({ error: "Recordatorio no encontrado" });
+        return;
+      }
+      
+      res.json(recordatorio);
+    } catch (error) {
+      res.status(500).json({ error: "Error al actualizar recordatorio" });
+    }
+  });
+
+  // Eliminar un recordatorio
+  app.delete("/api/recordatorios/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteRecordatorio(id);
+      
+      if (!deleted) {
+        res.status(404).json({ error: "Recordatorio no encontrado" });
+        return;
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Error al eliminar recordatorio" });
     }
   });
 

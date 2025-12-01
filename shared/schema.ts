@@ -162,3 +162,20 @@ export const insertCitaSchema = createInsertSchema(citas).omit({
 
 export type InsertCita = z.infer<typeof insertCitaSchema>;
 export type Cita = typeof citas.$inferSelect;
+
+// Recordatorios de citas
+export const recordatorios = pgTable("recordatorios", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nombre: text("nombre").notNull(),
+  canal: text("canal").notNull(), // "sms", "whatsapp", "email"
+  mensaje: text("mensaje").notNull(),
+  horasAntes: integer("horas_antes").notNull(), // tiempo de antelación en horas
+  activo: boolean("activo").default(true),
+});
+
+export const insertRecordatorioSchema = createInsertSchema(recordatorios).omit({
+  id: true,
+});
+
+export type InsertRecordatorio = z.infer<typeof insertRecordatorioSchema>;
+export type Recordatorio = typeof recordatorios.$inferSelect;

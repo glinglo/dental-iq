@@ -14,7 +14,9 @@ import type {
   Mensaje,
   InsertMensaje,
   Cita,
-  InsertCita
+  InsertCita,
+  Recordatorio,
+  InsertRecordatorio
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { generarPacientesMock, generarCampanasMock, generarTareasLlamadasMock, generarConversacionesMock, generarCitasMock } from "./mockData";
@@ -56,6 +58,13 @@ export interface IStorage {
   getCita(id: string): Promise<Cita | undefined>;
   createCita(cita: InsertCita): Promise<Cita>;
   updateCitaEstado(id: string, estado: string): Promise<Cita | undefined>;
+  
+  // Recordatorios
+  getRecordatorios(): Promise<Recordatorio[]>;
+  getRecordatorio(id: string): Promise<Recordatorio | undefined>;
+  createRecordatorio(recordatorio: InsertRecordatorio): Promise<Recordatorio>;
+  updateRecordatorio(id: string, data: Partial<InsertRecordatorio>): Promise<Recordatorio | undefined>;
+  deleteRecordatorio(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -65,6 +74,7 @@ export class MemStorage implements IStorage {
   private conversaciones: Map<string, Conversacion>;
   private mensajes: Map<string, Mensaje>;
   private citas: Map<string, Cita>;
+  private recordatorios: Map<string, Recordatorio>;
 
   constructor() {
     this.pacientes = new Map();
@@ -73,6 +83,7 @@ export class MemStorage implements IStorage {
     this.conversaciones = new Map();
     this.mensajes = new Map();
     this.citas = new Map();
+    this.recordatorios = new Map();
     
     // Inicializar con mock data
     this.inicializarMockData();
@@ -110,6 +121,34 @@ export class MemStorage implements IStorage {
     const citas = generarCitasMock(pacientes);
     citas.forEach((cita: Cita) => {
       this.citas.set(cita.id, cita);
+    });
+    
+    // Inicializar recordatorios por defecto
+    this.inicializarRecordatoriosDefault();
+  }
+  
+  private inicializarRecordatoriosDefault() {
+    const recordatoriosDefault: Recordatorio[] = [
+      {
+        id: randomUUID(),
+        nombre: "Recordatorio 24h antes",
+        canal: "sms",
+        mensaje: "Hola {nombre}, le recordamos que tiene una cita mañana a las {hora} en nuestra clínica. Responda CONFIRMAR para confirmar o llame al {telefono_clinica} para reprogramar.",
+        horasAntes: 24,
+        activo: true,
+      },
+      {
+        id: randomUUID(),
+        nombre: "Recordatorio 2h antes",
+        canal: "whatsapp",
+        mensaje: "Hola {nombre}, le recordamos que su cita es en 2 horas ({hora}). Le esperamos en nuestra clínica. Si necesita reprogramar, responda a este mensaje.",
+        horasAntes: 2,
+        activo: true,
+      },
+    ];
+    
+    recordatoriosDefault.forEach(r => {
+      this.recordatorios.set(r.id, r);
     });
   }
 
@@ -420,6 +459,43 @@ export class MemStorage implements IStorage {
       this.citas.set(id, cita);
     }
     return cita;
+  }
+
+  // Recordatorios
+  async getRecordatorios(): Promise<Recordatorio[]> {
+    return Array.from(this.recordatorios.values());
+  }
+
+  async getRecordatorio(id: string): Promise<Recordatorio | undefined> {
+    return this.recordatorios.get(id);
+  }
+
+  async createRecordatorio(insertRecordatorio: InsertRecordatorio): Promise<Recordatorio> {
+    const id = randomUUID();
+    const recordatorio: Recordatorio = {
+      ...insertRecordatorio,
+      id,
+      activo: insertRecordatorio.activo ?? true,
+    };
+    this.recordatorios.set(id, recordatorio);
+    return recordatorio;
+  }
+
+  async updateRecordatorio(id: string, data: Partial<InsertRecordatorio>): Promise<Recordatorio | undefined> {
+    const recordatorio = this.recordatorios.get(id);
+    if (recordatorio) {
+      const updated: Recordatorio = {
+        ...recordatorio,
+        ...data,
+      };
+      this.recordatorios.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async deleteRecordatorio(id: string): Promise<boolean> {
+    return this.recordatorios.delete(id);
   }
 }
 
