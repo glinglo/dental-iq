@@ -48,7 +48,7 @@ const menuItems = [
     icon: Phone,
   },
   {
-    title: "Citas",
+    title: "Agenda",
     url: "/citas",
     icon: Calendar,
   },
