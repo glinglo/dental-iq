@@ -3,8 +3,9 @@ import {
   Users, 
   Megaphone, 
   MessageCircle,
-  Phone,
-  Calendar
+  ClipboardList,
+  Calendar,
+  Stethoscope
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -43,9 +44,9 @@ const menuItems = [
     showBadge: true,
   },
   {
-    title: "Staff Calls",
+    title: "Acciones del Día",
     url: "/staff-calls",
-    icon: Phone,
+    icon: ClipboardList,
   },
   {
     title: "Agenda",
@@ -69,7 +70,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-            <Phone className="w-5 h-5 text-primary-foreground" />
+            <Stethoscope className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-sidebar-foreground">

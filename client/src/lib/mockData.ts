@@ -188,19 +188,58 @@ export function generarCampanasMock(): Campana[] {
   ];
 }
 
-// Generar tareas de llamadas mock
+// Generar tareas de llamadas mock para Acciones del Día (Kanban)
 export function generarTareasLlamadasMock(pacientes: Paciente[]): TareaLlamada[] {
   const pacientesPerdidos = pacientes.filter(p => p.estado === "perdido" && p.prioridad);
   const tareas: TareaLlamada[] = [];
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
 
-  // Seleccionar 20 pacientes aleatorios para tareas de llamadas
+  // Seleccionar 25 pacientes aleatorios para tareas de llamadas
   const pacientesSeleccionados = pacientesPerdidos
     .sort(() => Math.random() - 0.5)
-    .slice(0, 20);
+    .slice(0, 25);
 
   pacientesSeleccionados.forEach((paciente, index) => {
-    const estados: TareaLlamada["estado"][] = ["pendiente", "contactado", "cita_agendada", "no_contactado"];
-    const estado = index < 12 ? "pendiente" : estados[Math.floor(Math.random() * estados.length)];
+    // Distribuir tareas en las 3 columnas del kanban:
+    // - 8 pendientes de aprobación (no aprobado, estado pendiente)
+    // - 10 programadas para hoy (aprobado, estado pendiente, fechaProgramada hoy)
+    // - 7 completadas hoy (aprobado, estado completado, fechaCompletada hoy)
+    
+    let estado: TareaLlamada["estado"] = "pendiente";
+    let aprobado = false;
+    let fechaProgramada: Date | null = null;
+    let fechaContacto: Date | null = null;
+    let fechaCompletada: Date | null = null;
+    let notas: string | null = null;
+
+    if (index < 8) {
+      // Columna 1: Pendiente de Aprobación
+      estado = "pendiente";
+      aprobado = false;
+      fechaProgramada = null;
+    } else if (index < 18) {
+      // Columna 2: Programadas para Hoy
+      estado = "pendiente";
+      aprobado = true;
+      fechaProgramada = hoy;
+    } else {
+      // Columna 3: Completadas Hoy
+      const estadosCompletados: TareaLlamada["estado"][] = ["contactado", "cita_agendada", "no_contactado"];
+      estado = estadosCompletados[index % 3];
+      aprobado = true;
+      fechaProgramada = hoy;
+      fechaCompletada = new Date();
+      fechaContacto = new Date();
+      
+      if (estado === "contactado") {
+        notas = "Paciente interesado, pendiente de confirmar fecha";
+      } else if (estado === "cita_agendada") {
+        notas = "Cita agendada para la próxima semana";
+      } else {
+        notas = "No contestó después de 3 intentos";
+      }
+    }
 
     tareas.push({
       id: `tarea-${index + 1}`,
@@ -210,11 +249,12 @@ export function generarTareasLlamadasMock(pacientes: Paciente[]): TareaLlamada[]
       motivo: `Reactivación - ${paciente.mesesSinVisita} meses sin visita`,
       prioridad: paciente.prioridad!,
       estado,
-      fechaCreacion: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Últimos 7 días
-      fechaContacto: estado === "contactado" || estado === "cita_agendada" 
-        ? new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000) 
-        : null,
-      notas: estado === "contactado" ? "Paciente interesado, pendiente de confirmar fecha" : null,
+      aprobado,
+      fechaProgramada,
+      fechaCreacion: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+      fechaContacto,
+      fechaCompletada,
+      notas,
     });
   });
 

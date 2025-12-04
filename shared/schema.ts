@@ -50,7 +50,7 @@ export const insertCampanaSchema = createInsertSchema(campanas).omit({
 export type InsertCampana = z.infer<typeof insertCampanaSchema>;
 export type Campana = typeof campanas.$inferSelect;
 
-// Tareas de llamadas para staff
+// Tareas de llamadas para staff (Acciones del Día)
 export const tareasLlamadas = pgTable("tareas_llamadas", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   pacienteId: varchar("paciente_id").notNull(),
@@ -59,8 +59,11 @@ export const tareasLlamadas = pgTable("tareas_llamadas", {
   motivo: text("motivo").notNull(),
   prioridad: text("prioridad").notNull(), // "Alta", "Media", "Baja"
   estado: text("estado").notNull(), // "pendiente", "contactado", "cita_agendada", "no_contactado"
+  aprobado: boolean("aprobado").default(false), // si la tarea ha sido aprobada por supervisor
+  fechaProgramada: timestamp("fecha_programada"), // fecha en que se programa la tarea
   fechaCreacion: timestamp("fecha_creacion").defaultNow(),
   fechaContacto: timestamp("fecha_contacto"),
+  fechaCompletada: timestamp("fecha_completada"), // fecha de finalización
   notas: text("notas"),
 });
 
