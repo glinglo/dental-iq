@@ -56,8 +56,10 @@ export const tareasLlamadas = pgTable("tareas_llamadas", {
   pacienteId: varchar("paciente_id").notNull(),
   pacienteNombre: text("paciente_nombre").notNull(),
   telefono: text("telefono").notNull(),
+  email: text("email"), // email del paciente para acciones de tipo email
   motivo: text("motivo").notNull(),
   prioridad: text("prioridad").notNull(), // "Alta", "Media", "Baja"
+  tipoAccion: text("tipo_accion").notNull().default("llamada"), // "llamada", "email", "carta"
   estado: text("estado").notNull(), // "pendiente", "contactado", "cita_agendada", "no_contactado"
   aprobado: boolean("aprobado").default(false), // si la tarea ha sido aprobada por supervisor
   fechaProgramada: timestamp("fecha_programada"), // fecha en que se programa la tarea

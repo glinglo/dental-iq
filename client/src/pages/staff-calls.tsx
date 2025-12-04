@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, CheckCircle2, Calendar, XCircle, FileText, ThumbsUp, RotateCcw, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Phone, CheckCircle2, Calendar, XCircle, FileText, ThumbsUp, RotateCcw, User, ChevronDown, ChevronUp, Mail, Send, Inbox } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,38 @@ function esMismoDia(fecha1: Date | null | undefined, fecha2: Date): boolean {
          d1.getMonth() === fecha2.getMonth() &&
          d1.getDate() === fecha2.getDate();
 }
+
+type TipoAccion = "llamada" | "email" | "carta";
+
+const tipoAccionConfig: Record<TipoAccion, { 
+  icon: typeof Phone; 
+  label: string; 
+  color: string;
+  accionPrimaria: string;
+  accionCompletada: string;
+}> = {
+  llamada: { 
+    icon: Phone, 
+    label: "Llamada", 
+    color: "text-blue-600 bg-blue-50 border-blue-200",
+    accionPrimaria: "Llamar",
+    accionCompletada: "Llamado"
+  },
+  email: { 
+    icon: Mail, 
+    label: "Email", 
+    color: "text-purple-600 bg-purple-50 border-purple-200",
+    accionPrimaria: "Enviar",
+    accionCompletada: "Enviado"
+  },
+  carta: { 
+    icon: Inbox, 
+    label: "Carta", 
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+    accionPrimaria: "Enviar",
+    accionCompletada: "Enviada"
+  },
+};
 
 export default function StaffCalls() {
   const queryClient = useQueryClient();
@@ -78,7 +110,7 @@ export default function StaffCalls() {
         onSuccess: () => {
           toast({
             title: "Tarea aprobada",
-            description: `La llamada a ${tarea.pacienteNombre} ha sido programada para hoy`,
+            description: `La acción para ${tarea.pacienteNombre} ha sido programada para hoy`,
           });
         },
       }
@@ -86,13 +118,14 @@ export default function StaffCalls() {
   };
 
   const handleMarcarContactado = (tarea: TareaLlamada) => {
+    const tipoConfig = tipoAccionConfig[(tarea.tipoAccion as TipoAccion) || "llamada"];
     updateTareaMutation.mutate(
       { id: tarea.id, estado: "contactado", fechaCompletada: new Date().toISOString(), fechaContacto: new Date().toISOString() },
       {
         onSuccess: () => {
           toast({
-            title: "Paciente contactado",
-            description: `Se ha marcado a ${tarea.pacienteNombre} como contactado`,
+            title: tipoConfig.accionCompletada,
+            description: `Se ha completado la acción para ${tarea.pacienteNombre}`,
           });
         },
       }
@@ -119,8 +152,8 @@ export default function StaffCalls() {
       {
         onSuccess: () => {
           toast({
-            title: "Sin contacto",
-            description: `${tarea.pacienteNombre} marcado como no contactado`,
+            title: "Acción fallida",
+            description: `No se pudo completar la acción para ${tarea.pacienteNombre}`,
           });
         },
       }
@@ -134,7 +167,7 @@ export default function StaffCalls() {
         onSuccess: () => {
           toast({
             title: "Tarea reabierta",
-            description: `La llamada a ${tarea.pacienteNombre} ha sido reprogramada`,
+            description: `La acción para ${tarea.pacienteNombre} ha sido reprogramada`,
           });
         },
       }
@@ -154,6 +187,18 @@ export default function StaffCalls() {
     );
   };
 
+  const getTipoAccionBadge = (tipoAccion: string | null) => {
+    const tipo = (tipoAccion as TipoAccion) || "llamada";
+    const config = tipoAccionConfig[tipo];
+    const IconComponent = config.icon;
+    return (
+      <Badge variant="outline" className={`text-xs ${config.color} gap-1`}>
+        <IconComponent className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
+  };
+
   const getEstadoLabel = (aprobado: boolean | null) => {
     if (!aprobado) {
       return (
@@ -163,24 +208,35 @@ export default function StaffCalls() {
       );
     }
     return (
-      <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 bg-blue-50">
-        Listo para llamar
+      <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
+        Listo
       </Badge>
     );
   };
 
   const getResultadoBadge = (estado: string) => {
     const config: Record<string, { className: string; label: string }> = {
-      contactado: { className: "text-green-600 border-green-300 bg-green-50", label: "Contactado" },
+      contactado: { className: "text-green-600 border-green-300 bg-green-50", label: "Completado" },
       cita_agendada: { className: "text-emerald-600 border-emerald-300 bg-emerald-50", label: "Cita Agendada" },
-      no_contactado: { className: "text-gray-600 border-gray-300 bg-gray-50", label: "No Contactado" },
+      no_contactado: { className: "text-gray-600 border-gray-300 bg-gray-50", label: "Fallido" },
     };
     const c = config[estado] || { className: "", label: estado };
     return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
   };
 
+  const getContactInfo = (tarea: TareaLlamada) => {
+    const tipo = (tarea.tipoAccion as TipoAccion) || "llamada";
+    if (tipo === "email" && tarea.email) {
+      return tarea.email;
+    }
+    return tarea.telefono;
+  };
+
   const renderTareaCard = (tarea: TareaLlamada, index: number) => {
     const esPendienteAprobacion = !tarea.aprobado;
+    const tipoAccion = (tarea.tipoAccion as TipoAccion) || "llamada";
+    const tipoConfig = tipoAccionConfig[tipoAccion];
+    const TipoIcon = tipoConfig.icon;
 
     return (
       <Card 
@@ -190,9 +246,9 @@ export default function StaffCalls() {
       >
         <CardContent className="p-4">
           <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-muted-foreground" />
+            {/* Avatar con icono del tipo */}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${tipoConfig.color}`}>
+              <TipoIcon className="w-5 h-5" />
             </div>
 
             {/* Info del paciente */}
@@ -202,10 +258,11 @@ export default function StaffCalls() {
                   {tarea.pacienteNombre}
                 </p>
                 {getPrioridadBadge(tarea.prioridad)}
+                {getTipoAccionBadge(tarea.tipoAccion)}
                 {getEstadoLabel(tarea.aprobado)}
               </div>
               <p className="text-sm text-muted-foreground font-mono mb-2">
-                {tarea.telefono}
+                {getContactInfo(tarea)}
               </p>
               <p className="text-sm text-muted-foreground line-clamp-1">
                 {tarea.motivo}
@@ -233,15 +290,24 @@ export default function StaffCalls() {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Guion de Llamada</DialogTitle>
+                        <DialogTitle>Detalles de la Acción</DialogTitle>
                         <DialogDescription>
-                          Guion sugerido para llamar a {tarea.pacienteNombre}
+                          {tipoConfig.label} para {tarea.pacienteNombre}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="rounded-md bg-muted p-4 text-sm text-foreground">
-                        Buenos días, ¿hablo con {tarea.pacienteNombre}? Le llamamos de la Clínica Dental. 
-                        Hemos notado que hace tiempo que no nos visita y queremos ofrecerle una cita de revisión. 
-                        ¿Le vendría bien la próxima semana?
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          {getTipoAccionBadge(tarea.tipoAccion)}
+                          {getPrioridadBadge(tarea.prioridad)}
+                        </div>
+                        <div className="rounded-md bg-muted p-4 text-sm text-foreground">
+                          <p className="font-medium mb-2">Motivo:</p>
+                          <p>{tarea.motivo}</p>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Contacto: </span>
+                          <span className="font-mono">{getContactInfo(tarea)}</span>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -255,18 +321,20 @@ export default function StaffCalls() {
                     disabled={updateTareaMutation.isPending}
                     data-testid={`button-contactado-${index}`}
                   >
-                    <Phone className="w-3 h-3 mr-1" />
-                    Contactado
+                    <Send className="w-3 h-3 mr-1" />
+                    {tipoConfig.accionPrimaria}
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleAgendarCita(tarea)}
-                    disabled={updateTareaMutation.isPending}
-                    data-testid={`button-agendar-${index}`}
-                  >
-                    <Calendar className="w-3 h-3 mr-1" />
-                    Agendar
-                  </Button>
+                  {tipoAccion === "llamada" && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleAgendarCita(tarea)}
+                      disabled={updateTareaMutation.isPending}
+                      data-testid={`button-agendar-${index}`}
+                    >
+                      <Calendar className="w-3 h-3 mr-1" />
+                      Agendar
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -279,28 +347,31 @@ export default function StaffCalls() {
                   </Button>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" data-testid={`button-guion-programada-${index}`}>
+                      <Button variant="ghost" size="icon" data-testid={`button-detalles-${index}`}>
                         <FileText className="w-4 h-4" />
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Guion de Llamada</DialogTitle>
+                        <DialogTitle>Detalles de la Acción</DialogTitle>
                         <DialogDescription>
-                          Guion sugerido para llamar a {tarea.pacienteNombre}
+                          {tipoConfig.label} para {tarea.pacienteNombre}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
+                        <div className="flex items-center gap-2">
+                          {getTipoAccionBadge(tarea.tipoAccion)}
+                          {getPrioridadBadge(tarea.prioridad)}
+                        </div>
                         <div className="rounded-md bg-muted p-4 text-sm text-foreground">
-                          Buenos días, ¿hablo con {tarea.pacienteNombre}? Le llamamos de la Clínica Dental. 
-                          Hemos notado que hace tiempo que no nos visita y queremos ofrecerle una cita de revisión. 
-                          ¿Le vendría bien la próxima semana?
+                          <p className="font-medium mb-2">Motivo:</p>
+                          <p>{tarea.motivo}</p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="notas">Notas de la llamada</Label>
+                          <Label htmlFor="notas">Notas</Label>
                           <Textarea
                             id="notas"
-                            placeholder="Añade notas sobre la conversación..."
+                            placeholder="Añade notas sobre la acción..."
                             value={notas}
                             onChange={(e) => setNotas(e.target.value)}
                             rows={3}
@@ -320,6 +391,10 @@ export default function StaffCalls() {
   };
 
   const renderCompletadaCard = (tarea: TareaLlamada, index: number) => {
+    const tipoAccion = (tarea.tipoAccion as TipoAccion) || "llamada";
+    const tipoConfig = tipoAccionConfig[tipoAccion];
+    const TipoIcon = tipoConfig.icon;
+
     return (
       <Card 
         key={tarea.id} 
@@ -328,9 +403,9 @@ export default function StaffCalls() {
       >
         <CardContent className="p-4">
           <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-              <User className="w-5 h-5 text-muted-foreground" />
+            {/* Avatar con icono del tipo */}
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${tipoConfig.color}`}>
+              <TipoIcon className="w-5 h-5" />
             </div>
 
             {/* Info del paciente */}
@@ -340,10 +415,11 @@ export default function StaffCalls() {
                   {tarea.pacienteNombre}
                 </p>
                 {getPrioridadBadge(tarea.prioridad)}
+                {getTipoAccionBadge(tarea.tipoAccion)}
                 {getResultadoBadge(tarea.estado)}
               </div>
               <p className="text-sm text-muted-foreground font-mono mb-2">
-                {tarea.telefono}
+                {getContactInfo(tarea)}
               </p>
               {tarea.notas && (
                 <p className="text-sm text-muted-foreground line-clamp-1">
@@ -380,6 +456,7 @@ export default function StaffCalls() {
             <div className="flex items-center gap-2 mb-2">
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-5 w-12" />
+              <Skeleton className="h-5 w-16" />
               <Skeleton className="h-5 w-24" />
             </div>
             <Skeleton className="h-3 w-24 mb-2" />

@@ -180,28 +180,91 @@ export function generarCampanasMock(): Campana[] {
 export function generarTareasLlamadasMock(pacientes: Paciente[]): TareaLlamada[] {
   const pacientesPerdidos = pacientes.filter(p => p.estado === "perdido" && p.prioridad);
   const tareas: TareaLlamada[] = [];
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
 
   const pacientesSeleccionados = pacientesPerdidos
     .sort(() => Math.random() - 0.5)
-    .slice(0, 20);
+    .slice(0, 25);
+
+  // Tipos de acción con sus motivos específicos
+  const tiposAccion: ("llamada" | "email" | "carta")[] = ["llamada", "email", "carta"];
+  const motivosPorTipo = {
+    llamada: [
+      "Llamar para agendar cita de revisión",
+      "Recordatorio telefónico de seguimiento",
+      "Contactar para ofertar limpieza dental",
+    ],
+    email: [
+      "Enviar recordatorio por correo electrónico",
+      "Enviar información de promoción especial",
+      "Notificar disponibilidad de cita",
+    ],
+    carta: [
+      "Enviar carta de reactivación",
+      "Enviar invitación a revisión anual",
+      "Enviar folleto con promociones",
+    ],
+  };
 
   pacientesSeleccionados.forEach((paciente, index) => {
-    const estados: TareaLlamada["estado"][] = ["pendiente", "contactado", "cita_agendada", "no_contactado"];
-    const estado = index < 12 ? "pendiente" : estados[Math.floor(Math.random() * estados.length)];
+    // Distribución: 55% llamada, 30% email, 15% carta
+    const rand = Math.random();
+    const tipoAccion: "llamada" | "email" | "carta" = rand < 0.55 ? "llamada" : rand < 0.85 ? "email" : "carta";
+    
+    const motivosDelTipo = motivosPorTipo[tipoAccion];
+    const motivo = motivosDelTipo[Math.floor(Math.random() * motivosDelTipo.length)];
+    
+    // Crear distribución para kanban:
+    // - 8 pendientes de aprobación (no aprobado, estado pendiente)
+    // - 10 programadas para hoy (aprobado, estado pendiente, fechaProgramada hoy)
+    // - 7 completadas hoy (estados completados, fechaCompletada hoy)
+    let estado: TareaLlamada["estado"] = "pendiente";
+    let aprobado = false;
+    let fechaProgramada: Date | null = null;
+    let fechaCompletada: Date | null = null;
+    let fechaContacto: Date | null = null;
+    let notas: string | null = null;
+
+    if (index < 8) {
+      // Pendientes de aprobación
+      aprobado = false;
+      estado = "pendiente";
+    } else if (index < 18) {
+      // Programadas para hoy
+      aprobado = true;
+      estado = "pendiente";
+      fechaProgramada = new Date(hoy);
+    } else {
+      // Completadas hoy
+      aprobado = true;
+      const estadosCompletados: TareaLlamada["estado"][] = ["contactado", "cita_agendada", "no_contactado"];
+      estado = estadosCompletados[Math.floor(Math.random() * estadosCompletados.length)];
+      fechaCompletada = new Date(hoy);
+      if (estado === "contactado" || estado === "cita_agendada") {
+        fechaContacto = new Date(hoy);
+        notas = estado === "cita_agendada" 
+          ? "Cita agendada para la próxima semana" 
+          : "Paciente contactado, pendiente de confirmar";
+      }
+    }
 
     tareas.push({
       id: `tarea-${index + 1}`,
       pacienteId: paciente.id,
       pacienteNombre: paciente.nombre,
       telefono: paciente.telefono,
-      motivo: `Reactivación - ${paciente.mesesSinVisita} meses sin visita`,
+      email: paciente.email,
+      motivo,
       prioridad: paciente.prioridad!,
+      tipoAccion,
       estado,
+      aprobado,
+      fechaProgramada,
       fechaCreacion: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-      fechaContacto: estado === "contactado" || estado === "cita_agendada" 
-        ? new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000) 
-        : null,
-      notas: estado === "contactado" ? "Paciente interesado, pendiente de confirmar fecha" : null,
+      fechaContacto,
+      fechaCompletada,
+      notas,
     });
   });
 
