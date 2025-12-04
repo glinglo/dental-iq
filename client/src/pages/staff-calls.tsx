@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Phone, CheckCircle2, Calendar, XCircle, FileText, ThumbsUp, RotateCcw, User, ChevronDown, ChevronUp, Mail, Send, Inbox } from "lucide-react";
+import { Phone, CheckCircle2, Calendar, XCircle, FileText, Check, RotateCcw, ChevronDown, ChevronUp, Mail, Send, Inbox, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,6 +53,91 @@ const tipoAccionConfig: Record<TipoAccion, {
     accionCompletada: "Enviada"
   },
 };
+
+function generarGuionLlamada(tarea: TareaLlamada): string {
+  const nombre = tarea.pacienteNombre.split(" ")[0];
+  return `Buenos días, ¿hablo con ${tarea.pacienteNombre}?
+
+Mi nombre es [Tu nombre] y le llamo de la Clínica Dental.
+
+Hemos notado que hace tiempo que no nos visita y queríamos contactarle para ofrecerle una cita de revisión. Es importante mantener un control periódico de su salud dental.
+
+¿Le vendría bien agendar una cita para la próxima semana? Tenemos disponibilidad por las mañanas y por las tardes.
+
+[Si acepta]: Perfecto, le agendo para el [día] a las [hora]. Le enviaremos un recordatorio por SMS.
+
+[Si no puede]: Sin problema, ¿cuándo le vendría mejor? Podemos buscar otra fecha que se adapte a su horario.
+
+[Si no está interesado]: Entiendo. Si en algún momento necesita nuestros servicios, no dude en contactarnos. ¡Que tenga un buen día!`;
+}
+
+function generarEmailTemplate(tarea: TareaLlamada): { asunto: string; cuerpo: string } {
+  const nombre = tarea.pacienteNombre.split(" ")[0];
+  return {
+    asunto: `${nombre}, te echamos de menos en la Clínica Dental`,
+    cuerpo: `Estimado/a ${tarea.pacienteNombre},
+
+Esperamos que se encuentre bien. Nos ponemos en contacto con usted porque hemos notado que hace tiempo que no nos visita.
+
+En la Clínica Dental nos preocupamos por su salud bucodental, y queremos recordarle la importancia de realizar revisiones periódicas para prevenir problemas futuros.
+
+Por ello, nos gustaría invitarle a agendar una cita de revisión. Contamos con horarios flexibles que se adaptan a sus necesidades.
+
+Para reservar su cita puede:
+- Responder a este correo con su disponibilidad
+- Llamarnos al teléfono de la clínica
+- Reservar online a través de nuestra web
+
+¡Le esperamos!
+
+Atentamente,
+El equipo de la Clínica Dental
+
+---
+Este mensaje ha sido enviado a ${tarea.email || tarea.telefono}
+Si no desea recibir más comunicaciones, responda con "BAJA"`
+  };
+}
+
+function generarCartaTemplate(tarea: TareaLlamada): string {
+  const fecha = new Date().toLocaleDateString("es-ES", { 
+    day: "numeric", 
+    month: "long", 
+    year: "numeric" 
+  });
+  
+  return `CLÍNICA DENTAL
+Calle Principal, 123
+28001 Madrid
+Tel: 900 123 456
+
+${fecha}
+
+${tarea.pacienteNombre}
+[Dirección del paciente]
+
+Estimado/a ${tarea.pacienteNombre.split(" ")[0]}:
+
+Nos dirigimos a usted para recordarle que hace tiempo que no nos visita en nuestra clínica. Su salud dental es importante para nosotros, y queremos asegurarnos de que mantiene un adecuado cuidado bucodental.
+
+Las revisiones periódicas son fundamentales para:
+• Detectar problemas a tiempo
+• Prevenir caries y enfermedades de las encías  
+• Mantener una sonrisa sana y bonita
+
+Por ello, le invitamos a solicitar una cita de revisión. Puede contactarnos por teléfono o visitando nuestra clínica.
+
+Como paciente valorado, queremos ofrecerle un 15% de descuento en su próxima visita si agenda antes de fin de mes.
+
+Quedamos a su disposición para cualquier consulta.
+
+Atentamente,
+
+
+Dr. [Nombre del Doctor]
+Director Médico
+Clínica Dental`;
+}
 
 export default function StaffCalls() {
   const queryClient = useQueryClient();
@@ -103,14 +189,15 @@ export default function StaffCalls() {
   // Todas las acciones pendientes (combinadas)
   const accionesPendientes = [...pendientesAprobacion, ...programadasHoy];
 
-  const handleAprobar = (tarea: TareaLlamada) => {
+  const handleCompletar = (tarea: TareaLlamada) => {
+    const tipoConfig = tipoAccionConfig[(tarea.tipoAccion as TipoAccion) || "llamada"];
     updateTareaMutation.mutate(
-      { id: tarea.id, aprobado: true, fechaProgramada: new Date().toISOString() },
+      { id: tarea.id, aprobado: true, estado: "contactado", fechaProgramada: new Date().toISOString(), fechaCompletada: new Date().toISOString(), fechaContacto: new Date().toISOString() },
       {
         onSuccess: () => {
           toast({
-            title: "Tarea aprobada",
-            description: `La acción para ${tarea.pacienteNombre} ha sido programada para hoy`,
+            title: "Acción completada",
+            description: `${tipoConfig.label} para ${tarea.pacienteNombre} marcada como completada`,
           });
         },
       }
@@ -174,6 +261,14 @@ export default function StaffCalls() {
     );
   };
 
+  const handleCopiarTexto = (texto: string) => {
+    navigator.clipboard.writeText(texto);
+    toast({
+      title: "Copiado",
+      description: "Texto copiado al portapapeles",
+    });
+  };
+
   const getPrioridadBadge = (prioridad: string) => {
     const variants = {
       Alta: "destructive" as const,
@@ -199,21 +294,6 @@ export default function StaffCalls() {
     );
   };
 
-  const getEstadoLabel = (aprobado: boolean | null) => {
-    if (!aprobado) {
-      return (
-        <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50">
-          Pendiente aprobación
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="outline" className="text-xs text-green-600 border-green-300 bg-green-50">
-        Listo
-      </Badge>
-    );
-  };
-
   const getResultadoBadge = (estado: string) => {
     const config: Record<string, { className: string; label: string }> = {
       contactado: { className: "text-green-600 border-green-300 bg-green-50", label: "Completado" },
@@ -232,8 +312,163 @@ export default function StaffCalls() {
     return tarea.telefono;
   };
 
+  const renderDetallesModal = (tarea: TareaLlamada) => {
+    const tipoAccion = (tarea.tipoAccion as TipoAccion) || "llamada";
+    const tipoConfig = tipoAccionConfig[tipoAccion];
+
+    if (tipoAccion === "llamada") {
+      const guion = generarGuionLlamada(tarea);
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            {getTipoAccionBadge(tarea.tipoAccion)}
+            {getPrioridadBadge(tarea.prioridad)}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Paciente:</span>
+              <p className="font-medium">{tarea.pacienteNombre}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Teléfono:</span>
+              <p className="font-mono">{tarea.telefono}</p>
+            </div>
+          </div>
+
+          <div className="text-sm">
+            <span className="text-muted-foreground">Motivo:</span>
+            <p>{tarea.motivo}</p>
+          </div>
+
+          <Separator />
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">Guion de llamada</Label>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleCopiarTexto(guion)}
+                data-testid="button-copiar-guion"
+              >
+                <Copy className="w-3 h-3 mr-1" />
+                Copiar
+              </Button>
+            </div>
+            <div className="rounded-md bg-muted p-4 text-sm text-foreground whitespace-pre-wrap max-h-64 overflow-y-auto">
+              {guion}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (tipoAccion === "email") {
+      const emailTemplate = generarEmailTemplate(tarea);
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            {getTipoAccionBadge(tarea.tipoAccion)}
+            {getPrioridadBadge(tarea.prioridad)}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Paciente:</span>
+              <p className="font-medium">{tarea.pacienteNombre}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Email:</span>
+              <p className="font-mono text-sm">{tarea.email || "No disponible"}</p>
+            </div>
+          </div>
+
+          <div className="text-sm">
+            <span className="text-muted-foreground">Motivo:</span>
+            <p>{tarea.motivo}</p>
+          </div>
+
+          <Separator />
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-sm font-medium">Email listo para enviar</Label>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleCopiarTexto(`Asunto: ${emailTemplate.asunto}\n\n${emailTemplate.cuerpo}`)}
+                data-testid="button-copiar-email"
+              >
+                <Copy className="w-3 h-3 mr-1" />
+                Copiar
+              </Button>
+            </div>
+            <div className="rounded-md bg-muted p-4 text-sm space-y-3 max-h-64 overflow-y-auto">
+              <div>
+                <span className="text-muted-foreground text-xs">Asunto:</span>
+                <p className="font-medium">{emailTemplate.asunto}</p>
+              </div>
+              <Separator />
+              <div className="whitespace-pre-wrap text-foreground">
+                {emailTemplate.cuerpo}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Carta
+    const cartaTemplate = generarCartaTemplate(tarea);
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          {getTipoAccionBadge(tarea.tipoAccion)}
+          {getPrioridadBadge(tarea.prioridad)}
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-muted-foreground">Paciente:</span>
+            <p className="font-medium">{tarea.pacienteNombre}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Teléfono:</span>
+            <p className="font-mono">{tarea.telefono}</p>
+          </div>
+        </div>
+
+        <div className="text-sm">
+          <span className="text-muted-foreground">Motivo:</span>
+          <p>{tarea.motivo}</p>
+        </div>
+
+        <Separator />
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-sm font-medium">Carta para imprimir</Label>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleCopiarTexto(cartaTemplate)}
+              data-testid="button-copiar-carta"
+            >
+              <Copy className="w-3 h-3 mr-1" />
+              Copiar
+            </Button>
+          </div>
+          <div className="rounded-md bg-muted p-4 text-sm text-foreground whitespace-pre-wrap max-h-64 overflow-y-auto font-mono text-xs">
+            {cartaTemplate}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderTareaCard = (tarea: TareaLlamada, index: number) => {
-    const esPendienteAprobacion = !tarea.aprobado;
+    const esPendiente = !tarea.aprobado;
     const tipoAccion = (tarea.tipoAccion as TipoAccion) || "llamada";
     const tipoConfig = tipoAccionConfig[tipoAccion];
     const TipoIcon = tipoConfig.icon;
@@ -259,7 +494,6 @@ export default function StaffCalls() {
                 </p>
                 {getPrioridadBadge(tarea.prioridad)}
                 {getTipoAccionBadge(tarea.tipoAccion)}
-                {getEstadoLabel(tarea.aprobado)}
               </div>
               <p className="text-sm text-muted-foreground font-mono mb-2">
                 {getContactInfo(tarea)}
@@ -271,44 +505,31 @@ export default function StaffCalls() {
 
             {/* Acciones */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {esPendienteAprobacion ? (
+              {esPendiente ? (
                 <>
                   <Button
                     size="sm"
-                    onClick={() => handleAprobar(tarea)}
+                    onClick={() => handleCompletar(tarea)}
                     disabled={updateTareaMutation.isPending}
-                    data-testid={`button-aprobar-${index}`}
+                    data-testid={`button-completar-${index}`}
                   >
-                    <ThumbsUp className="w-3 h-3 mr-1" />
-                    Aprobar
+                    <Check className="w-3 h-3 mr-1" />
+                    Completada
                   </Button>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon" data-testid={`button-guion-${index}`}>
+                      <Button variant="outline" size="icon" data-testid={`button-detalles-${index}`}>
                         <FileText className="w-4 h-4" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Detalles de la Acción</DialogTitle>
                         <DialogDescription>
                           {tipoConfig.label} para {tarea.pacienteNombre}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                          {getTipoAccionBadge(tarea.tipoAccion)}
-                          {getPrioridadBadge(tarea.prioridad)}
-                        </div>
-                        <div className="rounded-md bg-muted p-4 text-sm text-foreground">
-                          <p className="font-medium mb-2">Motivo:</p>
-                          <p>{tarea.motivo}</p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">Contacto: </span>
-                          <span className="font-mono">{getContactInfo(tarea)}</span>
-                        </div>
-                      </div>
+                      {renderDetallesModal(tarea)}
                     </DialogContent>
                   </Dialog>
                 </>
@@ -347,37 +568,29 @@ export default function StaffCalls() {
                   </Button>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" data-testid={`button-detalles-${index}`}>
+                      <Button variant="ghost" size="icon" data-testid={`button-ver-detalles-${index}`}>
                         <FileText className="w-4 h-4" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Detalles de la Acción</DialogTitle>
                         <DialogDescription>
                           {tipoConfig.label} para {tarea.pacienteNombre}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="flex items-center gap-2">
-                          {getTipoAccionBadge(tarea.tipoAccion)}
-                          {getPrioridadBadge(tarea.prioridad)}
-                        </div>
-                        <div className="rounded-md bg-muted p-4 text-sm text-foreground">
-                          <p className="font-medium mb-2">Motivo:</p>
-                          <p>{tarea.motivo}</p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="notas">Notas</Label>
-                          <Textarea
-                            id="notas"
-                            placeholder="Añade notas sobre la acción..."
-                            value={notas}
-                            onChange={(e) => setNotas(e.target.value)}
-                            rows={3}
-                            data-testid={`textarea-notas-${index}`}
-                          />
-                        </div>
+                      {renderDetallesModal(tarea)}
+                      <Separator className="my-4" />
+                      <div className="space-y-2">
+                        <Label htmlFor="notas">Notas</Label>
+                        <Textarea
+                          id="notas"
+                          placeholder="Añade notas sobre la acción..."
+                          value={notas}
+                          onChange={(e) => setNotas(e.target.value)}
+                          rows={3}
+                          data-testid={`textarea-notas-${index}`}
+                        />
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -457,13 +670,12 @@ export default function StaffCalls() {
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-5 w-12" />
               <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-5 w-24" />
             </div>
             <Skeleton className="h-3 w-24 mb-2" />
             <Skeleton className="h-3 w-48" />
           </div>
           <div className="flex gap-2">
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-24" />
             <Skeleton className="h-8 w-8" />
           </div>
         </div>
