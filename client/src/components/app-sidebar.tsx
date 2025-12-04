@@ -20,12 +20,19 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import type { TareaLlamada } from "@shared/schema";
 
 const menuItems = [
   {
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Acciones del Día",
+    url: "/staff-calls",
+    icon: ClipboardList,
+    showTareasBadge: true,
   },
   {
     title: "Pacientes",
@@ -44,11 +51,6 @@ const menuItems = [
     showBadge: true,
   },
   {
-    title: "Acciones del Día",
-    url: "/staff-calls",
-    icon: ClipboardList,
-  },
-  {
     title: "Agenda",
     url: "/citas",
     icon: Calendar,
@@ -63,7 +65,16 @@ export function AppSidebar() {
     refetchInterval: 30000,
   });
   
+  const { data: tareas = [] } = useQuery<TareaLlamada[]>({
+    queryKey: ["/api/tareas"],
+    refetchInterval: 30000,
+  });
+  
   const unreadCount = unreadData?.count ?? 0;
+  
+  const pendingTareasCount = tareas.filter(t => 
+    t.estado === "pendiente"
+  ).length;
 
   return (
     <Sidebar>
@@ -100,6 +111,15 @@ export function AppSidebar() {
                             data-testid="badge-conversaciones-sin-leer"
                           >
                             {unreadCount}
+                          </Badge>
+                        )}
+                        {item.showTareasBadge && pendingTareasCount > 0 && (
+                          <Badge 
+                            variant="default" 
+                            className="h-5 min-w-5 px-1.5 text-xs"
+                            data-testid="badge-acciones-pendientes"
+                          >
+                            {pendingTareasCount}
                           </Badge>
                         )}
                       </Link>

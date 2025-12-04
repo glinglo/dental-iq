@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, CheckCircle2, Calendar, XCircle, FileText, Check, RotateCcw, ChevronDown, ChevronUp, Mail, Send, Inbox, Copy } from "lucide-react";
+import { Phone, CheckCircle2, Calendar, XCircle, FileText, RotateCcw, ChevronDown, ChevronUp, Mail, Send, Inbox, Copy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -513,8 +513,7 @@ export default function StaffCalls() {
                     disabled={updateTareaMutation.isPending}
                     data-testid={`button-completar-${index}`}
                   >
-                    <Check className="w-3 h-3 mr-1" />
-                    Completada
+                    Marcar como realizada
                   </Button>
                   <Dialog>
                     <DialogTrigger asChild>
@@ -524,10 +523,17 @@ export default function StaffCalls() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>Detalles de la Acción</DialogTitle>
-                        <DialogDescription>
-                          {tipoConfig.label} para {tarea.pacienteNombre}
-                        </DialogDescription>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tipoConfig.color}`}>
+                            <TipoIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <DialogTitle>Detalles de la Acción</DialogTitle>
+                            <DialogDescription>
+                              {tipoConfig.label} para {tarea.pacienteNombre}
+                            </DialogDescription>
+                          </div>
+                        </div>
                       </DialogHeader>
                       {renderDetallesModal(tarea)}
                     </DialogContent>
@@ -574,10 +580,17 @@ export default function StaffCalls() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>Detalles de la Acción</DialogTitle>
-                        <DialogDescription>
-                          {tipoConfig.label} para {tarea.pacienteNombre}
-                        </DialogDescription>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tipoConfig.color}`}>
+                            <TipoIcon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <DialogTitle>Detalles de la Acción</DialogTitle>
+                            <DialogDescription>
+                              {tipoConfig.label} para {tarea.pacienteNombre}
+                            </DialogDescription>
+                          </div>
+                        </div>
                       </DialogHeader>
                       {renderDetallesModal(tarea)}
                       <Separator className="my-4" />
