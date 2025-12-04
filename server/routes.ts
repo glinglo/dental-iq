@@ -130,16 +130,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Actualizar estado de tarea
+  // Actualizar tarea (estado, aprobación, fechas)
   app.patch("/api/tareas/:id", async (req, res) => {
     try {
       const { id } = req.params;
       const schema = z.object({
-        estado: z.string(),
-        notas: z.string().optional(),
+        estado: z.string().optional(),
+        notas: z.string().nullable().optional(),
+        aprobado: z.boolean().optional(),
+        fechaProgramada: z.string().nullable().optional(),
+        fechaContacto: z.string().nullable().optional(),
+        fechaCompletada: z.string().nullable().optional(),
       });
-      const { estado, notas } = schema.parse(req.body);
-      const tarea = await storage.updateTareaEstado(id, estado, notas);
+      const updates = schema.parse(req.body);
+      const tarea = await storage.updateTarea(id, updates);
       
       if (!tarea) {
         res.status(404).json({ error: "Tarea no encontrada" });

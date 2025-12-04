@@ -38,7 +38,14 @@ export interface IStorage {
   // Tareas de llamadas
   getTareas(): Promise<TareaLlamada[]>;
   getTarea(id: string): Promise<TareaLlamada | undefined>;
-  updateTareaEstado(id: string, estado: string, notas?: string): Promise<TareaLlamada | undefined>;
+  updateTarea(id: string, updates: {
+    estado?: string;
+    notas?: string | null;
+    aprobado?: boolean;
+    fechaProgramada?: string | null;
+    fechaContacto?: string | null;
+    fechaCompletada?: string | null;
+  }): Promise<TareaLlamada | undefined>;
   
   // Dashboard
   getDashboardKPIs(): Promise<DashboardKPIs>;
@@ -282,15 +289,33 @@ export class MemStorage implements IStorage {
     return this.tareas.get(id);
   }
 
-  async updateTareaEstado(id: string, estado: string, notas?: string): Promise<TareaLlamada | undefined> {
+  async updateTarea(id: string, updates: {
+    estado?: string;
+    notas?: string | null;
+    aprobado?: boolean;
+    fechaProgramada?: string | null;
+    fechaContacto?: string | null;
+    fechaCompletada?: string | null;
+  }): Promise<TareaLlamada | undefined> {
     const tarea = this.tareas.get(id);
     if (tarea) {
-      tarea.estado = estado;
-      if (estado === "contactado" || estado === "cita_agendada") {
-        tarea.fechaContacto = new Date();
+      if (updates.estado !== undefined) {
+        tarea.estado = updates.estado;
       }
-      if (notas) {
-        tarea.notas = notas;
+      if (updates.notas !== undefined) {
+        tarea.notas = updates.notas;
+      }
+      if (updates.aprobado !== undefined) {
+        tarea.aprobado = updates.aprobado;
+      }
+      if (updates.fechaProgramada !== undefined) {
+        tarea.fechaProgramada = updates.fechaProgramada ? new Date(updates.fechaProgramada) : null;
+      }
+      if (updates.fechaContacto !== undefined) {
+        tarea.fechaContacto = updates.fechaContacto ? new Date(updates.fechaContacto) : null;
+      }
+      if (updates.fechaCompletada !== undefined) {
+        tarea.fechaCompletada = updates.fechaCompletada ? new Date(updates.fechaCompletada) : null;
       }
       this.tareas.set(id, tarea);
     }

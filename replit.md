@@ -28,7 +28,10 @@ Preferred communication style: Simple, everyday language.
   - "Reactivación" - Multi-channel campaign creation for lost patients
   - "Recordatorios" - Appointment reminder configuration
 - `/agenda` - Weekly calendar view for appointments
-- `/staff-calls` - Call task management for staff
+- `/staff-calls` - "Acciones del Día" kanban-style task management with 3 columns:
+  - "Pendiente de Aprobación" - Tasks awaiting supervisor approval
+  - "Programadas para Hoy" - Approved tasks scheduled for today
+  - "Completadas Hoy" - Tasks completed today
 - `/conversaciones` - Unified inbox for patient communications
 - `/configuracion` - System configuration
 
