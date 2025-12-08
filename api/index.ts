@@ -88,10 +88,22 @@ async function initialize() {
 
 export default async function handler(req: any, res: any) {
   try {
+    console.log(`[Vercel] Request: ${req.method} ${req.url}`);
+    
     await initialize();
     
     // Manejar la request con Express
-    app(req, res);
+    app(req, res, (err: any) => {
+      if (err) {
+        console.error('[Vercel] Express error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ 
+            error: 'Internal Server Error',
+            message: err.message || 'Unknown error'
+          });
+        }
+      }
+    });
   } catch (error) {
     console.error('[Vercel] Handler error:', error);
     if (error instanceof Error) {
