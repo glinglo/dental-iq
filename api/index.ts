@@ -33,22 +33,34 @@ async function initialize() {
 
   if (distPath) {
     console.log(`[Vercel] Serving static files from: ${distPath}`);
-    app.use(express.static(distPath));
+    
+    // Servir archivos estáticos ANTES de las rutas de API
+    app.use(express.static(distPath, {
+      maxAge: '1y',
+      etag: true
+    }));
     
     // Fallback para SPA - solo si no es una ruta de API
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api')) {
         return next();
       }
+      // Si es un archivo estático, ya debería haberse servido arriba
+      if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json)$/)) {
+        return res.status(404).send('File not found');
+      }
       const indexPath = path.resolve(distPath!, 'index.html');
       if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
       } else {
-        next();
+        console.error(`[Vercel] index.html not found at: ${indexPath}`);
+        res.status(404).send('index.html not found');
       }
     });
   } else {
     console.error('[Vercel] No se encontró el directorio de build. Paths probados:', possiblePaths);
+    console.error('[Vercel] process.cwd():', process.cwd());
+    console.error('[Vercel] currentDir:', currentDir);
   }
   
   initialized = true;
