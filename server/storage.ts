@@ -1538,15 +1538,24 @@ export class MemStorage implements IStorage {
 
   // Sistema de automatizaciones
   private iniciarAutomatizaciones() {
-    // Ejecutar cada minuto
-    setInterval(() => {
-      this.ejecutarAutomatizaciones();
-    }, 60000); // 60 segundos
-    
-    // Ejecutar inmediatamente al iniciar
-    setTimeout(() => {
-      this.ejecutarAutomatizaciones();
-    }, 2000);
+    // En Vercel/serverless, evitar setInterval que puede causar problemas
+    // Solo ejecutar una vez al inicio
+    if (typeof process !== 'undefined' && process.env.VERCEL) {
+      // En Vercel, ejecutar solo una vez
+      setTimeout(() => {
+        this.ejecutarAutomatizaciones().catch(console.error);
+      }, 2000);
+    } else {
+      // En entorno normal, usar setInterval
+      setInterval(() => {
+        this.ejecutarAutomatizaciones().catch(console.error);
+      }, 60000); // 60 segundos
+
+      // Ejecutar inmediatamente después de un pequeño delay
+      setTimeout(() => {
+        this.ejecutarAutomatizaciones().catch(console.error);
+      }, 2000);
+    }
   }
 
   private async ejecutarAutomatizaciones() {
