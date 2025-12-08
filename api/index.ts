@@ -15,11 +15,12 @@ async function initialize() {
   serverInstance = await registerRoutes(app);
   
   // Configurar archivos estáticos para Vercel
+  const currentDir = import.meta.dirname || path.dirname(new URL(import.meta.url).pathname);
   const possiblePaths = [
     path.resolve(process.cwd(), 'dist', 'public'),
     path.resolve(process.cwd(), 'public'),
-    path.resolve(__dirname, '..', 'dist', 'public'),
-    path.resolve(__dirname, '..', 'public'),
+    path.resolve(currentDir, '..', 'dist', 'public'),
+    path.resolve(currentDir, '..', 'public'),
   ];
 
   let distPath: string | null = null;
