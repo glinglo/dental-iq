@@ -3,11 +3,9 @@ import { app } from '../server/app';
 import { registerRoutes } from '../server/routes';
 import fs from 'fs';
 import path from 'path';
-import express from 'express';
 import { fileURLToPath } from 'url';
 
 let initialized = false;
-let serverInstance: any = null;
 
 // Obtener __dirname equivalente en ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -17,17 +15,19 @@ async function initialize() {
   if (initialized) return;
   
   try {
-    // Registrar rutas (esto devuelve un Server pero no lo necesitamos en Vercel)
-    serverInstance = await registerRoutes(app);
+    console.log('[Vercel] Initializing application...');
+    console.log('[Vercel] process.cwd():', process.cwd());
+    console.log('[Vercel] __dirname:', __dirname);
     
-    // Configurar archivos estáticos para Vercel
+    // Registrar rutas de API
+    await registerRoutes(app);
+    
+    // Configurar fallback para SPA (solo para rutas que no sean API ni archivos estáticos)
+    // Los archivos estáticos los sirve Vercel automáticamente desde outputDirectory
     const possiblePaths = [
       path.resolve(process.cwd(), 'dist', 'public'),
-      path.resolve(process.cwd(), 'public'),
       path.resolve(__dirname, '..', 'dist', 'public'),
-      path.resolve(__dirname, '..', 'public'),
-      '/var/task/dist/public', // Lambda function path
-      '/var/task/public', // Lambda function path
+      path.resolve(__dirname, '..', '..', 'dist', 'public'),
     ];
 
     let distPath: string | null = null;
@@ -44,21 +44,15 @@ async function initialize() {
     }
 
     if (distPath) {
-      // Servir archivos estáticos ANTES de las rutas de API
-      app.use(express.static(distPath, {
-        maxAge: '1y',
-        etag: true,
-        index: false
-      }));
-      
-      // Fallback para SPA - solo si no es una ruta de API ni un archivo estático
+      // Fallback para SPA - solo para rutas que no sean API ni archivos estáticos
       app.get('*', (req, res, next) => {
+        // Las rutas de API ya están manejadas arriba
         if (req.path.startsWith('/api')) {
           return next();
         }
-        // Si es un archivo estático, ya debería haberse servido arriba
+        // Los archivos estáticos los sirve Vercel automáticamente
         if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json)$/)) {
-          return res.status(404).send('File not found');
+          return res.status(404).json({ error: 'Static file not found' });
         }
         // Servir index.html para todas las demás rutas (SPA fallback)
         const indexPath = path.resolve(distPath!, 'index.html');
@@ -66,19 +60,26 @@ async function initialize() {
           res.sendFile(indexPath);
         } else {
           console.error(`[Vercel] index.html not found at: ${indexPath}`);
-          res.status(404).send('index.html not found');
+          res.status(404).json({ error: 'index.html not found' });
         }
       });
     } else {
-      console.warn('[Vercel] No se encontró el directorio de build. Paths probados:', possiblePaths);
-      console.warn('[Vercel] process.cwd():', process.cwd());
-      console.warn('[Vercel] __dirname:', __dirname);
-      // Continuar sin archivos estáticos - Vercel debería servirlos automáticamente
+      console.warn('[Vercel] No se encontró el directorio de build. Vercel debería servir archivos estáticos automáticamente.');
+      // Fallback básico sin archivos estáticos
+      app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+          res.status(200).send('<!DOCTYPE html><html><head><title>DentalIQ</title></head><body><div id="root"></div><p>Loading...</p></body></html>');
+        }
+      });
     }
     
     initialized = true;
+    console.log('[Vercel] Application initialized successfully');
   } catch (error) {
     console.error('[Vercel] Error during initialization:', error);
+    if (error instanceof Error) {
+      console.error('[Vercel] Error stack:', error.stack);
+    }
     throw error;
   }
 }
@@ -91,6 +92,9 @@ export default async function handler(req: any, res: any) {
     app(req, res);
   } catch (error) {
     console.error('[Vercel] Handler error:', error);
+    if (error instanceof Error) {
+      console.error('[Vercel] Error stack:', error.stack);
+    }
     if (!res.headersSent) {
       res.status(500).json({ 
         error: 'Internal Server Error',
