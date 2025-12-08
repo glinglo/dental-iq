@@ -466,10 +466,15 @@ export function generarConversacionesMock(pacientes: Paciente[]): { conversacion
       
       mensajes.push({
         id: `msg-${convId}-${i + 1}`,
+        type: "conversation",
+        channel: canal,
         conversacionId: convId,
+        patientId: paciente.id,
+        budgetId: null,
         contenido,
         direccion,
         fechaEnvio,
+        openedAt: null,
         leido: i < numMensajes - 1 || !esEntrante, // El último mensaje entrante puede estar sin leer
       });
     }
@@ -689,7 +694,11 @@ export function generarBudgetsMock(pacientes: Paciente[]): Budget[] {
     });
   });
 
-  return budgets.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return budgets.sort((a, b) => {
+    const timeA = a.createdAt?.getTime() || 0;
+    const timeB = b.createdAt?.getTime() || 0;
+    return timeB - timeA;
+  });
 }
 
 function calculatePriority(urgencyScore: number, acceptanceProb: number): "high" | "medium" | "low" {
