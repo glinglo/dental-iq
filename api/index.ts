@@ -2,7 +2,6 @@
 import { app } from '../server/app';
 import { registerRoutes } from '../server/routes';
 import { serveStatic } from '../server/index-prod';
-import { createServer } from 'http';
 
 let initialized = false;
 let serverInstance: any = null;
