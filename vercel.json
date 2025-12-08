@@ -1,7 +1,13 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "installCommand": "npm install",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "dist/public/**"
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
