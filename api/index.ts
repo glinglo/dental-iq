@@ -15,7 +15,7 @@ async function initialize() {
   serverInstance = await registerRoutes(app);
   
   // Configurar archivos estáticos para Vercel
-  const currentDir = import.meta.dirname || path.dirname(new URL(import.meta.url).pathname);
+  const currentDir = path.dirname(new URL(import.meta.url).pathname);
   const possiblePaths = [
     path.resolve(process.cwd(), 'dist', 'public'),
     path.resolve(process.cwd(), 'public'),
