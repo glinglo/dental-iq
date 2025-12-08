@@ -37,10 +37,11 @@ async function initialize() {
     // Servir archivos estáticos ANTES de las rutas de API
     app.use(express.static(distPath, {
       maxAge: '1y',
-      etag: true
+      etag: true,
+      index: false // No servir index.html automáticamente, lo haremos manualmente
     }));
     
-    // Fallback para SPA - solo si no es una ruta de API
+    // Fallback para SPA - solo si no es una ruta de API ni un archivo estático
     app.get('*', (req, res, next) => {
       if (req.path.startsWith('/api')) {
         return next();
@@ -49,6 +50,7 @@ async function initialize() {
       if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json)$/)) {
         return res.status(404).send('File not found');
       }
+      // Servir index.html para todas las demás rutas (SPA fallback)
       const indexPath = path.resolve(distPath!, 'index.html');
       if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
