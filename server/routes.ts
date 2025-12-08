@@ -1158,10 +1158,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/dashboard/dentaliq-kpis", async (req, res) => {
     try {
+      console.log('[API] /api/dashboard/dentaliq-kpis called');
+      const budgets = await storage.getBudgets();
+      console.log('[API] Budgets count:', budgets.length);
       const kpis = await storage.getDentalIQKPIs();
+      console.log('[API] KPIs returned:', JSON.stringify(kpis));
       res.json(kpis);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener KPIs" });
+      console.error('[API] Error getting KPIs:', error);
+      if (error instanceof Error) {
+        console.error('[API] Error stack:', error.stack);
+      }
+      res.status(500).json({ error: "Error al obtener KPIs", details: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

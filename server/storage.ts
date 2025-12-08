@@ -1379,6 +1379,9 @@ export class MemStorage implements IStorage {
   async getDentalIQKPIs(): Promise<DentalIQKPIs> {
     const budgets = Array.from(this.budgets.values());
     const total = budgets.length;
+    console.log(`[Storage] getDentalIQKPIs called - total budgets: ${total}`);
+    console.log(`[Storage] pacientes count: ${this.pacientes.size}`);
+    console.log(`[Storage] budgets map size: ${this.budgets.size}`);
     
     // Tasa de aceptación fija del 26%
     const tasaAceptacion = 26.0;
