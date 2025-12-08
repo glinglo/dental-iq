@@ -195,23 +195,28 @@ export class MemStorage implements IStorage {
   }
   
   private inicializarMockData() {
+    console.log('[Storage] Starting mock data initialization...');
+    
     // Generar y cargar clínicas primero
     const clinics = generarClinicsMock();
     clinics.forEach((clinic: Clinic) => {
       this.clinics.set(clinic.id, clinic);
     });
+    console.log(`[Storage] Loaded ${clinics.length} clinics`);
     
     // Generar y cargar pacientes
     const pacientes = generarPacientesMock();
     pacientes.forEach((paciente: Paciente) => {
       this.pacientes.set(paciente.id, paciente);
     });
+    console.log(`[Storage] Loaded ${pacientes.length} pacientes`);
     
     // Generar y cargar budgets (50 budgets)
     const budgets = generarBudgetsMock(pacientes);
     budgets.forEach((budget: Budget) => {
       this.budgets.set(budget.id, budget);
     });
+    console.log(`[Storage] Loaded ${budgets.length} budgets`);
     
     // Generar y cargar citas primero (necesario para tratamientos preventivos)
     const citas = generarCitasMock(pacientes);
@@ -2576,4 +2581,16 @@ export class MemStorage implements IStorage {
   }
 }
 
+// Inicializar storage - esto carga los datos mock inmediatamente
 export const storage = new MemStorage();
+
+// Verificar que los datos se cargaron correctamente
+(async () => {
+  try {
+    const pacientesCount = (await storage.getPacientes()).length;
+    const budgetsCount = (await storage.getBudgets()).length;
+    console.log(`[Storage] Initialization verified - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
+  } catch (error) {
+    console.error('[Storage] Error verifying initialization:', error);
+  }
+})();
