@@ -15,12 +15,20 @@ async function initialize() {
   
   try {
     console.log('[Vercel] Initializing application...');
+    console.log('[Vercel] NODE_ENV:', process.env.NODE_ENV);
+    console.log('[Vercel] VERCEL:', process.env.VERCEL);
     
-    // Importar registerRoutes dinámicamente para evitar inicialización temprana
+    // Asegurar que storage se inicialice antes de importar routes
+    // Esto fuerza la inicialización de los datos mock
+    const { storage } = await import('../server/storage');
+    console.log('[Vercel] Storage initialized, pacientes count:', (await storage.getPacientes()).length);
+    
+    // Importar registerRoutes dinámicamente
     const { registerRoutes } = await import('../server/routes');
     
     // Registrar rutas de API
     await registerRoutes(app);
+    console.log('[Vercel] Routes registered');
     
     // Configurar fallback para SPA
     const possiblePaths = [
