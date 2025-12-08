@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Phone, CheckCircle2, Calendar, XCircle, FileText, RotateCcw, ChevronDown, ChevronUp, Mail, Send, Inbox, Copy } from "lucide-react";
+import { Phone, CheckCircle2, Calendar, XCircle, FileText, RotateCcw, ChevronDown, ChevronUp, Mail, Send, Inbox, Copy, Users, AlertTriangle, Plus, Check, CheckSquare } from "lucide-react";
+import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,12 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { TareaLlamada } from "@shared/schema";
+import type { TareaLlamada, Paciente, Campana } from "@shared/schema";
 
 function esMismoDia(fecha1: Date | null | undefined, fecha2: Date): boolean {
   if (!fecha1) return false;
@@ -22,7 +25,7 @@ function esMismoDia(fecha1: Date | null | undefined, fecha2: Date): boolean {
          d1.getDate() === fecha2.getDate();
 }
 
-type TipoAccion = "llamada" | "email" | "carta";
+type TipoAccion = "llamada" | "email" | "carta" | "añadir_campana" | "añadir_campana_riesgo";
 
 const tipoAccionConfig: Record<TipoAccion, { 
   icon: typeof Phone; 
@@ -51,6 +54,20 @@ const tipoAccionConfig: Record<TipoAccion, {
     color: "text-amber-600 bg-amber-50 border-amber-200",
     accionPrimaria: "Enviar",
     accionCompletada: "Enviada"
+  },
+  añadir_campana: {
+    icon: Users,
+    label: "Añadir a Campaña",
+    color: "text-green-600 bg-green-50 border-green-200",
+    accionPrimaria: "Añadir",
+    accionCompletada: "Añadidos"
+  },
+  añadir_campana_riesgo: {
+    icon: AlertTriangle,
+    label: "Añadir Pacientes en Riesgo",
+    color: "text-orange-600 bg-orange-50 border-orange-200",
+    accionPrimaria: "Añadir",
+    accionCompletada: "Añadidos"
   },
 };
 
@@ -140,14 +157,32 @@ Clínica Dental`;
 }
 
 export default function StaffCalls() {
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [notas, setNotas] = useState("");
   const [mostrarCompletadas, setMostrarCompletadas] = useState(false);
+  const [modalPacientesAbierto, setModalPacientesAbierto] = useState(false);
+  const [tareaSeleccionada, setTareaSeleccionada] = useState<TareaLlamada | null>(null);
+  const [pacientesSeleccionados, setPacientesSeleccionados] = useState<Set<string>>(new Set());
   const hoy = new Date();
 
   const { data: tareas = [], isLoading } = useQuery<TareaLlamada[]>({
     queryKey: ["/api/tareas"],
+  });
+
+  const { data: pacientesEnRiesgo = [], isLoading: loadingPacientes } = useQuery<Paciente[]>({
+    queryKey: ["/api/pacientes/en-riesgo"],
+    enabled: modalPacientesAbierto && tareaSeleccionada?.tipoAccion === "añadir_campana_riesgo",
+  });
+
+  const { data: pacientesListos = [], isLoading: loadingPacientesListos } = useQuery<Paciente[]>({
+    queryKey: ["/api/pacientes/listos-campana", tareaSeleccionada?.campanaId],
+    enabled: modalPacientesAbierto && tareaSeleccionada?.tipoAccion === "añadir_campana" && !!tareaSeleccionada?.campanaId,
+  });
+
+  const { data: campanas = [] } = useQuery<Campana[]>({
+    queryKey: ["/api/campanas"],
   });
 
   const updateTareaMutation = useMutation({
@@ -163,6 +198,33 @@ export default function StaffCalls() {
       toast({
         title: "Error al actualizar",
         description: "No se pudo actualizar la tarea",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const anadirPacientesMutation = useMutation({
+    mutationFn: async (pacienteIds: string[]) => {
+      return await apiRequest("POST", "/api/pacientes/anadir-a-campana", { pacienteIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pacientes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pacientes/en-riesgo"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campanas"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tareas"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/kpis"] });
+      toast({
+        title: "Pacientes añadidos",
+        description: `${pacientesSeleccionados.size} pacientes añadidos a la campaña`,
+      });
+      setModalPacientesAbierto(false);
+      setPacientesSeleccionados(new Set());
+      setTareaSeleccionada(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error al añadir pacientes",
+        description: "No se pudieron añadir los pacientes a la campaña",
         variant: "destructive",
       });
     },
@@ -309,6 +371,9 @@ export default function StaffCalls() {
     if (tipo === "email" && tarea.email) {
       return tarea.email;
     }
+    if (tipo === "añadir_campana" || tipo === "añadir_campana_riesgo") {
+      return `${tarea.cantidadPacientes || 0} pacientes`;
+    }
     return tarea.telefono;
   };
 
@@ -322,7 +387,6 @@ export default function StaffCalls() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             {getTipoAccionBadge(tarea.tipoAccion)}
-            {getPrioridadBadge(tarea.prioridad)}
           </div>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -370,7 +434,6 @@ export default function StaffCalls() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             {getTipoAccionBadge(tarea.tipoAccion)}
-            {getPrioridadBadge(tarea.prioridad)}
           </div>
           
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -419,13 +482,59 @@ export default function StaffCalls() {
       );
     }
 
+    if (tipoAccion === "añadir_campana" || tipoAccion === "añadir_campana_riesgo") {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            {getTipoAccionBadge(tarea.tipoAccion)}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Cantidad:</span>
+              <p className="font-medium">{tarea.cantidadPacientes || 0} pacientes</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Campaña:</span>
+              <p className="font-medium">{tarea.motivo.split('"')[1] || "Campaña"}</p>
+            </div>
+          </div>
+
+          <div className="text-sm">
+            <span className="text-muted-foreground">Motivo:</span>
+            <p>{tarea.motivo}</p>
+          </div>
+
+          <Separator />
+
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2">
+              {tipoAccion === "añadir_campana_riesgo" 
+                ? "Estos pacientes están en riesgo de entrar en fase 'dormidos' (4-6 meses sin visita)."
+                : "Estos pacientes están listos para ser añadidos a la campaña (más de 6 meses sin visita)."}
+            </p>
+            <Button
+              className="w-full"
+              onClick={() => {
+                if (tarea.campanaId) {
+                  setLocation(`/campanas/${tarea.campanaId}`);
+                }
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ir a la campaña para añadir pacientes
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     // Carta
     const cartaTemplate = generarCartaTemplate(tarea);
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           {getTipoAccionBadge(tarea.tipoAccion)}
-          {getPrioridadBadge(tarea.prioridad)}
         </div>
         
         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -472,6 +581,9 @@ export default function StaffCalls() {
     const tipoAccion = (tarea.tipoAccion as TipoAccion) || "llamada";
     const tipoConfig = tipoAccionConfig[tipoAccion];
     const TipoIcon = tipoConfig.icon;
+    const campanaAsociada = tarea.campanaId 
+      ? campanas.find(c => c.id === tarea.campanaId)
+      : null;
 
     return (
       <Card 
@@ -492,12 +604,22 @@ export default function StaffCalls() {
                 <p className="font-medium text-foreground">
                   {tarea.pacienteNombre}
                 </p>
-                {getPrioridadBadge(tarea.prioridad)}
                 {getTipoAccionBadge(tarea.tipoAccion)}
               </div>
-              <p className="text-sm text-muted-foreground font-mono mb-2">
-                {getContactInfo(tarea)}
-              </p>
+              {(tipoAccion === "añadir_campana" || tipoAccion === "añadir_campana_riesgo") ? (
+                <div className="mb-2 space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    {tarea.cantidadPacientes || 0} pacientes listos para añadir a{" "}
+                    <span className="font-semibold text-foreground">
+                      {campanaAsociada?.nombre || "campaña"}
+                    </span>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground font-mono mb-2">
+                  {getContactInfo(tarea)}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground line-clamp-1">
                 {tarea.motivo}
               </p>
@@ -505,7 +627,20 @@ export default function StaffCalls() {
 
             {/* Acciones */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {esPendiente ? (
+              {(tipoAccion === "añadir_campana" || tipoAccion === "añadir_campana_riesgo") ? (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setTareaSeleccionada(tarea);
+                      setModalPacientesAbierto(true);
+                    }}
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Revisar pacientes
+                  </Button>
+                </>
+              ) : esPendiente ? (
                 <>
                   <Button
                     size="sm"
@@ -640,7 +775,6 @@ export default function StaffCalls() {
                 <p className="font-medium text-foreground">
                   {tarea.pacienteNombre}
                 </p>
-                {getPrioridadBadge(tarea.prioridad)}
                 {getTipoAccionBadge(tarea.tipoAccion)}
                 {getResultadoBadge(tarea.estado)}
               </div>
@@ -695,6 +829,44 @@ export default function StaffCalls() {
       </CardContent>
     </Card>
   );
+
+  const pacientesParaMostrar = tareaSeleccionada?.tipoAccion === "añadir_campana_riesgo" 
+    ? pacientesEnRiesgo 
+    : pacientesListos;
+
+  const handleTogglePaciente = (id: string) => {
+    const nuevaSeleccion = new Set(pacientesSeleccionados);
+    if (nuevaSeleccion.has(id)) {
+      nuevaSeleccion.delete(id);
+    } else {
+      nuevaSeleccion.add(id);
+    }
+    setPacientesSeleccionados(nuevaSeleccion);
+  };
+
+  const handleSeleccionarTodos = () => {
+    if (pacientesSeleccionados.size === pacientesParaMostrar.length) {
+      setPacientesSeleccionados(new Set());
+    } else {
+      setPacientesSeleccionados(new Set(pacientesParaMostrar.map(p => p.id)));
+    }
+  };
+
+  const handleAñadirPacientes = () => {
+    if (pacientesSeleccionados.size === 0) {
+      toast({
+        title: "Selecciona pacientes",
+        description: "Debes seleccionar al menos un paciente para añadir",
+        variant: "destructive",
+      });
+      return;
+    }
+    anadirPacientesMutation.mutate(Array.from(pacientesSeleccionados));
+  };
+
+  const campanaSeleccionada = tareaSeleccionada?.campanaId 
+    ? campanas.find(c => c.id === tareaSeleccionada.campanaId)
+    : null;
 
   return (
     <div className="flex-1 overflow-auto">
@@ -760,6 +932,161 @@ export default function StaffCalls() {
           </Collapsible>
         )}
       </div>
+
+      {/* Modal de Pacientes en Riesgo */}
+      <Dialog open={modalPacientesAbierto} onOpenChange={setModalPacientesAbierto}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+              {tareaSeleccionada?.tipoAccion === "añadir_campana_riesgo" 
+                ? "Pacientes en Riesgo" 
+                : "Pacientes Listos para Campaña"}
+            </DialogTitle>
+            <DialogDescription>
+              {campanaSeleccionada 
+                ? `Revisa y selecciona los pacientes que deseas añadir a la campaña "${campanaSeleccionada.nombre}"`
+                : tareaSeleccionada?.tipoAccion === "añadir_campana_riesgo"
+                  ? "Revisa y selecciona los pacientes en riesgo (4-6 meses sin visita)"
+                  : "Revisa y selecciona los pacientes listos para añadir a la campaña"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 flex flex-col min-h-0 space-y-4">
+            {/* Header con acciones */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-sm">
+                  {pacientesParaMostrar.length} pacientes disponibles
+                </Badge>
+                {pacientesSeleccionados.size > 0 && (
+                  <Badge variant="default" className="text-sm">
+                    {pacientesSeleccionados.size} seleccionados
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSeleccionarTodos}
+                >
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  {pacientesSeleccionados.size === pacientesParaMostrar.length ? "Deseleccionar todos" : "Seleccionar todos"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Lista de pacientes con scroll */}
+            <ScrollArea className="flex-1 border rounded-lg">
+              <div className="p-4 space-y-2">
+                {(loadingPacientes || loadingPacientesListos) ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <Skeleton className="w-5 h-5 rounded" />
+                      <Skeleton className="h-4 flex-1" />
+                    </div>
+                  ))
+                ) : pacientesParaMostrar.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertTriangle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No hay pacientes disponibles en este momento</p>
+                  </div>
+                ) : (
+                  pacientesParaMostrar.map((paciente) => {
+                    const ahora = new Date();
+                    const ultimaVisita = paciente.ultimaVisita instanceof Date 
+                      ? paciente.ultimaVisita 
+                      : new Date(paciente.ultimaVisita);
+                    const diffTime = Math.abs(ahora.getTime() - ultimaVisita.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const mesesSinVisita = Math.floor(diffDays / 30);
+                    const estaSeleccionado = pacientesSeleccionados.has(paciente.id);
+
+                    return (
+                      <div
+                        key={paciente.id}
+                        className={`
+                          flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer
+                          ${estaSeleccionado ? "bg-primary/5 border-primary" : "hover:bg-muted/50"}
+                        `}
+                        onClick={() => handleTogglePaciente(paciente.id)}
+                      >
+                        <Checkbox
+                          checked={estaSeleccionado}
+                          onCheckedChange={() => handleTogglePaciente(paciente.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <p className="font-medium text-foreground">{paciente.nombre}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {mesesSinVisita} meses sin visita
+                            </Badge>
+                            {paciente.prioridad && (
+                              <Badge 
+                                variant={paciente.prioridad === "Alta" ? "destructive" : paciente.prioridad === "Media" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {paciente.prioridad}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="font-mono">{paciente.telefono}</span>
+                            <span>•</span>
+                            <span>{paciente.diagnostico}</span>
+                            {paciente.edad && (
+                              <>
+                                <span>•</span>
+                                <span>{paciente.edad} años</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Footer con acciones */}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                {pacientesSeleccionados.size > 0 
+                  ? `${pacientesSeleccionados.size} paciente${pacientesSeleccionados.size > 1 ? "s" : ""} seleccionado${pacientesSeleccionados.size > 1 ? "s" : ""}`
+                  : "Selecciona los pacientes que deseas añadir"}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setModalPacientesAbierto(false);
+                    setPacientesSeleccionados(new Set());
+                    setTareaSeleccionada(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleAñadirPacientes}
+                  disabled={pacientesSeleccionados.size === 0 || anadirPacientesMutation.isPending}
+                >
+                  {anadirPacientesMutation.isPending ? (
+                    "Añadiendo..."
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Añadir {pacientesSeleccionados.size > 0 ? `${pacientesSeleccionados.size} ` : ""}Paciente{pacientesSeleccionados.size !== 1 ? "s" : ""}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

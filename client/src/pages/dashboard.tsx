@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Users, Calendar, DollarSign, CalendarDays, TrendingUp } from "lucide-react";
+import { useLocation } from "wouter";
+import { Users, Calendar, DollarSign, CalendarDays, TrendingUp, CheckSquare, AlertTriangle, BarChart3, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import type { DashboardKPIs } from "@shared/schema";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from "recharts";
+import type { DashboardKPIs, ConversionPorCanal, Paciente, DentalIQKPIs } from "@shared/schema";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 type TimeFrame = "7d" | "14d" | "30d" | "trimestre" | "semestre" | "año";
 
@@ -28,10 +33,23 @@ const timeFrameMultipliers: Record<TimeFrame, number> = {
 };
 
 export default function Dashboard() {
+  const [, setLocation] = useLocation();
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("14d");
 
   const { data: kpis, isLoading } = useQuery<DashboardKPIs>({
     queryKey: ["/api/dashboard/kpis"],
+  });
+
+  const { data: dentaliqKPIs, isLoading: loadingDentalIQ } = useQuery<DentalIQKPIs>({
+    queryKey: ["/api/dashboard/dentaliq-kpis"],
+  });
+
+  const { data: conversionPorCanal = [], isLoading: loadingConversion } = useQuery<ConversionPorCanal[]>({
+    queryKey: ["/api/dashboard/conversion-canal"],
+  });
+
+  const { data: pacientesEnRiesgo = [], isLoading: loadingRiesgo } = useQuery<Paciente[]>({
+    queryKey: ["/api/pacientes/en-riesgo"],
   });
 
   const multiplier = timeFrameMultipliers[timeFrame];
@@ -104,12 +122,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 3 KPIs Principales */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pacientes Perdidos */}
-          <Card className="relative overflow-visible" data-testid="card-kpi-pacientes">
+        {/* 4 KPIs Principales LaFraise */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Tasa Aceptación */}
+          <Card className="relative overflow-visible" data-testid="card-kpi-tasa-aceptacion">
             <CardContent className="pt-6 pb-6">
-              {isLoading ? (
+              {loadingDentalIQ ? (
                 <div className="space-y-3">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-12 w-24" />
@@ -117,24 +135,24 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="w-5 h-5 text-chart-1" />
-                    <span className="text-sm font-medium">Pacientes reactivados</span>
+                    <TrendingUp className="w-5 h-5 text-chart-1" />
+                    <span className="text-sm font-medium">Tasa Aceptación</span>
                   </div>
-                  <div className="text-5xl font-bold text-foreground" data-testid="text-kpi-pacientes">
-                    {pacientesPerdidos}
+                  <div className="text-5xl font-bold text-foreground">
+                    {dentaliqKPIs ? `${dentaliqKPIs.tasaAceptacion.toFixed(1)}%` : "0.0%"}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    en {getTimeFrameLabel()}
+                    Meta: {dentaliqKPIs ? `+${dentaliqKPIs.tasaAceptacionGoal.toFixed(1)}%` : "+20.0%"}
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Citas Creadas */}
-          <Card className="relative overflow-visible" data-testid="card-kpi-citas">
+          {/* Horas Ahorradas */}
+          <Card className="relative overflow-visible" data-testid="card-kpi-horas">
             <CardContent className="pt-6 pb-6">
-              {isLoading ? (
+              {loadingDentalIQ ? (
                 <div className="space-y-3">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-12 w-24" />
@@ -143,23 +161,23 @@ export default function Dashboard() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-5 h-5 text-chart-2" />
-                    <span className="text-sm font-medium">Citas creadas</span>
+                    <span className="text-sm font-medium">Horas Ahorradas</span>
                   </div>
-                  <div className="text-5xl font-bold text-foreground" data-testid="text-kpi-citas">
-                    {citasGeneradas}
+                  <div className="text-5xl font-bold text-foreground">
+                    {dentaliqKPIs?.horasAhorradas || 0}h
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    en {getTimeFrameLabel()}
+                    Estimado semanal
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Beneficio Obtenido */}
-          <Card className="relative overflow-visible" data-testid="card-kpi-beneficio">
+          {/* Tratamientos Aceptados */}
+          <Card className="relative overflow-visible" data-testid="card-kpi-tratamientos">
             <CardContent className="pt-6 pb-6">
-              {isLoading ? (
+              {loadingDentalIQ ? (
                 <div className="space-y-3">
                   <Skeleton className="h-4 w-32" />
                   <Skeleton className="h-12 w-24" />
@@ -167,20 +185,178 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <DollarSign className="w-5 h-5 text-chart-3" />
-                    <span className="text-sm font-medium">Beneficio obtenido</span>
+                    <CheckSquare className="w-5 h-5 text-chart-3" />
+                    <span className="text-sm font-medium">Tratamientos Aceptados</span>
                   </div>
-                  <div className="text-5xl font-bold text-foreground" data-testid="text-kpi-beneficio">
-                    {beneficioEstimado.toLocaleString('es-ES')}€
+                  <div className="text-5xl font-bold text-foreground">
+                    {dentaliqKPIs?.treatmentsAceptados || 0}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    en {getTimeFrameLabel()}
+                    Total aceptados
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Facturación Generada */}
+          <Card className="relative overflow-visible" data-testid="card-kpi-facturacion">
+            <CardContent className="pt-6 pb-6">
+              {loadingDentalIQ ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-12 w-24" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <DollarSign className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium">Facturación Generada</span>
+                  </div>
+                  <div className="text-5xl font-bold text-foreground">
+                    {dentaliqKPIs && dentaliqKPIs.facturacionGenerada >= 1000
+                      ? `${(dentaliqKPIs.facturacionGenerada / 1000).toFixed(1)}k€`
+                      : dentaliqKPIs
+                      ? `${Math.round(dentaliqKPIs.facturacionGenerada).toLocaleString('es-ES')}€`
+                      : "0€"}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    De presupuestos aceptados
                   </p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
+
+        {/* Grid con nuevas secciones */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Ranking de Canales */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <CardTitle className="text-lg font-semibold">Ranking de Canales</CardTitle>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Canales con mejor tasa de conversión
+              </p>
+            </CardHeader>
+            <CardContent>
+              {loadingConversion ? (
+                <Skeleton className="h-64 w-full" />
+              ) : conversionPorCanal.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={conversionPorCanal} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis type="number" domain={[0, 20]} tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                        <YAxis dataKey="canal" type="category" width={120} tick={{ fontSize: 12 }} className="text-muted-foreground" />
+                        <Tooltip 
+                          formatter={(value: number) => `${value}%`}
+                          labelStyle={{ color: "hsl(var(--foreground))" }}
+                        />
+                        <Bar dataKey="conversion" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="space-y-2 pt-2 border-t">
+                    {conversionPorCanal.map((item, index) => (
+                      <div key={item.canal} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="w-6 h-6 flex items-center justify-center p-0 text-xs">
+                            {index + 1}
+                          </Badge>
+                          <span className="font-medium">{item.canal}</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-muted-foreground">
+                          <span>{item.contactos} contactos</span>
+                          <span className="font-semibold text-foreground">{item.conversion}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay datos de conversión disponibles
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+        </div>
+
+        {/* Pacientes en Riesgo */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <CardTitle className="text-lg font-semibold">Pacientes en Riesgo</CardTitle>
+              </div>
+              <Badge variant="outline" className="text-amber-600 border-amber-600">
+                {pacientesEnRiesgo.length} pacientes
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Pacientes que están a punto de entrar en fase "dormidos" (4-6 meses sin visita)
+            </p>
+          </CardHeader>
+          <CardContent>
+            {loadingRiesgo ? (
+              <Skeleton className="h-48 w-full" />
+            ) : pacientesEnRiesgo.length > 0 ? (
+              <div className="space-y-4">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {pacientesEnRiesgo.map((paciente) => (
+                    <div 
+                      key={paciente.id} 
+                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground">{paciente.nombre}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>{paciente.telefono}</span>
+                          <span>•</span>
+                          <span>{paciente.diagnostico}</span>
+                          <span>•</span>
+                          <span className="font-medium text-amber-600">
+                            {paciente.mesesSinVisita} meses sin visita
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLocation("/campanas/nueva");
+                        }}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Añadir a campaña
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => setLocation("/pacientes")}
+                >
+                  Ver todos los pacientes en riesgo
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>No hay pacientes en riesgo en este momento</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Forecast Line Chart */}
         <Card data-testid="card-forecast">

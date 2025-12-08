@@ -1,4 +1,4 @@
-import type { Paciente, Campana, TareaLlamada, Conversacion, Mensaje, Cita } from "@shared/schema";
+import type { Paciente, Campana, TareaLlamada, Conversacion, Mensaje, Cita, Budget, Clinic, TratamientoPreventivo } from "@shared/schema";
 
 // Nombres y apellidos españoles/latinoamericanos
 const nombres = [
@@ -54,6 +54,10 @@ function generarTelefono(): string {
   const prefijo = prefijos[Math.floor(Math.random() * prefijos.length)];
   const numero = Math.floor(10000000 + Math.random() * 90000000);
   return `${prefijo}${numero.toString().substring(0, 8)}`;
+}
+
+function generarWhatsApp(): string {
+  return generarTelefono();
 }
 
 function generarEmail(nombre: string, apellido: string): string {
@@ -113,17 +117,20 @@ export function generarPacientesMock(): Paciente[] {
 
     pacientes.push({
       id: `pac-${i + 1}`,
+      clinicId: "clinic-1", // Default clinic
       nombre: nombreCompleto,
       ultimaVisita,
       diagnostico: diagnosticos[Math.floor(Math.random() * diagnosticos.length)],
       telefono: generarTelefono(),
       email: generarEmail(nombre, apellido1),
+      whatsapp: Math.random() < 0.8 ? generarWhatsApp() : null,
       edad,
       estado,
       prioridad,
       tieneCitaFutura,
       mesesSinVisita,
       enCampana,
+      notes: Math.random() < 0.3 ? "Paciente con historial de tratamientos previos" : null,
     });
   }
 
@@ -175,6 +182,86 @@ export function generarCampanasMock(): Campana[] {
       fechaCreacion: new Date("2024-02-20"),
     },
   ];
+}
+
+export function generarTareasCampanaMock(pacientes: Paciente[], campanas: Campana[]): TareaLlamada[] {
+  const tareas: TareaLlamada[] = [];
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  // Obtener campañas activas
+  const campanasActivas = campanas.filter(c => c.estado === "activa");
+  if (campanasActivas.length === 0) return [];
+
+  // Obtener pacientes en riesgo
+  const pacientesEnRiesgo = pacientes.filter(p => {
+    if (p.tieneCitaFutura || p.enCampana) return false;
+    const ahora = new Date();
+    const diffTime = Math.abs(ahora.getTime() - p.ultimaVisita.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const mesesSinVisita = Math.floor(diffDays / 30);
+    return mesesSinVisita >= 4 && mesesSinVisita <= 6;
+  });
+
+  // Obtener pacientes listos para campaña (más de 6 meses sin visita)
+  const pacientesListos = pacientes.filter(p => {
+    if (p.tieneCitaFutura || p.enCampana) return false;
+    const ahora = new Date();
+    const diffTime = Math.abs(ahora.getTime() - p.ultimaVisita.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const mesesSinVisita = Math.floor(diffDays / 30);
+    return mesesSinVisita >= 6;
+  });
+
+  // Crear acción para añadir pacientes en riesgo a una campaña
+  if (pacientesEnRiesgo.length > 0 && campanasActivas.length > 0) {
+    const campanaSeleccionada = campanasActivas[0];
+    tareas.push({
+      id: `tarea-campana-riesgo-1`,
+      pacienteId: "", // No aplica para acciones de campaña
+      pacienteNombre: `${pacientesEnRiesgo.length} pacientes`,
+      telefono: "",
+      email: null,
+      motivo: `Añadir ${pacientesEnRiesgo.length} pacientes en riesgo a campaña "${campanaSeleccionada.nombre}"`,
+      prioridad: "Alta",
+      tipoAccion: "añadir_campana_riesgo",
+      estado: "pendiente",
+      aprobado: false,
+      fechaProgramada: null,
+      fechaCreacion: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      fechaContacto: null,
+      fechaCompletada: null,
+      notas: null,
+      campanaId: campanaSeleccionada.id,
+      cantidadPacientes: pacientesEnRiesgo.length,
+    });
+  }
+
+  // Crear acción para añadir pacientes listos a una campaña
+  if (pacientesListos.length > 0 && campanasActivas.length > 0) {
+    const campanaSeleccionada = campanasActivas.length > 1 ? campanasActivas[1] : campanasActivas[0];
+    tareas.push({
+      id: `tarea-campana-lista-1`,
+      pacienteId: "",
+      pacienteNombre: `${pacientesListos.length} pacientes`,
+      telefono: "",
+      email: null,
+      motivo: `${pacientesListos.length} pacientes listos para añadir a "${campanaSeleccionada.nombre}"`,
+      prioridad: "Media",
+      tipoAccion: "añadir_campana",
+      estado: "pendiente",
+      aprobado: false,
+      fechaProgramada: null,
+      fechaCreacion: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      fechaContacto: null,
+      fechaCompletada: null,
+      notas: null,
+      campanaId: campanaSeleccionada.id,
+      cantidadPacientes: pacientesListos.length,
+    });
+  }
+
+  return tareas;
 }
 
 export function generarTareasLlamadasMock(pacientes: Paciente[]): TareaLlamada[] {
@@ -265,6 +352,8 @@ export function generarTareasLlamadasMock(pacientes: Paciente[]): TareaLlamada[]
       fechaContacto,
       fechaCompletada,
       notas,
+      campanaId: null,
+      cantidadPacientes: null,
     });
   });
 
@@ -481,4 +570,174 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   }
   
   return citas.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+}
+
+// Generate clinics
+export function generarClinicsMock(): Clinic[] {
+  return [
+    {
+      id: "clinic-1",
+      name: "Clínica Dental DentalIQ",
+      address: "Calle Principal 123, Madrid, España",
+      createdAt: new Date("2024-01-01"),
+    },
+    {
+      id: "clinic-2",
+      name: "Dental Care Barcelona",
+      address: "Avenida Diagonal 456, Barcelona, España",
+      createdAt: new Date("2024-02-15"),
+    },
+  ];
+}
+
+// Generate budgets (presupuestos) - 50 budgets for DentalIQ
+export function generarBudgetsMock(pacientes: Paciente[]): Budget[] {
+  const budgets: Budget[] = [];
+  const tratamientos = [
+    { name: "Limpieza dental profesional", amount: [80, 120] },
+    { name: "Empaste composite", amount: [60, 100] },
+    { name: "Endodoncia", amount: [200, 350] },
+    { name: "Implante dental", amount: [800, 1500] },
+    { name: "Ortodoncia completa", amount: [2000, 4000] },
+    { name: "Blanqueamiento dental", amount: [150, 300] },
+    { name: "Periodoncia", amount: [300, 600] },
+    { name: "Corona dental", amount: [400, 800] },
+    { name: "Puente dental", amount: [600, 1200] },
+    { name: "Extracción molar", amount: [80, 150] },
+    { name: "Revisión y diagnóstico", amount: [40, 80] },
+    { name: "Tratamiento de caries múltiples", amount: [200, 400] },
+  ];
+
+  // Select 50 random patients
+  const selectedPatients = pacientes
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 50);
+
+  selectedPatients.forEach((patient, index) => {
+    const tratamiento = tratamientos[Math.floor(Math.random() * tratamientos.length)];
+    const amount = (
+      tratamiento.amount[0] +
+      Math.random() * (tratamiento.amount[1] - tratamiento.amount[0])
+    ).toFixed(2);
+
+    const procedures = [
+      tratamiento.name,
+      ...(Math.random() < 0.3 ? ["Radiografía panorámica"] : []),
+      ...(Math.random() < 0.2 ? ["Consulta inicial"] : []),
+    ];
+
+    const treatmentDetails = {
+      procedures,
+      total: Number(amount),
+    };
+
+    // Calculate mock urgency score (0-100)
+    let urgencyScore = 50;
+    if (tratamiento.name.toLowerCase().includes("dolor") || 
+        tratamiento.name.toLowerCase().includes("urgencia") ||
+        tratamiento.name.toLowerCase().includes("extracción")) {
+      urgencyScore = 70 + Math.floor(Math.random() * 30);
+    } else if (tratamiento.name.toLowerCase().includes("limpieza") ||
+               tratamiento.name.toLowerCase().includes("revisión")) {
+      urgencyScore = 30 + Math.floor(Math.random() * 20);
+    } else {
+      urgencyScore = 40 + Math.floor(Math.random() * 40);
+    }
+
+    // Calculate mock acceptance probability (0-100)
+    let acceptanceProb = 60;
+    const amountNum = Number(amount);
+    if (amountNum < 100) {
+      acceptanceProb = 70 + Math.floor(Math.random() * 25);
+    } else if (amountNum < 500) {
+      acceptanceProb = 50 + Math.floor(Math.random() * 30);
+    } else {
+      acceptanceProb = 30 + Math.floor(Math.random() * 40);
+    }
+
+    // Adjust based on patient age
+    if (patient.edad > 65) {
+      urgencyScore = Math.min(100, urgencyScore + 10);
+    }
+
+    const priority = calculatePriority(urgencyScore, acceptanceProb);
+
+    // Status distribution: 70% pending, 20% accepted, 10% rejected
+    const statusRand = Math.random();
+    let status: "pending" | "accepted" | "rejected" = "pending";
+    if (statusRand < 0.2) {
+      status = "accepted";
+    } else if (statusRand < 0.3) {
+      status = "rejected";
+    }
+
+    const createdAt = generarFechaAleatoria(Math.floor(Math.random() * 6));
+    const updatedAt = new Date(createdAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1000);
+
+    budgets.push({
+      id: `budget-${index + 1}`,
+      patientId: patient.id,
+      clinicId: patient.clinicId || "clinic-1",
+      amount,
+      urgencyScore,
+      acceptanceProb,
+      status,
+      treatmentDetails,
+      priority,
+      createdAt,
+      updatedAt,
+    });
+  });
+
+  return budgets.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+function calculatePriority(urgencyScore: number, acceptanceProb: number): "high" | "medium" | "low" {
+  const combinedScore = (urgencyScore * 0.6) + (acceptanceProb * 0.4);
+  if (combinedScore >= 75) return "high";
+  if (combinedScore >= 50) return "medium";
+  return "low";
+}
+
+// Generate preventive treatments from completed appointments and accepted budgets
+export function generarTratamientosPreventivosMock(
+  pacientes: Paciente[],
+  citas: Cita[],
+  budgets: Budget[]
+): TratamientoPreventivo[] {
+  const tratamientos: TratamientoPreventivo[] = [];
+  
+  // Crear tratamientos preventivos desde citas completadas
+  const citasPreventivas = citas.filter(c => 
+    c.estado === "completada" && 
+    (c.tipo === "limpieza" || c.tipo === "revision")
+  );
+  
+  citasPreventivas.slice(0, 30).forEach((cita, index) => {
+    const frecuenciaMeses = cita.tipo === "limpieza" ? 6 : 12;
+    const fechaRealizacion = new Date(cita.fechaHora);
+    const proximaFecha = new Date(fechaRealizacion);
+    proximaFecha.setMonth(proximaFecha.getMonth() + frecuenciaMeses);
+    
+    // Hacer que algunos estén vencidos (para mostrar recordatorios)
+    if (index < 10) {
+      proximaFecha.setMonth(proximaFecha.getMonth() - 2); // Vencidos hace 2 meses
+    }
+    
+    tratamientos.push({
+      id: `tratamiento-${index + 1}`,
+      pacienteId: cita.pacienteId,
+      clinicId: "clinic-1",
+      tipoTratamiento: cita.tipo,
+      fechaRealizacion,
+      proximaFechaRecomendada: proximaFecha,
+      frecuenciaMeses,
+      citaId: cita.id,
+      budgetId: null,
+      notas: "Detectado automáticamente",
+      createdAt: fechaRealizacion,
+    });
+  });
+  
+  return tratamientos;
 }

@@ -1,14 +1,19 @@
 import { 
   LayoutDashboard, 
   Users, 
-  Megaphone, 
+  FileText,
   MessageCircle,
-  ClipboardList,
   Calendar,
-  Stethoscope
+  Stethoscope,
+  ChevronRight,
+  Send,
+  TrendingUp,
+  Bell,
+  Mail
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,9 +23,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import type { TareaLlamada } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   {
@@ -29,52 +37,75 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Acciones del Día",
-    url: "/staff-calls",
-    icon: ClipboardList,
-    showTareasBadge: true,
-  },
-  {
-    title: "Pacientes",
-    url: "/pacientes",
-    icon: Users,
+    title: "Presupuestos",
+    url: "/presupuestos",
+    icon: FileText,
+    submenu: [
+      {
+        title: "Seguimiento",
+        url: "/presupuestos/seguimiento",
+        icon: Send,
+      },
+      {
+        title: "Analíticas",
+        url: "/presupuestos/analiticas",
+        icon: TrendingUp,
+      },
+    ],
   },
   {
     title: "Campañas",
-    url: "/campanas",
-    icon: Megaphone,
+    url: "/campañas",
+    icon: Users,
+    submenu: [
+      {
+        title: "Salud Preventiva",
+        url: "/campañas/salud-preventiva",
+        icon: Stethoscope,
+      },
+      {
+        title: "Recuperación",
+        url: "/campañas/recalls",
+        icon: Send,
+      },
+    ],
   },
   {
-    title: "Conversaciones",
-    url: "/conversaciones",
-    icon: MessageCircle,
-    showBadge: true,
-  },
-  {
-    title: "Agenda",
-    url: "/citas",
+    title: "Citas",
     icon: Calendar,
+    submenu: [
+      {
+        title: "Agenda",
+        url: "/citas/agenda",
+        icon: Calendar,
+      },
+      {
+        title: "Recordatorios",
+        url: "/citas/recordatorios",
+        icon: Bell,
+      },
+      {
+        title: "Mensajes post-visita",
+        url: "/citas/post-visita",
+        icon: Mail,
+      },
+    ],
   },
 ];
 
 export function AppSidebar() {
   const [location] = useLocation();
-  
-  const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ["/api/conversaciones/sin-leer/count"],
-    refetchInterval: 30000,
-  });
-  
-  const { data: tareas = [] } = useQuery<TareaLlamada[]>({
-    queryKey: ["/api/tareas"],
-    refetchInterval: 30000,
-  });
-  
-  const unreadCount = unreadData?.count ?? 0;
-  
-  const pendingTareasCount = tareas.filter(t => 
-    t.estado === "pendiente"
-  ).length;
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+
+  const toggleMenu = (title: string) => {
+    const newExpanded = new Set(expandedMenus);
+    if (newExpanded.has(title)) {
+      newExpanded.delete(title);
+    } else {
+      newExpanded.add(title);
+    }
+    setExpandedMenus(newExpanded);
+  };
 
   return (
     <Sidebar>
@@ -85,9 +116,9 @@ export function AppSidebar() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-sidebar-foreground">
-              Reactivación
+              DentalIQ
             </h2>
-            <p className="text-xs text-muted-foreground">Clínicas</p>
+            <p className="text-xs text-muted-foreground">Gestión Dental</p>
           </div>
         </div>
       </SidebarHeader>
@@ -97,33 +128,56 @@ export function AppSidebar() {
           <SidebarGroupContent className="pt-4">
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = location === item.url;
+                const isActive = location === item.url || (item.submenu && item.submenu.some(sub => location === sub.url));
+                const isExpanded = expandedMenus.has(item.title);
+                const hasSubmenu = item.submenu && item.submenu.length > 0;
+
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                        <item.icon className="w-4 h-4" />
-                        <span className="flex-1">{item.title}</span>
-                        {item.showBadge && unreadCount > 0 && (
-                          <Badge 
-                            variant="default" 
-                            className="h-5 min-w-5 px-1.5 text-xs"
-                            data-testid="badge-conversaciones-sin-leer"
-                          >
-                            {unreadCount}
-                          </Badge>
-                        )}
-                        {item.showTareasBadge && pendingTareasCount > 0 && (
-                          <Badge 
-                            variant="default" 
-                            className="h-5 min-w-5 px-1.5 text-xs"
-                            data-testid="badge-acciones-pendientes"
-                          >
-                            {pendingTareasCount}
-                          </Badge>
-                        )}
-                      </Link>
+                    <SidebarMenuButton 
+                      asChild={!hasSubmenu && !!item.url}
+                      isActive={isActive}
+                      onClick={hasSubmenu ? () => toggleMenu(item.title) : undefined}
+                      className={cn(hasSubmenu && "cursor-pointer")}
+                    >
+                      {hasSubmenu ? (
+                        <div className="flex items-center w-full">
+                          <item.icon className="w-4 h-4" />
+                          <span className="flex-1">{item.title}</span>
+                          <ChevronRight className={cn(
+                            "w-4 h-4 transition-transform",
+                            isExpanded && "rotate-90"
+                          )} />
+                        </div>
+                      ) : item.url ? (
+                        <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                          <item.icon className="w-4 h-4" />
+                          <span className="flex-1">{item.title}</span>
+                        </Link>
+                      ) : (
+                        <div className="flex items-center w-full">
+                          <item.icon className="w-4 h-4" />
+                          <span className="flex-1">{item.title}</span>
+                        </div>
+                      )}
                     </SidebarMenuButton>
+                    {hasSubmenu && isExpanded && (
+                      <SidebarMenuSub>
+                        {item.submenu.map((subItem) => {
+                          const isSubActive = location === subItem.url;
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton asChild isActive={isSubActive}>
+                                <Link href={subItem.url}>
+                                  <subItem.icon className="w-4 h-4" />
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    )}
                   </SidebarMenuItem>
                 );
               })}
