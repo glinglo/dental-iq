@@ -257,15 +257,25 @@ export class MemStorage implements IStorage {
     // Inicializar reglas de comunicación por defecto
     this.inicializarReglasComunicacionDefault();
     
-    // Crear secuencias para presupuestos pendientes existentes
-    setTimeout(() => {
-      this.inicializarSecuenciasParaPresupuestosExistentes().catch(console.error);
-    }, 1000);
-    
-    // Crear secuencias de recall para pacientes dormidos
-    setTimeout(() => {
-      this.inicializarSecuenciasParaPacientesDormidos().catch(console.error);
-    }, 1500);
+    // En Vercel/serverless, ejecutar secuencias inmediatamente de forma síncrona
+    // En entorno normal, usar setTimeout para no bloquear
+    if (typeof process !== 'undefined' && process.env.VERCEL) {
+      // En Vercel, ejecutar inmediatamente pero de forma asíncrona sin bloquear
+      Promise.resolve().then(() => {
+        this.inicializarSecuenciasParaPresupuestosExistentes().catch(console.error);
+        this.inicializarSecuenciasParaPacientesDormidos().catch(console.error);
+      });
+    } else {
+      // Crear secuencias para presupuestos pendientes existentes
+      setTimeout(() => {
+        this.inicializarSecuenciasParaPresupuestosExistentes().catch(console.error);
+      }, 1000);
+      
+      // Crear secuencias de recall para pacientes dormidos
+      setTimeout(() => {
+        this.inicializarSecuenciasParaPacientesDormidos().catch(console.error);
+      }, 1500);
+    }
   }
   
   // Crear secuencias para presupuestos pendientes que ya existen
