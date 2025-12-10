@@ -21,7 +21,22 @@ async function initialize() {
     // Asegurar que storage se inicialice antes de importar routes
     // Esto fuerza la inicialización de los datos mock
     const { storage } = await import('../server/storage');
-    console.log('[Vercel] Storage initialized, pacientes count:', (await storage.getPacientes()).length);
+    
+    // Esperar a que el storage esté completamente inicializado (incluyendo async)
+    await storage.ensureInitialized();
+    
+    // Verificar que los datos estén cargados
+    const pacientes = await storage.getPacientes();
+    const budgets = await storage.getBudgets();
+    const campanas = await storage.getCampanas();
+    const citas = await storage.getCitas();
+    
+    console.log(`[Vercel] Storage initialized - pacientes: ${pacientes.length}, budgets: ${budgets.length}, campanas: ${campanas.length}, citas: ${citas.length}`);
+    
+    if (pacientes.length === 0 || budgets.length === 0) {
+      console.error('[Vercel] WARNING: Storage appears to be empty!');
+      console.error('[Vercel] This may indicate an initialization problem.');
+    }
     
     // Importar registerRoutes dinámicamente
     const { registerRoutes } = await import('../server/routes');

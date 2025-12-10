@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -564,8 +564,7 @@ ${tarea?.motivo || "Hemos notado que hace tiempo que no nos visita y queríamos 
                   <div className={`p-2 rounded-lg border ${getTipoColor(accionSeleccionada.tipo)}`}>
                     {(() => {
                       const Icon = getTipoIcon(accionSeleccionada.tipo);
-                      const IconComponent = Icon as React.ComponentType<{ className?: string }>;
-                      return <IconComponent className="w-6 h-6" />;
+                      return React.createElement(Icon, { className: "w-6 h-6" });
                     })()}
                   </div>
                   <div>

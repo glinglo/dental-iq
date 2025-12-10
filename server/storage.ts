@@ -168,6 +168,8 @@ export class MemStorage implements IStorage {
     { tipoTratamiento: "ortodoncia_revision", frecuenciaMeses: 3, nombre: "Revisión ortodoncia" },
   ];
 
+  private initializationPromise: Promise<void> | null = null;
+
   constructor() {
     this.pacientes = new Map();
     this.campanas = new Map();
@@ -184,14 +186,35 @@ export class MemStorage implements IStorage {
     this.reglasComunicacion = new Map();
     this.secuenciasComunicacion = new Map();
     
-    // Inicializar con mock data
+    // Inicializar con mock data (síncrono)
     this.inicializarMockData();
     
-    // Crear secuencias para presupuestos pendientes existentes
-    this.inicializarSecuenciasParaPresupuestosExistentes();
-    
-    // Iniciar automatizaciones
-    this.iniciarAutomatizaciones();
+    // Inicializar secuencias y automatizaciones de forma asíncrona
+    this.initializationPromise = this.initializeAsync();
+  }
+
+  private async initializeAsync(): Promise<void> {
+    try {
+      // Crear secuencias para presupuestos pendientes existentes
+      await this.inicializarSecuenciasParaPresupuestosExistentes();
+      
+      // Crear secuencias de recall para pacientes dormidos
+      await this.inicializarSecuenciasParaPacientesDormidos();
+      
+      // Iniciar automatizaciones
+      this.iniciarAutomatizaciones();
+      
+      console.log('[Storage] Async initialization completed');
+    } catch (error) {
+      console.error('[Storage] Error during async initialization:', error);
+    }
+  }
+
+  // Método para asegurar que la inicialización esté completa
+  async ensureInitialized(): Promise<void> {
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+    }
   }
   
   private inicializarMockData() {
@@ -262,25 +285,7 @@ export class MemStorage implements IStorage {
     // Inicializar reglas de comunicación por defecto
     this.inicializarReglasComunicacionDefault();
     
-    // En Vercel/serverless, ejecutar secuencias inmediatamente de forma síncrona
-    // En entorno normal, usar setTimeout para no bloquear
-    if (typeof process !== 'undefined' && process.env.VERCEL) {
-      // En Vercel, ejecutar inmediatamente pero de forma asíncrona sin bloquear
-      Promise.resolve().then(() => {
-        this.inicializarSecuenciasParaPresupuestosExistentes().catch(console.error);
-        this.inicializarSecuenciasParaPacientesDormidos().catch(console.error);
-      });
-    } else {
-      // Crear secuencias para presupuestos pendientes existentes
-      setTimeout(() => {
-        this.inicializarSecuenciasParaPresupuestosExistentes().catch(console.error);
-      }, 1000);
-      
-      // Crear secuencias de recall para pacientes dormidos
-      setTimeout(() => {
-        this.inicializarSecuenciasParaPacientesDormidos().catch(console.error);
-      }, 1500);
-    }
+    // Las secuencias se inicializan en initializeAsync() para asegurar que se completen
   }
   
   // Crear secuencias para presupuestos pendientes que ya existen
