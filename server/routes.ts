@@ -132,6 +132,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/tareas/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const tareas = await storage.getTareas();
+      const tarea = tareas.find(t => t.id === id);
+      if (!tarea) {
+        return res.status(404).json({ error: "Tarea no encontrada" });
+      }
+      res.json(tarea);
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener tarea" });
+    }
+  });
+
   // Obtener tareas programadas para hoy
   app.get("/api/tareas/hoy", async (req, res) => {
     try {
@@ -1224,6 +1238,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(accionesHoy);
     } catch (error) {
       console.error("Error obteniendo acciones del día para presupuestos:", error);
+      res.status(500).json({ error: "Error al obtener acciones del día" });
+    }
+  });
+
+  // Obtener todas las acciones del día (combinadas)
+  app.get("/api/acciones-del-dia", async (req, res) => {
+    try {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const mañana = new Date(hoy);
+      mañana.setDate(mañana.getDate() + 1);
+      const accionesHoy = [];
+
+      // 1. Acciones automáticas de IA - Recordatorios de citas
+      const citas = await storage.getCitas();
+      const citasRecordatorio = citas.filter(c => {
+        if (c.estado !== "programada") return false;
+        const fechaCita = new Date(c.fechaHora);
+        const horasAntes = (fechaCita.getTime() - hoy.getTime()) / (1000 * 60 * 60);
+        return (horasAntes > 23 && horasAntes < 25) || (horasAntes > 0.5 && horasAntes < 1.5);
+      });
+      
+      for (const cita of citasRecordatorio) {
+        const paciente = await storage.getPaciente(cita.pacienteId);
+        if (!paciente) continue;
+        
+        const fechaCita = new Date(cita.fechaHora);
+        const horasAntes = (fechaCita.getTime() - hoy.getTime()) / (1000 * 60 * 60);
+        const tipoRecordatorio = horasAntes > 23 ? "24h" : "1h";
+        
+        accionesHoy.push({
+          tipo: "recordatorio",
+          automatica: true,
+          paciente,
+          cita,
+          tipoRecordatorio,
+          fechaCita,
+          canal: paciente.whatsapp ? "whatsapp" : "sms",
+          horaProgramada: fechaCita,
+        });
+      }
+
+      // 2. Acciones automáticas - Mensajes post-visita
+      const secuenciasPostVisita = await storage.getSecuenciasComunicacion({
+        tipo: "post_visita",
+        estado: "activa"
+      });
+      for (const secuencia of secuenciasPostVisita) {
+        if (!secuencia.proximaAccion) continue;
+        const proximaAccion = new Date(secuencia.proximaAccion);
+        proximaAccion.setHours(0, 0, 0, 0);
+        if (proximaAccion.getTime() >= hoy.getTime() && proximaAccion.getTime() < mañana.getTime()) {
+          const paciente = await storage.getPaciente(secuencia.pacienteId!);
+          if (!paciente) continue;
+          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          if (!regla) continue;
+          const pasos = regla.secuencia as any[];
+          const pasoActual = pasos[secuencia.pasoActual || 0];
+          if (pasoActual) {
+            accionesHoy.push({
+              tipo: "post_visita",
+              automatica: true,
+              paciente,
+              secuencia,
+              pasoActual,
+              canal: pasoActual.canal,
+              horaProgramada: new Date(secuencia.proximaAccion!),
+            });
+          }
+        }
+      }
+
+      // 3. Acciones automáticas - Touchpoints de presupuestos
+      const secuenciasPresupuestos = await storage.getSecuenciasComunicacion({
+        tipo: "relance_presupuesto",
+        estado: "activa"
+      });
+      for (const secuencia of secuenciasPresupuestos) {
+        if (!secuencia.proximaAccion) continue;
+        const proximaAccion = new Date(secuencia.proximaAccion);
+        proximaAccion.setHours(0, 0, 0, 0);
+        if (proximaAccion.getTime() >= hoy.getTime() && proximaAccion.getTime() < mañana.getTime()) {
+          const budget = await storage.getBudget(secuencia.budgetId!);
+          if (!budget) continue;
+          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          if (!regla) continue;
+          const pasos = regla.secuencia as any[];
+          const pasoActual = pasos[secuencia.pasoActual || 0];
+          if (pasoActual) {
+            accionesHoy.push({
+              tipo: "relance_presupuesto",
+              automatica: true,
+              budget,
+              secuencia,
+              pasoActual,
+              canal: pasoActual.canal,
+              horaProgramada: new Date(secuencia.proximaAccion!),
+            });
+          }
+        }
+      }
+
+      // 4. Acciones automáticas - Touchpoints a pacientes perdidos (recall)
+      const secuenciasRecall = await storage.getSecuenciasComunicacion({
+        tipo: "recall_paciente",
+        estado: "activa"
+      });
+      for (const secuencia of secuenciasRecall) {
+        if (!secuencia.proximaAccion) continue;
+        const proximaAccion = new Date(secuencia.proximaAccion);
+        proximaAccion.setHours(0, 0, 0, 0);
+        if (proximaAccion.getTime() >= hoy.getTime() && proximaAccion.getTime() < mañana.getTime()) {
+          const paciente = await storage.getPaciente(secuencia.pacienteId!);
+          if (!paciente) continue;
+          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          if (!regla) continue;
+          const pasos = regla.secuencia as any[];
+          const pasoActual = pasos[secuencia.pasoActual || 0];
+          if (pasoActual) {
+            accionesHoy.push({
+              tipo: "recall_paciente",
+              automatica: true,
+              paciente,
+              secuencia,
+              pasoActual,
+              canal: pasoActual.canal,
+              horaProgramada: new Date(secuencia.proximaAccion!),
+            });
+          }
+        }
+      }
+
+      // 5. Acciones manuales - Llamadas del staff
+      const tareasLlamadas = await storage.getTareas();
+      const tareasHoy = tareasLlamadas.filter(t => {
+        if (t.estado !== "pendiente") return false;
+        if (!t.fechaProgramada) return false;
+        const fechaProgramada = new Date(t.fechaProgramada);
+        fechaProgramada.setHours(0, 0, 0, 0);
+        return fechaProgramada.getTime() >= hoy.getTime() && fechaProgramada.getTime() < mañana.getTime();
+      });
+
+      for (const tarea of tareasHoy) {
+        const paciente = await storage.getPaciente(tarea.pacienteId);
+        if (!paciente) continue;
+        
+        accionesHoy.push({
+          tipo: "llamada_staff",
+          automatica: false,
+          paciente,
+          tarea: {
+            id: tarea.id,
+            pacienteId: tarea.pacienteId,
+            pacienteNombre: tarea.pacienteNombre,
+            telefono: tarea.telefono,
+            email: tarea.email,
+            motivo: tarea.motivo,
+            prioridad: tarea.prioridad,
+            tipoAccion: tarea.tipoAccion,
+            estado: tarea.estado,
+            fechaProgramada: tarea.fechaProgramada,
+            notas: tarea.notas,
+          },
+          motivo: tarea.motivo,
+          prioridad: tarea.prioridad,
+          telefono: tarea.telefono,
+          horaProgramada: tarea.fechaProgramada ? new Date(tarea.fechaProgramada) : new Date(),
+        });
+      }
+
+      // Ordenar por hora programada
+      accionesHoy.sort((a, b) => {
+        const horaA = a.horaProgramada ? new Date(a.horaProgramada).getTime() : 0;
+        const horaB = b.horaProgramada ? new Date(b.horaProgramada).getTime() : 0;
+        return horaA - horaB;
+      });
+
+      res.json(accionesHoy);
+    } catch (error) {
+      console.error("Error obteniendo acciones del día:", error);
       res.status(500).json({ error: "Error al obtener acciones del día" });
     }
   });

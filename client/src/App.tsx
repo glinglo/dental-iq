@@ -75,11 +75,13 @@ import PacientesPostVisita from "@/pages/pacientes-post-visita";
 import PresupuestoRelanceDetalle from "@/pages/presupuesto-relance-detalle";
 import CampanasDashboard from "@/pages/campanas-dashboard";
 import SaludPreventivaAcompanamiento from "@/pages/salud-preventiva-acompanamiento";
+import AccionesDelDia from "@/pages/acciones-del-dia";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/acciones-del-dia" component={AccionesDelDia} />
       <Route path="/presupuestos" component={PresupuestosAccionesHoy} />
       <Route path="/presupuestos/seguimiento" component={PacientesRelances} />
       <Route path="/presupuestos/seguimiento/:id" component={PresupuestoRelanceDetalle} />

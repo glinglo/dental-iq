@@ -135,13 +135,18 @@ export function ReglasComunicacionDialog({
       setEditingRegla(reglaActiva);
       setStepActual(1);
     } else if (!reglaActiva) {
-      setNombre("");
+      // Para relance_presupuesto, establecer nombre por defecto automáticamente
+      if (tipo === "relance_presupuesto") {
+        setNombre("Regla de Seguimiento de Presupuestos");
+      } else {
+        setNombre("");
+      }
       setPasos([]);
       setCriterios({});
       setEditingRegla(null);
       setStepActual(1);
     }
-  }, [reglaActiva]);
+  }, [reglaActiva, tipo]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: {
@@ -258,7 +263,12 @@ export function ReglasComunicacionDialog({
   };
 
   const handleSave = () => {
-    if (!nombre.trim()) {
+    // Para relance_presupuesto, establecer nombre automáticamente si está vacío
+    const nombreFinal = tipo === "relance_presupuesto" && !nombre.trim() 
+      ? "Regla de Seguimiento de Presupuestos"
+      : nombre.trim();
+    
+    if (!nombreFinal && tipo !== "relance_presupuesto") {
       toast({
         title: "Nombre requerido",
         description: "Por favor ingresa un nombre para la regla",
@@ -279,14 +289,14 @@ export function ReglasComunicacionDialog({
     if (reglaActiva) {
       updateMutation.mutate({
         id: reglaActiva.id,
-        nombre,
+        nombre: nombreFinal,
         secuencia: pasos,
         criterios: tipo === "recall_paciente" ? criterios : undefined,
       });
     } else {
       // Crear nueva regla si no existe
       apiRequest("POST", "/api/reglas-comunicacion", {
-        nombre,
+        nombre: nombreFinal,
         tipo,
         activa: true,
         secuencia: pasos,
@@ -371,16 +381,18 @@ export function ReglasComunicacionDialog({
         )}
 
         <div className="space-y-6 py-4">
-          {/* Nombre de la regla - siempre visible */}
-          <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre de la Regla *</Label>
-            <Input
-              id="nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej: Relance presupuesto estándar"
-            />
-          </div>
+          {/* Nombre de la regla - oculto para relance_presupuesto */}
+          {tipo !== "relance_presupuesto" && (
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre de la Regla *</Label>
+              <Input
+                id="nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Ej: Relance presupuesto estándar"
+              />
+            </div>
+          )}
 
           {/* Paso 1: Criterios de asignación (solo para recall_paciente) */}
           {tipo === "recall_paciente" && stepActual === 1 && (
@@ -618,6 +630,7 @@ export function ReglasComunicacionDialog({
                   {stepActual === 1 && (
                     <Button
                       onClick={() => {
+                        // Para recall_paciente, validar nombre (no aplica a relance_presupuesto)
                         if (!nombre.trim()) {
                           toast({
                             title: "Nombre requerido",

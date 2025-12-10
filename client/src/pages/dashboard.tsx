@@ -229,8 +229,8 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Grid con nuevas secciones */}
-        <div className="grid grid-cols-1 gap-6">
+        {/* Grid con Ranking de Canales y Pacientes en Riesgo lado a lado */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Ranking de Canales */}
           <Card>
             <CardHeader>
@@ -286,10 +286,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-        </div>
-
-        {/* Pacientes en Riesgo */}
-        <Card>
+          {/* Pacientes en Riesgo */}
+          <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -357,6 +355,7 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+        </div>
 
         {/* Forecast Line Chart */}
         <Card data-testid="card-forecast">

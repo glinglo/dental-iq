@@ -9,7 +9,8 @@ import {
   Send,
   TrendingUp,
   Bell,
-  Mail
+  Mail,
+  CheckSquare
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +36,11 @@ const menuItems = [
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Acciones del Día",
+    url: "/acciones-del-dia",
+    icon: CheckSquare,
   },
   {
     title: "Presupuestos",
