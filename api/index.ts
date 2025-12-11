@@ -61,15 +61,18 @@ function getApp(): Express {
 
 // Función para obtener storage de forma lazy
 async function getStorage() {
-  // Si ya se importó estáticamente, usarlo
+  // Si ya se importó, usarlo
   if (storageModule && storageModule.storage) {
     return storageModule.storage;
   }
   
-  // Si no, intentar importación dinámica
+  // Intentar importación dinámica con diferentes extensiones y rutas
   const importPaths = [
-    '../server/storage',
+    '../server/storage.js',  // Con extensión .js (después de transpilación)
+    '../server/storage',     // Sin extensión
+    './server/storage.js',
     './server/storage',
+    '/var/task/server/storage.js',
     '/var/task/server/storage',
   ];
   
@@ -143,10 +146,13 @@ async function registerRoutesOnce() {
     if (routesModule && routesModule.registerRoutes) {
       registerRoutes = routesModule.registerRoutes;
     } else {
-      // Si no, intentar importación dinámica
+      // Si no, intentar importación dinámica con diferentes extensiones
       const routesImportPaths = [
-        '../server/routes',
+        '../server/routes.js',  // Con extensión .js
+        '../server/routes',     // Sin extensión
+        './server/routes.js',
         './server/routes',
+        '/var/task/server/routes.js',
         '/var/task/server/routes',
       ];
       
