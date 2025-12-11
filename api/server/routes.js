@@ -51,7 +51,7 @@ function determinarEstado(mesesSinVisita, tieneCitaFutura) {
   return "sin cita";
 }
 function generarPacientesMock() {
-  const pacientes = [];
+  const pacientes2 = [];
   for (let i = 0; i < 200; i++) {
     const nombre = nombres[Math.floor(Math.random() * nombres.length)];
     const apellido1 = apellidos[Math.floor(Math.random() * apellidos.length)];
@@ -73,7 +73,7 @@ function generarPacientesMock() {
     const prioridad = estado === "perdido" ? determinarPrioridad(mesesSinVisita) : null;
     const edad = 18 + Math.floor(Math.random() * 62);
     const enCampana = Math.random() < 0.25;
-    pacientes.push({
+    pacientes2.push({
       id: `pac-${i + 1}`,
       clinicId: "clinic-1",
       // Default clinic
@@ -92,7 +92,7 @@ function generarPacientesMock() {
       notes: Math.random() < 0.3 ? "Paciente con historial de tratamientos previos" : null
     });
   }
-  return pacientes;
+  return pacientes2;
 }
 function generarCampanasMock() {
   return [
@@ -140,13 +140,13 @@ function generarCampanasMock() {
     }
   ];
 }
-function generarTareasCampanaMock(pacientes, campanas) {
+function generarTareasCampanaMock(pacientes2, campanas2) {
   const tareas = [];
   const hoy = /* @__PURE__ */ new Date();
   hoy.setHours(0, 0, 0, 0);
-  const campanasActivas = campanas.filter((c) => c.estado === "activa");
+  const campanasActivas = campanas2.filter((c) => c.estado === "activa");
   if (campanasActivas.length === 0) return [];
-  const pacientesEnRiesgo = pacientes.filter((p) => {
+  const pacientesEnRiesgo = pacientes2.filter((p) => {
     if (p.tieneCitaFutura || p.enCampana) return false;
     const ahora = /* @__PURE__ */ new Date();
     const diffTime = Math.abs(ahora.getTime() - p.ultimaVisita.getTime());
@@ -154,7 +154,7 @@ function generarTareasCampanaMock(pacientes, campanas) {
     const mesesSinVisita = Math.floor(diffDays / 30);
     return mesesSinVisita >= 4 && mesesSinVisita <= 6;
   });
-  const pacientesListos = pacientes.filter((p) => {
+  const pacientesListos = pacientes2.filter((p) => {
     if (p.tieneCitaFutura || p.enCampana) return false;
     const ahora = /* @__PURE__ */ new Date();
     const diffTime = Math.abs(ahora.getTime() - p.ultimaVisita.getTime());
@@ -209,8 +209,8 @@ function generarTareasCampanaMock(pacientes, campanas) {
   }
   return tareas;
 }
-function generarTareasLlamadasMock(pacientes) {
-  const pacientesPerdidos = pacientes.filter((p) => p.estado === "perdido" && p.prioridad);
+function generarTareasLlamadasMock(pacientes2) {
+  const pacientesPerdidos = pacientes2.filter((p) => p.estado === "perdido" && p.prioridad);
   const tareas = [];
   const hoy = /* @__PURE__ */ new Date();
   hoy.setHours(0, 0, 0, 0);
@@ -286,11 +286,11 @@ function generarTareasLlamadasMock(pacientes) {
     return prioridadOrden[a.prioridad] - prioridadOrden[b.prioridad];
   });
 }
-function generarConversacionesMock(pacientes) {
-  const conversaciones = [];
-  const mensajes = [];
+function generarConversacionesMock(pacientes2) {
+  const conversaciones2 = [];
+  const mensajes2 = [];
   const canales = ["whatsapp", "sms", "email"];
-  const pacientesConConversacion = pacientes.sort(() => Math.random() - 0.5).slice(0, 40);
+  const pacientesConConversacion = pacientes2.sort(() => Math.random() - 0.5).slice(0, 40);
   pacientesConConversacion.forEach((paciente, index) => {
     const canal = canales[Math.floor(Math.random() * canales.length)];
     const convId = `conv-${index + 1}`;
@@ -309,7 +309,7 @@ function generarConversacionesMock(pacientes) {
         ultimoMensaje = contenido;
         fechaUltimoMensaje = fechaEnvio;
       }
-      mensajes.push({
+      mensajes2.push({
         id: `msg-${convId}-${i + 1}`,
         type: "conversation",
         channel: canal,
@@ -325,7 +325,7 @@ function generarConversacionesMock(pacientes) {
       });
     }
     const noLeidos = Math.random() < 0.5 ? Math.floor(Math.random() * 4) + 1 : 0;
-    conversaciones.push({
+    conversaciones2.push({
       id: convId,
       pacienteId: paciente.id,
       canal,
@@ -335,10 +335,10 @@ function generarConversacionesMock(pacientes) {
       estado: "activa"
     });
   });
-  return { conversaciones, mensajes };
+  return { conversaciones: conversaciones2, mensajes: mensajes2 };
 }
-function generarCitasMock(pacientes) {
-  const citas = [];
+function generarCitasMock(pacientes2) {
+  const citas2 = [];
   const ahora = /* @__PURE__ */ new Date();
   console.log("[MockData] Generating citas - Current date:", ahora.toISOString());
   const inicioSemana = new Date(ahora);
@@ -350,7 +350,7 @@ function generarCitasMock(pacientes) {
   const semanasAtras = 2;
   const semanasAdelante = 4;
   const horariosDisponibles = [9, 10, 11, 12, 13, 16, 17, 18, 19];
-  const pacientesSeleccionados = pacientes.sort(() => Math.random() - 0.5).slice(0, 60);
+  const pacientesSeleccionados = pacientes2.sort(() => Math.random() - 0.5).slice(0, 60);
   let citaIndex = 0;
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 7; dia++) {
@@ -375,7 +375,7 @@ function generarCitasMock(pacientes) {
         } else {
           estado = Math.random() < 0.6 ? "confirmada" : "programada";
         }
-        citas.push({
+        citas2.push({
           id: `cita-${citaIndex + 1}`,
           pacienteId: paciente.id,
           pacienteNombre: paciente.nombre,
@@ -393,7 +393,7 @@ function generarCitasMock(pacientes) {
       });
     }
   }
-  const citasOrdenadas = citas.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+  const citasOrdenadas = citas2.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
   console.log(`[MockData] Generated ${citasOrdenadas.length} citas`);
   if (citasOrdenadas.length > 0) {
     console.log(`[MockData] Primera cita: ${citasOrdenadas[0].fechaHora.toISOString()}`);
@@ -417,8 +417,8 @@ function generarClinicsMock() {
     }
   ];
 }
-function generarBudgetsMock(pacientes) {
-  const budgets = [];
+function generarBudgetsMock(pacientes2) {
+  const budgets2 = [];
   const tratamientos = [
     { name: "Limpieza dental profesional", amount: [80, 120] },
     { name: "Empaste composite", amount: [60, 100] },
@@ -433,7 +433,7 @@ function generarBudgetsMock(pacientes) {
     { name: "Revisi\xF3n y diagn\xF3stico", amount: [40, 80] },
     { name: "Tratamiento de caries m\xFAltiples", amount: [200, 400] }
   ];
-  const selectedPatients = pacientes.sort(() => Math.random() - 0.5).slice(0, 50);
+  const selectedPatients = pacientes2.sort(() => Math.random() - 0.5).slice(0, 50);
   selectedPatients.forEach((patient, index) => {
     const tratamiento = tratamientos[Math.floor(Math.random() * tratamientos.length)];
     const amount = (tratamiento.amount[0] + Math.random() * (tratamiento.amount[1] - tratamiento.amount[0])).toFixed(2);
@@ -476,7 +476,7 @@ function generarBudgetsMock(pacientes) {
     }
     const createdAt = generarFechaAleatoria(Math.floor(Math.random() * 6));
     const updatedAt = new Date(createdAt.getTime() + Math.random() * 30 * 24 * 60 * 60 * 1e3);
-    budgets.push({
+    budgets2.push({
       id: `budget-${index + 1}`,
       patientId: patient.id,
       clinicId: patient.clinicId || "clinic-1",
@@ -490,7 +490,7 @@ function generarBudgetsMock(pacientes) {
       updatedAt
     });
   });
-  return budgets.sort((a, b) => {
+  return budgets2.sort((a, b) => {
     const timeA = a.createdAt?.getTime() || 0;
     const timeB = b.createdAt?.getTime() || 0;
     return timeB - timeA;
@@ -502,9 +502,9 @@ function calculatePriority(urgencyScore, acceptanceProb) {
   if (combinedScore >= 50) return "medium";
   return "low";
 }
-function generarTratamientosPreventivosMock(pacientes, citas, budgets) {
+function generarTratamientosPreventivosMock(pacientes2, citas2, budgets2) {
   const tratamientos = [];
-  const citasPreventivas = citas.filter(
+  const citasPreventivas = citas2.filter(
     (c) => c.estado === "completada" && (c.tipo === "limpieza" || c.tipo === "revision")
   );
   citasPreventivas.slice(0, 30).forEach((cita, index) => {
@@ -1002,9 +1002,9 @@ var init_values = __esm({
       }
       return n;
     };
-    safeJSON = (text) => {
+    safeJSON = (text2) => {
       try {
-        return JSON.parse(text);
+        return JSON.parse(text2);
       } catch (err) {
         return void 0;
       }
@@ -1633,8 +1633,8 @@ var init_stringify = __esm({
       formatter: default_formatter,
       /** @deprecated */
       indices: false,
-      serializeDate(date) {
-        return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date);
+      serializeDate(date2) {
+        return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date2);
       },
       skipNulls: false,
       strictNullHandling: false
@@ -1741,8 +1741,8 @@ var init_line = __esm({
             continue;
           }
           const endIndex = __classPrivateFieldGet(this, _LineDecoder_carriageReturnIndex, "f") !== null ? patternIndex.preceding - 1 : patternIndex.preceding;
-          const line = decodeUTF8(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(0, endIndex));
-          lines.push(line);
+          const line2 = decodeUTF8(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(0, endIndex));
+          lines.push(line2);
           __classPrivateFieldSet(this, _LineDecoder_buffer, __classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(patternIndex.index), "f");
           __classPrivateFieldSet(this, _LineDecoder_carriageReturnIndex, null, "f");
         }
@@ -1853,14 +1853,14 @@ async function* _iterSSEMessages(response, controller) {
   const lineDecoder = new LineDecoder();
   const iter = ReadableStreamToAsyncIterable(response.body);
   for await (const sseChunk of iterSSEChunks(iter)) {
-    for (const line of lineDecoder.decode(sseChunk)) {
-      const sse = sseDecoder.decode(line);
+    for (const line2 of lineDecoder.decode(sseChunk)) {
+      const sse = sseDecoder.decode(line2);
       if (sse)
         yield sse;
     }
   }
-  for (const line of lineDecoder.flush()) {
-    const sse = sseDecoder.decode(line);
+  for (const line2 of lineDecoder.flush()) {
+    const sse = sseDecoder.decode(line2);
     if (sse)
       yield sse;
   }
@@ -1979,12 +1979,12 @@ var init_streaming = __esm({
           const lineDecoder = new LineDecoder();
           const iter = ReadableStreamToAsyncIterable(readableStream);
           for await (const chunk of iter) {
-            for (const line of lineDecoder.decode(chunk)) {
-              yield line;
+            for (const line2 of lineDecoder.decode(chunk)) {
+              yield line2;
             }
           }
-          for (const line of lineDecoder.flush()) {
-            yield line;
+          for (const line2 of lineDecoder.flush()) {
+            yield line2;
           }
         }
         async function* iterator() {
@@ -1994,11 +1994,11 @@ var init_streaming = __esm({
           consumed = true;
           let done = false;
           try {
-            for await (const line of iterLines()) {
+            for await (const line2 of iterLines()) {
               if (done)
                 continue;
-              if (line)
-                yield JSON.parse(line);
+              if (line2)
+                yield JSON.parse(line2);
             }
             done = true;
           } catch (e) {
@@ -2075,11 +2075,11 @@ var init_streaming = __esm({
         this.data = [];
         this.chunks = [];
       }
-      decode(line) {
-        if (line.endsWith("\r")) {
-          line = line.substring(0, line.length - 1);
+      decode(line2) {
+        if (line2.endsWith("\r")) {
+          line2 = line2.substring(0, line2.length - 1);
         }
-        if (!line) {
+        if (!line2) {
           if (!this.event && !this.data.length)
             return null;
           const sse = {
@@ -2092,11 +2092,11 @@ var init_streaming = __esm({
           this.chunks = [];
           return sse;
         }
-        this.chunks.push(line);
-        if (line.startsWith(":")) {
+        this.chunks.push(line2);
+        if (line2.startsWith(":")) {
           return null;
         }
-        let [fieldname, _, value] = partition(line, ":");
+        let [fieldname, _, value] = partition(line2, ":");
         if (value.startsWith(" ")) {
           value = value.substring(1);
         }
@@ -2132,11 +2132,11 @@ async function defaultParseResponse(client, props) {
     const mediaType = contentType?.split(";")[0]?.trim();
     const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
     if (isJSON) {
-      const json = await response.json();
-      return addRequestID(json, response);
+      const json2 = await response.json();
+      return addRequestID(json2, response);
     }
-    const text = await response.text();
-    return text;
+    const text2 = await response.text();
+    return text2;
   })();
   loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
     retryOfRequestLogID,
@@ -7827,9 +7827,9 @@ var init_webhooks = __esm({
         __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_validateSecret).call(this, secret);
         const headersObj = buildHeaders([headers]).values;
         const signatureHeader = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-signature");
-        const timestamp = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-timestamp");
+        const timestamp2 = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-timestamp");
         const webhookId = __classPrivateFieldGet(this, _Webhooks_instances, "m", _Webhooks_getRequiredHeader).call(this, headersObj, "webhook-id");
-        const timestampSeconds = parseInt(timestamp, 10);
+        const timestampSeconds = parseInt(timestamp2, 10);
         if (isNaN(timestampSeconds)) {
           throw new InvalidWebhookSignatureError("Invalid webhook timestamp format");
         }
@@ -7842,7 +7842,7 @@ var init_webhooks = __esm({
         }
         const signatures = signatureHeader.split(" ").map((part) => part.startsWith("v1,") ? part.substring(3) : part);
         const decodedSecret = secret.startsWith("whsec_") ? Buffer.from(secret.replace("whsec_", ""), "base64") : Buffer.from(secret, "utf-8");
-        const signedPayload = webhookId ? `${webhookId}.${timestamp}.${payload}` : `${timestamp}.${payload}`;
+        const signedPayload = webhookId ? `${webhookId}.${timestamp2}.${payload}` : `${timestamp2}.${payload}`;
         const key = await crypto.subtle.importKey("raw", decodedSecret, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
         for (const signature of signatures) {
           try {
@@ -8702,12 +8702,12 @@ function calculatePriority2(urgencyScore, acceptanceProb) {
 }
 async function generatePreventiveHealthMessage(patientData, tipoTratamiento, diasVencidos, canal, intento) {
   if (!process.env.OPENAI_API_KEY) {
-    const mensajes = {
+    const mensajes2 = {
       1: `Hola ${patientData.nombre}, es momento de agendar tu ${tipoTratamiento}. Han pasado ${Math.floor(diasVencidos / 30)} meses desde tu \xFAltima visita. \xBFTe gustar\xEDa agendar una cita?`,
       2: `${patientData.nombre}, recordatorio: es hora de tu ${tipoTratamiento}. Han pasado ${Math.floor(diasVencidos / 30)} meses. Ll\xE1manos para agendar.`,
       3: `Estimado/a ${patientData.nombre}, le recordamos que es momento de agendar su ${tipoTratamiento}. Han pasado ${Math.floor(diasVencidos / 30)} meses desde su \xFAltima visita. La salud bucal preventiva es fundamental.`
     };
-    return mensajes[intento] || mensajes[1];
+    return mensajes2[intento] || mensajes2[1];
   }
   try {
     const prompt = `Eres un agente IA dental amigable y experto en salud preventiva. Genera un mensaje de recordatorio para tratamiento preventivo.
@@ -9019,87 +9019,87 @@ var init_storage = __esm({
             this.reglasComunicacion.clear();
             this.secuenciasComunicacion.clear();
           }
-          const clinics = generarClinicsMock();
-          clinics.forEach((clinic) => {
+          const clinics2 = generarClinicsMock();
+          clinics2.forEach((clinic) => {
             this.clinics.set(clinic.id, clinic);
           });
-          console.log(`[Storage] \u2713 Loaded ${clinics.length} clinics`);
-          let pacientes;
+          console.log(`[Storage] \u2713 Loaded ${clinics2.length} clinics`);
+          let pacientes2;
           try {
-            pacientes = generarPacientesMock();
-            if (!pacientes || pacientes.length === 0) {
+            pacientes2 = generarPacientesMock();
+            if (!pacientes2 || pacientes2.length === 0) {
               throw new Error("generarPacientesMock returned empty array");
             }
-            pacientes.forEach((paciente) => {
+            pacientes2.forEach((paciente) => {
               this.pacientes.set(paciente.id, paciente);
             });
-            console.log(`[Storage] \u2713 Loaded ${pacientes.length} pacientes`);
+            console.log(`[Storage] \u2713 Loaded ${pacientes2.length} pacientes`);
           } catch (error) {
             console.error("[Storage] ERROR generating pacientes:", error);
             throw new Error(`Failed to generate pacientes: ${error instanceof Error ? error.message : String(error)}`);
           }
-          let budgets;
+          let budgets2;
           try {
-            budgets = generarBudgetsMock(pacientes);
-            if (!budgets || budgets.length === 0) {
+            budgets2 = generarBudgetsMock(pacientes2);
+            if (!budgets2 || budgets2.length === 0) {
               throw new Error("generarBudgetsMock returned empty array");
             }
-            budgets.forEach((budget) => {
+            budgets2.forEach((budget) => {
               this.budgets.set(budget.id, budget);
             });
-            console.log(`[Storage] \u2713 Loaded ${budgets.length} budgets`);
+            console.log(`[Storage] \u2713 Loaded ${budgets2.length} budgets`);
           } catch (error) {
             console.error("[Storage] ERROR generating budgets:", error);
             throw new Error(`Failed to generate budgets: ${error instanceof Error ? error.message : String(error)}`);
           }
-          let citas;
+          let citas2;
           try {
-            citas = generarCitasMock(pacientes);
-            if (!citas || citas.length === 0) {
+            citas2 = generarCitasMock(pacientes2);
+            if (!citas2 || citas2.length === 0) {
               throw new Error("generarCitasMock returned empty array");
             }
-            citas.forEach((cita) => {
+            citas2.forEach((cita) => {
               this.citas.set(cita.id, cita);
             });
-            console.log(`[Storage] \u2713 Loaded ${citas.length} citas`);
+            console.log(`[Storage] \u2713 Loaded ${citas2.length} citas`);
           } catch (error) {
             console.error("[Storage] ERROR generating citas:", error);
             throw new Error(`Failed to generate citas: ${error instanceof Error ? error.message : String(error)}`);
           }
-          const tratamientosPreventivos = generarTratamientosPreventivosMock(pacientes, citas, budgets);
-          tratamientosPreventivos.forEach((tratamiento) => {
+          const tratamientosPreventivos2 = generarTratamientosPreventivosMock(pacientes2, citas2, budgets2);
+          tratamientosPreventivos2.forEach((tratamiento) => {
             this.tratamientosPreventivos.set(tratamiento.id, tratamiento);
           });
-          console.log(`[Storage] \u2713 Loaded ${tratamientosPreventivos.length} tratamientos preventivos`);
-          let campanas;
+          console.log(`[Storage] \u2713 Loaded ${tratamientosPreventivos2.length} tratamientos preventivos`);
+          let campanas2;
           try {
-            campanas = generarCampanasMock();
-            if (!campanas || campanas.length === 0) {
+            campanas2 = generarCampanasMock();
+            if (!campanas2 || campanas2.length === 0) {
               throw new Error("generarCampanasMock returned empty array");
             }
-            campanas.forEach((campana) => {
+            campanas2.forEach((campana) => {
               this.campanas.set(campana.id, campana);
             });
-            console.log(`[Storage] \u2713 Loaded ${campanas.length} campanas`);
+            console.log(`[Storage] \u2713 Loaded ${campanas2.length} campanas`);
           } catch (error) {
             console.error("[Storage] ERROR generating campanas:", error);
             throw new Error(`Failed to generate campanas: ${error instanceof Error ? error.message : String(error)}`);
           }
-          const tareas = generarTareasLlamadasMock(pacientes);
-          const tareasCampana = generarTareasCampanaMock(pacientes, campanas);
+          const tareas = generarTareasLlamadasMock(pacientes2);
+          const tareasCampana = generarTareasCampanaMock(pacientes2, campanas2);
           const todasLasTareas = [...tareas, ...tareasCampana];
           todasLasTareas.forEach((tarea) => {
             this.tareas.set(tarea.id, tarea);
           });
           console.log(`[Storage] \u2713 Loaded ${todasLasTareas.length} tareas (${tareas.length} llamadas + ${tareasCampana.length} campa\xF1a)`);
-          const { conversaciones, mensajes } = generarConversacionesMock(pacientes);
-          conversaciones.forEach((conversacion) => {
+          const { conversaciones: conversaciones2, mensajes: mensajes2 } = generarConversacionesMock(pacientes2);
+          conversaciones2.forEach((conversacion) => {
             this.conversaciones.set(conversacion.id, conversacion);
           });
-          mensajes.forEach((mensaje) => {
+          mensajes2.forEach((mensaje) => {
             this.mensajes.set(mensaje.id, mensaje);
           });
-          console.log(`[Storage] \u2713 Loaded ${conversaciones.length} conversaciones and ${mensajes.length} mensajes`);
+          console.log(`[Storage] \u2713 Loaded ${conversaciones2.length} conversaciones and ${mensajes2.length} mensajes`);
           this.inicializarRecordatoriosDefault();
           console.log(`[Storage] \u2713 Initialized recordatorios`);
           this.inicializarReglasComunicacionDefault();
@@ -9456,26 +9456,26 @@ var init_storage = __esm({
         return this.pacientes.get(id);
       }
       async getPacientesPerdidos(filtros) {
-        let pacientes = Array.from(this.pacientes.values()).filter((p) => p.estado === "perdido");
-        if (!filtros) return pacientes;
+        let pacientes2 = Array.from(this.pacientes.values()).filter((p) => p.estado === "perdido");
+        if (!filtros) return pacientes2;
         if (filtros.prioridad && filtros.prioridad !== "Todas") {
-          pacientes = pacientes.filter((p) => p.prioridad === filtros.prioridad);
+          pacientes2 = pacientes2.filter((p) => p.prioridad === filtros.prioridad);
         }
         if (filtros.diagnostico) {
-          pacientes = pacientes.filter((p) => p.diagnostico === filtros.diagnostico);
+          pacientes2 = pacientes2.filter((p) => p.diagnostico === filtros.diagnostico);
         }
         if (filtros.edadMin !== void 0) {
-          pacientes = pacientes.filter((p) => p.edad >= filtros.edadMin);
+          pacientes2 = pacientes2.filter((p) => p.edad >= filtros.edadMin);
         }
         if (filtros.edadMax !== void 0) {
-          pacientes = pacientes.filter((p) => p.edad <= filtros.edadMax);
+          pacientes2 = pacientes2.filter((p) => p.edad <= filtros.edadMax);
         }
-        return pacientes;
+        return pacientes2;
       }
       async calcularPacientesPerdidos() {
         const ahora = /* @__PURE__ */ new Date();
-        const pacientes = Array.from(this.pacientes.values());
-        pacientes.forEach((paciente) => {
+        const pacientes2 = Array.from(this.pacientes.values());
+        pacientes2.forEach((paciente) => {
           const diffTime = Math.abs(ahora.getTime() - paciente.ultimaVisita.getTime());
           const diffDays = Math.ceil(diffTime / (1e3 * 60 * 60 * 24));
           const mesesSinVisita = Math.floor(diffDays / 30);
@@ -9498,13 +9498,13 @@ var init_storage = __esm({
           }
           this.pacientes.set(paciente.id, paciente);
         });
-        const perdidos = pacientes.filter((p) => p.estado === "perdido");
+        const perdidos = pacientes2.filter((p) => p.estado === "perdido");
         return { total: perdidos.length, pacientes: perdidos };
       }
       async getPacientesEnRiesgo() {
         const ahora = /* @__PURE__ */ new Date();
-        const pacientes = Array.from(this.pacientes.values());
-        return pacientes.filter((p) => {
+        const pacientes2 = Array.from(this.pacientes.values());
+        return pacientes2.filter((p) => {
           if (p.tieneCitaFutura) return false;
           const diffTime = Math.abs(ahora.getTime() - p.ultimaVisita.getTime());
           const diffDays = Math.ceil(diffTime / (1e3 * 60 * 60 * 24));
@@ -9515,9 +9515,9 @@ var init_storage = __esm({
       async getPacientesListosParaCampana(campanaId) {
         const campana = await this.getCampana(campanaId);
         if (!campana) return [];
-        const pacientes = Array.from(this.pacientes.values());
+        const pacientes2 = Array.from(this.pacientes.values());
         const ahora = /* @__PURE__ */ new Date();
-        return pacientes.filter((p) => {
+        return pacientes2.filter((p) => {
           if (p.enCampana) return false;
           if (p.tieneCitaFutura) return false;
           const diffTime = Math.abs(ahora.getTime() - p.ultimaVisita.getTime());
@@ -9623,13 +9623,13 @@ var init_storage = __esm({
       }
       // Dashboard
       async getDashboardKPIs() {
-        const pacientes = Array.from(this.pacientes.values());
-        const campanas = Array.from(this.campanas.values());
+        const pacientes2 = Array.from(this.pacientes.values());
+        const campanas2 = Array.from(this.campanas.values());
         const tareas = Array.from(this.tareas.values());
-        const pacientesPerdidos = pacientes.filter((p) => p.estado === "perdido").length;
-        const pacientesEnCampanas = pacientes.filter((p) => p.enCampana).length;
-        const contactosEnviados = campanas.reduce((sum, c) => sum + (c.contactosEnviados || 0), 0);
-        const citasGeneradas = campanas.reduce((sum, c) => sum + (c.citasGeneradas || 0), 0) + tareas.filter((t) => t.estado === "cita_agendada").length;
+        const pacientesPerdidos = pacientes2.filter((p) => p.estado === "perdido").length;
+        const pacientesEnCampanas = pacientes2.filter((p) => p.enCampana).length;
+        const contactosEnviados = campanas2.reduce((sum, c) => sum + (c.contactosEnviados || 0), 0);
+        const citasGeneradas = campanas2.reduce((sum, c) => sum + (c.citasGeneradas || 0), 0) + tareas.filter((t) => t.estado === "cita_agendada").length;
         const tasaConversion = contactosEnviados > 0 ? citasGeneradas / contactosEnviados * 100 : 0;
         const roiEstimado = 5.4;
         return {
@@ -9650,8 +9650,8 @@ var init_storage = __esm({
       }
       // Conversaciones
       async getConversaciones() {
-        const conversaciones = Array.from(this.conversaciones.values());
-        return conversaciones.map((conv) => {
+        const conversaciones2 = Array.from(this.conversaciones.values());
+        return conversaciones2.map((conv) => {
           const paciente = this.pacientes.get(conv.pacienteId);
           if (!paciente) return null;
           return {
@@ -9715,8 +9715,8 @@ var init_storage = __esm({
           conv.noLeidos = 0;
           this.conversaciones.set(conv.id, conv);
         }
-        const mensajes = Array.from(this.mensajes.values()).filter((m) => m.conversacionId === conversacionId);
-        mensajes.forEach((m) => {
+        const mensajes2 = Array.from(this.mensajes.values()).filter((m) => m.conversacionId === conversacionId);
+        mensajes2.forEach((m) => {
           m.leido = true;
           this.mensajes.set(m.id, m);
         });
@@ -9788,7 +9788,7 @@ var init_storage = __esm({
       }
       async detectarHuecosLibres(fechaInicio, fechaFin, duracionMinutos = 30) {
         const huecos = [];
-        const citas = Array.from(this.citas.values()).filter((c) => {
+        const citas2 = Array.from(this.citas.values()).filter((c) => {
           const fechaCita = new Date(c.fechaHora);
           return fechaCita >= fechaInicio && fechaCita <= fechaFin && c.estado !== "cancelada";
         });
@@ -9798,7 +9798,7 @@ var init_storage = __esm({
         const fechaActual = new Date(fechaInicio);
         fechaActual.setHours(0, 0, 0, 0);
         while (fechaActual <= fechaFin) {
-          const citasDelDia = citas.filter((c) => {
+          const citasDelDia = citas2.filter((c) => {
             const fechaCita = new Date(c.fechaHora);
             return fechaCita.toDateString() === fechaActual.toDateString();
           }).sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
@@ -9839,7 +9839,7 @@ var init_storage = __esm({
       }
       async sugerirPacientesParaHueco(fecha, horaInicio, horaFin, limite = 5) {
         const sugerencias = [];
-        const pacientes = Array.from(this.pacientes.values());
+        const pacientes2 = Array.from(this.pacientes.values());
         const ahora = /* @__PURE__ */ new Date();
         const recordatoriosPreventivos = await this.getRecordatoriosPreventivosPendientes();
         for (const recordatorio of recordatoriosPreventivos.slice(0, limite * 2)) {
@@ -9916,8 +9916,8 @@ var init_storage = __esm({
       }
       // Budgets (DentalIQ)
       async getBudgets() {
-        const budgets = Array.from(this.budgets.values());
-        return budgets.map((budget) => {
+        const budgets2 = Array.from(this.budgets.values());
+        return budgets2.map((budget) => {
           const patient = this.pacientes.get(budget.patientId);
           if (!patient) {
             throw new Error(`Patient not found for budget ${budget.id}`);
@@ -10062,8 +10062,8 @@ var init_storage = __esm({
       }
       // DentalIQ KPIs
       async getDentalIQKPIs() {
-        const budgets = Array.from(this.budgets.values());
-        const total = budgets.length;
+        const budgets2 = Array.from(this.budgets.values());
+        const total = budgets2.length;
         console.log(`[Storage] getDentalIQKPIs called - total budgets: ${total}`);
         console.log(`[Storage] pacientes count: ${this.pacientes.size}`);
         console.log(`[Storage] budgets map size: ${this.budgets.size}`);
@@ -10118,22 +10118,22 @@ var init_storage = __esm({
       }
       // Acciones Automatizadas
       async getAcciones(filtros) {
-        let acciones = Array.from(this.acciones.values());
+        let acciones2 = Array.from(this.acciones.values());
         if (filtros?.estado) {
-          acciones = acciones.filter((a) => a.estado === filtros.estado);
+          acciones2 = acciones2.filter((a) => a.estado === filtros.estado);
         }
         if (filtros?.tipo) {
-          acciones = acciones.filter((a) => a.tipo === filtros.tipo);
+          acciones2 = acciones2.filter((a) => a.tipo === filtros.tipo);
         }
-        acciones.sort((a, b) => {
+        acciones2.sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
         });
         if (filtros?.limit) {
-          acciones = acciones.slice(0, filtros.limit);
+          acciones2 = acciones2.slice(0, filtros.limit);
         }
-        return acciones.map((accion) => {
+        return acciones2.map((accion) => {
           const result = { ...accion };
           if (accion.pacienteId) {
             const paciente = this.pacientes.get(accion.pacienteId);
@@ -10218,9 +10218,9 @@ var init_storage = __esm({
         }
       }
       async automatizarRelances() {
-        const budgets = Array.from(this.budgets.values()).filter((b) => b.status === "pending");
+        const budgets2 = Array.from(this.budgets.values()).filter((b) => b.status === "pending");
         const ahora = /* @__PURE__ */ new Date();
-        for (const budget of budgets) {
+        for (const budget of budgets2) {
           if (!budget.createdAt) continue;
           const fechaCreacion = new Date(budget.createdAt);
           const diasPendientes = Math.floor(
@@ -10305,9 +10305,9 @@ var init_storage = __esm({
         return this.automatizarRecordatoriosConConfiguracion(configuraciones);
       }
       async automatizarRecordatoriosConConfiguracion(configuraciones) {
-        const citas = Array.from(this.citas.values()).filter((c) => c.estado === "programada");
+        const citas2 = Array.from(this.citas.values()).filter((c) => c.estado === "programada");
         const ahora = /* @__PURE__ */ new Date();
-        for (const cita of citas) {
+        for (const cita of citas2) {
           const fechaCita = new Date(cita.fechaHora);
           const horasHastaCita = (fechaCita.getTime() - ahora.getTime()) / (1e3 * 60 * 60);
           for (const config of configuraciones) {
@@ -10395,9 +10395,9 @@ var init_storage = __esm({
         return this.automatizarPostVisitaConConfiguracion(configuraciones);
       }
       async automatizarPostVisitaConConfiguracion(configuraciones) {
-        const budgets = Array.from(this.budgets.values()).filter((b) => b.status === "accepted" && b.updatedAt);
+        const budgets2 = Array.from(this.budgets.values()).filter((b) => b.status === "accepted" && b.updatedAt);
         const ahora = /* @__PURE__ */ new Date();
-        for (const budget of budgets) {
+        for (const budget of budgets2) {
           if (!budget.updatedAt) continue;
           const fechaAceptacion = new Date(budget.updatedAt);
           const horasDesdeAceptacion = (ahora.getTime() - fechaAceptacion.getTime()) / (1e3 * 60 * 60);
@@ -10455,8 +10455,8 @@ var init_storage = __esm({
         }
       }
       async automatizarScoring() {
-        const budgets = Array.from(this.budgets.values()).filter((b) => !b.urgencyScore || !b.acceptanceProb);
-        for (const budget of budgets) {
+        const budgets2 = Array.from(this.budgets.values()).filter((b) => !b.urgencyScore || !b.acceptanceProb);
+        for (const budget of budgets2) {
           const paciente = this.pacientes.get(budget.patientId);
           if (!paciente) continue;
           try {
@@ -10549,7 +10549,7 @@ var init_storage = __esm({
       }
       async getRecordatoriosPreventivosPendientes() {
         const ahora = /* @__PURE__ */ new Date();
-        const recordatorios = [];
+        const recordatorios2 = [];
         const tratamientos = Array.from(this.tratamientosPreventivos.values());
         for (const tratamiento of tratamientos) {
           if (!tratamiento.proximaFechaRecomendada) continue;
@@ -10566,7 +10566,7 @@ var init_storage = __esm({
             if (intentosEnviados >= 1) canalSiguiente = "sms";
             if (intentosEnviados >= 2) canalSiguiente = "email";
             if (intentosEnviados < 3) {
-              recordatorios.push({
+              recordatorios2.push({
                 pacienteId: tratamiento.pacienteId,
                 pacienteNombre: paciente.nombre,
                 tipoTratamiento: tratamiento.tipoTratamiento,
@@ -10579,7 +10579,7 @@ var init_storage = __esm({
             }
           }
         }
-        return recordatorios.sort((a, b) => b.diasVencidos - a.diasVencidos);
+        return recordatorios2.sort((a, b) => b.diasVencidos - a.diasVencidos);
       }
       async automatizarSaludPreventiva() {
         const recordatoriosPendientes = await this.getRecordatoriosPreventivosPendientes();
@@ -10630,9 +10630,9 @@ var init_storage = __esm({
       // Detectar tratamientos preventivos desde citas completadas
       async detectarTratamientosPreventivosDesdeCitas() {
         const citasCompletadas = Array.from(this.citas.values()).filter((c) => c.estado === "completada");
-        const tratamientosPreventivos = ["limpieza", "revision", "fluorizacion"];
+        const tratamientosPreventivos2 = ["limpieza", "revision", "fluorizacion"];
         for (const cita of citasCompletadas) {
-          if (!tratamientosPreventivos.includes(cita.tipo)) continue;
+          if (!tratamientosPreventivos2.includes(cita.tipo)) continue;
           const tratamientoExistente = Array.from(this.tratamientosPreventivos.values()).find((t) => t.citaId === cita.id);
           if (!tratamientoExistente) {
             const regla = this.reglasFrecuencia.find((r) => r.tipoTratamiento === cita.tipo);
@@ -10736,8 +10736,8 @@ var init_storage = __esm({
       // Crear secuencias de recall para pacientes dormidos (asignación contextual)
       async inicializarSecuenciasParaPacientesDormidos() {
         const ahora = /* @__PURE__ */ new Date();
-        const pacientes = Array.from(this.pacientes.values());
-        const pacientesDormidos = pacientes.filter((p) => {
+        const pacientes2 = Array.from(this.pacientes.values());
+        const pacientesDormidos = pacientes2.filter((p) => {
           const ultimaVisita = new Date(p.ultimaVisita);
           const mesesSinVisita = (ahora.getTime() - ultimaVisita.getTime()) / (1e3 * 60 * 60 * 24 * 30);
           return p.estado === "perdido" || mesesSinVisita >= 6 && !p.tieneCitaFutura;
@@ -10949,8 +10949,2957 @@ var init_storage = __esm({
 
 // server/routes.ts
 import { createServer } from "http";
-import { insertCampanaSchema, insertRecordatorioSchema } from "@shared/schema";
+
+// node_modules/drizzle-orm/entity.js
+var entityKind = Symbol.for("drizzle:entityKind");
+var hasOwnEntityKind = Symbol.for("drizzle:hasOwnEntityKind");
+function is(value, type) {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  if (value instanceof type) {
+    return true;
+  }
+  if (!Object.prototype.hasOwnProperty.call(type, entityKind)) {
+    throw new Error(
+      `Class "${type.name ?? "<unknown>"}" doesn't look like a Drizzle entity. If this is incorrect and the class is provided by Drizzle, please report this as a bug.`
+    );
+  }
+  let cls = Object.getPrototypeOf(value).constructor;
+  if (cls) {
+    while (cls) {
+      if (entityKind in cls && cls[entityKind] === type[entityKind]) {
+        return true;
+      }
+      cls = Object.getPrototypeOf(cls);
+    }
+  }
+  return false;
+}
+
+// node_modules/drizzle-orm/column.js
+var Column = class {
+  constructor(table, config) {
+    this.table = table;
+    this.config = config;
+    this.name = config.name;
+    this.keyAsName = config.keyAsName;
+    this.notNull = config.notNull;
+    this.default = config.default;
+    this.defaultFn = config.defaultFn;
+    this.onUpdateFn = config.onUpdateFn;
+    this.hasDefault = config.hasDefault;
+    this.primary = config.primaryKey;
+    this.isUnique = config.isUnique;
+    this.uniqueName = config.uniqueName;
+    this.uniqueType = config.uniqueType;
+    this.dataType = config.dataType;
+    this.columnType = config.columnType;
+    this.generated = config.generated;
+    this.generatedIdentity = config.generatedIdentity;
+  }
+  static [entityKind] = "Column";
+  name;
+  keyAsName;
+  primary;
+  notNull;
+  default;
+  defaultFn;
+  onUpdateFn;
+  hasDefault;
+  isUnique;
+  uniqueName;
+  uniqueType;
+  dataType;
+  columnType;
+  enumValues = void 0;
+  generated = void 0;
+  generatedIdentity = void 0;
+  config;
+  mapFromDriverValue(value) {
+    return value;
+  }
+  mapToDriverValue(value) {
+    return value;
+  }
+  // ** @internal */
+  shouldDisableInsert() {
+    return this.config.generated !== void 0 && this.config.generated.type !== "byDefault";
+  }
+};
+
+// node_modules/drizzle-orm/column-builder.js
+var ColumnBuilder = class {
+  static [entityKind] = "ColumnBuilder";
+  config;
+  constructor(name, dataType, columnType) {
+    this.config = {
+      name,
+      keyAsName: name === "",
+      notNull: false,
+      default: void 0,
+      hasDefault: false,
+      primaryKey: false,
+      isUnique: false,
+      uniqueName: void 0,
+      uniqueType: void 0,
+      dataType,
+      columnType,
+      generated: void 0
+    };
+  }
+  /**
+   * Changes the data type of the column. Commonly used with `json` columns. Also, useful for branded types.
+   *
+   * @example
+   * ```ts
+   * const users = pgTable('users', {
+   * 	id: integer('id').$type<UserId>().primaryKey(),
+   * 	details: json('details').$type<UserDetails>().notNull(),
+   * });
+   * ```
+   */
+  $type() {
+    return this;
+  }
+  /**
+   * Adds a `not null` clause to the column definition.
+   *
+   * Affects the `select` model of the table - columns *without* `not null` will be nullable on select.
+   */
+  notNull() {
+    this.config.notNull = true;
+    return this;
+  }
+  /**
+   * Adds a `default <value>` clause to the column definition.
+   *
+   * Affects the `insert` model of the table - columns *with* `default` are optional on insert.
+   *
+   * If you need to set a dynamic default value, use {@link $defaultFn} instead.
+   */
+  default(value) {
+    this.config.default = value;
+    this.config.hasDefault = true;
+    return this;
+  }
+  /**
+   * Adds a dynamic default value to the column.
+   * The function will be called when the row is inserted, and the returned value will be used as the column value.
+   *
+   * **Note:** This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`.
+   */
+  $defaultFn(fn) {
+    this.config.defaultFn = fn;
+    this.config.hasDefault = true;
+    return this;
+  }
+  /**
+   * Alias for {@link $defaultFn}.
+   */
+  $default = this.$defaultFn;
+  /**
+   * Adds a dynamic update value to the column.
+   * The function will be called when the row is updated, and the returned value will be used as the column value if none is provided.
+   * If no `default` (or `$defaultFn`) value is provided, the function will be called when the row is inserted as well, and the returned value will be used as the column value.
+   *
+   * **Note:** This value does not affect the `drizzle-kit` behavior, it is only used at runtime in `drizzle-orm`.
+   */
+  $onUpdateFn(fn) {
+    this.config.onUpdateFn = fn;
+    this.config.hasDefault = true;
+    return this;
+  }
+  /**
+   * Alias for {@link $onUpdateFn}.
+   */
+  $onUpdate = this.$onUpdateFn;
+  /**
+   * Adds a `primary key` clause to the column definition. This implicitly makes the column `not null`.
+   *
+   * In SQLite, `integer primary key` implicitly makes the column auto-incrementing.
+   */
+  primaryKey() {
+    this.config.primaryKey = true;
+    this.config.notNull = true;
+    return this;
+  }
+  /** @internal Sets the name of the column to the key within the table definition if a name was not given. */
+  setName(name) {
+    if (this.config.name !== "")
+      return;
+    this.config.name = name;
+  }
+};
+
+// node_modules/drizzle-orm/table.utils.js
+var TableName = Symbol.for("drizzle:Name");
+
+// node_modules/drizzle-orm/pg-core/foreign-keys.js
+var ForeignKeyBuilder = class {
+  static [entityKind] = "PgForeignKeyBuilder";
+  /** @internal */
+  reference;
+  /** @internal */
+  _onUpdate = "no action";
+  /** @internal */
+  _onDelete = "no action";
+  constructor(config, actions) {
+    this.reference = () => {
+      const { name, columns, foreignColumns } = config();
+      return { name, columns, foreignTable: foreignColumns[0].table, foreignColumns };
+    };
+    if (actions) {
+      this._onUpdate = actions.onUpdate;
+      this._onDelete = actions.onDelete;
+    }
+  }
+  onUpdate(action) {
+    this._onUpdate = action === void 0 ? "no action" : action;
+    return this;
+  }
+  onDelete(action) {
+    this._onDelete = action === void 0 ? "no action" : action;
+    return this;
+  }
+  /** @internal */
+  build(table) {
+    return new ForeignKey(table, this);
+  }
+};
+var ForeignKey = class {
+  constructor(table, builder) {
+    this.table = table;
+    this.reference = builder.reference;
+    this.onUpdate = builder._onUpdate;
+    this.onDelete = builder._onDelete;
+  }
+  static [entityKind] = "PgForeignKey";
+  reference;
+  onUpdate;
+  onDelete;
+  getName() {
+    const { name, columns, foreignColumns } = this.reference();
+    const columnNames = columns.map((column) => column.name);
+    const foreignColumnNames = foreignColumns.map((column) => column.name);
+    const chunks = [
+      this.table[TableName],
+      ...columnNames,
+      foreignColumns[0].table[TableName],
+      ...foreignColumnNames
+    ];
+    return name ?? `${chunks.join("_")}_fk`;
+  }
+};
+
+// node_modules/drizzle-orm/tracing-utils.js
+function iife(fn, ...args) {
+  return fn(...args);
+}
+
+// node_modules/drizzle-orm/pg-core/unique-constraint.js
+function uniqueKeyName(table, columns) {
+  return `${table[TableName]}_${columns.join("_")}_unique`;
+}
+var UniqueConstraintBuilder = class {
+  constructor(columns, name) {
+    this.name = name;
+    this.columns = columns;
+  }
+  static [entityKind] = "PgUniqueConstraintBuilder";
+  /** @internal */
+  columns;
+  /** @internal */
+  nullsNotDistinctConfig = false;
+  nullsNotDistinct() {
+    this.nullsNotDistinctConfig = true;
+    return this;
+  }
+  /** @internal */
+  build(table) {
+    return new UniqueConstraint(table, this.columns, this.nullsNotDistinctConfig, this.name);
+  }
+};
+var UniqueOnConstraintBuilder = class {
+  static [entityKind] = "PgUniqueOnConstraintBuilder";
+  /** @internal */
+  name;
+  constructor(name) {
+    this.name = name;
+  }
+  on(...columns) {
+    return new UniqueConstraintBuilder(columns, this.name);
+  }
+};
+var UniqueConstraint = class {
+  constructor(table, columns, nullsNotDistinct, name) {
+    this.table = table;
+    this.columns = columns;
+    this.name = name ?? uniqueKeyName(this.table, this.columns.map((column) => column.name));
+    this.nullsNotDistinct = nullsNotDistinct;
+  }
+  static [entityKind] = "PgUniqueConstraint";
+  columns;
+  name;
+  nullsNotDistinct = false;
+  getName() {
+    return this.name;
+  }
+};
+
+// node_modules/drizzle-orm/pg-core/utils/array.js
+function parsePgArrayValue(arrayString, startFrom, inQuotes) {
+  for (let i = startFrom; i < arrayString.length; i++) {
+    const char2 = arrayString[i];
+    if (char2 === "\\") {
+      i++;
+      continue;
+    }
+    if (char2 === '"') {
+      return [arrayString.slice(startFrom, i).replace(/\\/g, ""), i + 1];
+    }
+    if (inQuotes) {
+      continue;
+    }
+    if (char2 === "," || char2 === "}") {
+      return [arrayString.slice(startFrom, i).replace(/\\/g, ""), i];
+    }
+  }
+  return [arrayString.slice(startFrom).replace(/\\/g, ""), arrayString.length];
+}
+function parsePgNestedArray(arrayString, startFrom = 0) {
+  const result = [];
+  let i = startFrom;
+  let lastCharIsComma = false;
+  while (i < arrayString.length) {
+    const char2 = arrayString[i];
+    if (char2 === ",") {
+      if (lastCharIsComma || i === startFrom) {
+        result.push("");
+      }
+      lastCharIsComma = true;
+      i++;
+      continue;
+    }
+    lastCharIsComma = false;
+    if (char2 === "\\") {
+      i += 2;
+      continue;
+    }
+    if (char2 === '"') {
+      const [value2, startFrom2] = parsePgArrayValue(arrayString, i + 1, true);
+      result.push(value2);
+      i = startFrom2;
+      continue;
+    }
+    if (char2 === "}") {
+      return [result, i + 1];
+    }
+    if (char2 === "{") {
+      const [value2, startFrom2] = parsePgNestedArray(arrayString, i + 1);
+      result.push(value2);
+      i = startFrom2;
+      continue;
+    }
+    const [value, newStartFrom] = parsePgArrayValue(arrayString, i, false);
+    result.push(value);
+    i = newStartFrom;
+  }
+  return [result, i];
+}
+function parsePgArray(arrayString) {
+  const [result] = parsePgNestedArray(arrayString, 1);
+  return result;
+}
+function makePgArray(array) {
+  return `{${array.map((item) => {
+    if (Array.isArray(item)) {
+      return makePgArray(item);
+    }
+    if (typeof item === "string") {
+      return `"${item.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+    }
+    return `${item}`;
+  }).join(",")}}`;
+}
+
+// node_modules/drizzle-orm/pg-core/columns/common.js
+var PgColumnBuilder = class extends ColumnBuilder {
+  foreignKeyConfigs = [];
+  static [entityKind] = "PgColumnBuilder";
+  array(size) {
+    return new PgArrayBuilder(this.config.name, this, size);
+  }
+  references(ref, actions = {}) {
+    this.foreignKeyConfigs.push({ ref, actions });
+    return this;
+  }
+  unique(name, config) {
+    this.config.isUnique = true;
+    this.config.uniqueName = name;
+    this.config.uniqueType = config?.nulls;
+    return this;
+  }
+  generatedAlwaysAs(as) {
+    this.config.generated = {
+      as,
+      type: "always",
+      mode: "stored"
+    };
+    return this;
+  }
+  /** @internal */
+  buildForeignKeys(column, table) {
+    return this.foreignKeyConfigs.map(({ ref, actions }) => {
+      return iife(
+        (ref2, actions2) => {
+          const builder = new ForeignKeyBuilder(() => {
+            const foreignColumn = ref2();
+            return { columns: [column], foreignColumns: [foreignColumn] };
+          });
+          if (actions2.onUpdate) {
+            builder.onUpdate(actions2.onUpdate);
+          }
+          if (actions2.onDelete) {
+            builder.onDelete(actions2.onDelete);
+          }
+          return builder.build(table);
+        },
+        ref,
+        actions
+      );
+    });
+  }
+  /** @internal */
+  buildExtraConfigColumn(table) {
+    return new ExtraConfigColumn(table, this.config);
+  }
+};
+var PgColumn = class extends Column {
+  constructor(table, config) {
+    if (!config.uniqueName) {
+      config.uniqueName = uniqueKeyName(table, [config.name]);
+    }
+    super(table, config);
+    this.table = table;
+  }
+  static [entityKind] = "PgColumn";
+};
+var ExtraConfigColumn = class extends PgColumn {
+  static [entityKind] = "ExtraConfigColumn";
+  getSQLType() {
+    return this.getSQLType();
+  }
+  indexConfig = {
+    order: this.config.order ?? "asc",
+    nulls: this.config.nulls ?? "last",
+    opClass: this.config.opClass
+  };
+  defaultConfig = {
+    order: "asc",
+    nulls: "last",
+    opClass: void 0
+  };
+  asc() {
+    this.indexConfig.order = "asc";
+    return this;
+  }
+  desc() {
+    this.indexConfig.order = "desc";
+    return this;
+  }
+  nullsFirst() {
+    this.indexConfig.nulls = "first";
+    return this;
+  }
+  nullsLast() {
+    this.indexConfig.nulls = "last";
+    return this;
+  }
+  /**
+   * ### PostgreSQL documentation quote
+   *
+   * > An operator class with optional parameters can be specified for each column of an index.
+   * The operator class identifies the operators to be used by the index for that column.
+   * For example, a B-tree index on four-byte integers would use the int4_ops class;
+   * this operator class includes comparison functions for four-byte integers.
+   * In practice the default operator class for the column's data type is usually sufficient.
+   * The main point of having operator classes is that for some data types, there could be more than one meaningful ordering.
+   * For example, we might want to sort a complex-number data type either by absolute value or by real part.
+   * We could do this by defining two operator classes for the data type and then selecting the proper class when creating an index.
+   * More information about operator classes check:
+   *
+   * ### Useful links
+   * https://www.postgresql.org/docs/current/sql-createindex.html
+   *
+   * https://www.postgresql.org/docs/current/indexes-opclass.html
+   *
+   * https://www.postgresql.org/docs/current/xindex.html
+   *
+   * ### Additional types
+   * If you have the `pg_vector` extension installed in your database, you can use the
+   * `vector_l2_ops`, `vector_ip_ops`, `vector_cosine_ops`, `vector_l1_ops`, `bit_hamming_ops`, `bit_jaccard_ops`, `halfvec_l2_ops`, `sparsevec_l2_ops` options, which are predefined types.
+   *
+   * **You can always specify any string you want in the operator class, in case Drizzle doesn't have it natively in its types**
+   *
+   * @param opClass
+   * @returns
+   */
+  op(opClass) {
+    this.indexConfig.opClass = opClass;
+    return this;
+  }
+};
+var IndexedColumn = class {
+  static [entityKind] = "IndexedColumn";
+  constructor(name, keyAsName, type, indexConfig) {
+    this.name = name;
+    this.keyAsName = keyAsName;
+    this.type = type;
+    this.indexConfig = indexConfig;
+  }
+  name;
+  keyAsName;
+  type;
+  indexConfig;
+};
+var PgArrayBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgArrayBuilder";
+  constructor(name, baseBuilder, size) {
+    super(name, "array", "PgArray");
+    this.config.baseBuilder = baseBuilder;
+    this.config.size = size;
+  }
+  /** @internal */
+  build(table) {
+    const baseColumn = this.config.baseBuilder.build(table);
+    return new PgArray(
+      table,
+      this.config,
+      baseColumn
+    );
+  }
+};
+var PgArray = class _PgArray extends PgColumn {
+  constructor(table, config, baseColumn, range) {
+    super(table, config);
+    this.baseColumn = baseColumn;
+    this.range = range;
+    this.size = config.size;
+  }
+  size;
+  static [entityKind] = "PgArray";
+  getSQLType() {
+    return `${this.baseColumn.getSQLType()}[${typeof this.size === "number" ? this.size : ""}]`;
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      value = parsePgArray(value);
+    }
+    return value.map((v) => this.baseColumn.mapFromDriverValue(v));
+  }
+  mapToDriverValue(value, isNestedArray = false) {
+    const a = value.map(
+      (v) => v === null ? null : is(this.baseColumn, _PgArray) ? this.baseColumn.mapToDriverValue(v, true) : this.baseColumn.mapToDriverValue(v)
+    );
+    if (isNestedArray)
+      return a;
+    return makePgArray(a);
+  }
+};
+
+// node_modules/drizzle-orm/pg-core/columns/enum.js
+var isPgEnumSym = Symbol.for("drizzle:isPgEnum");
+function isPgEnum(obj) {
+  return !!obj && typeof obj === "function" && isPgEnumSym in obj && obj[isPgEnumSym] === true;
+}
+var PgEnumColumnBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgEnumColumnBuilder";
+  constructor(name, enumInstance) {
+    super(name, "string", "PgEnumColumn");
+    this.config.enum = enumInstance;
+  }
+  /** @internal */
+  build(table) {
+    return new PgEnumColumn(
+      table,
+      this.config
+    );
+  }
+};
+var PgEnumColumn = class extends PgColumn {
+  static [entityKind] = "PgEnumColumn";
+  enum = this.config.enum;
+  enumValues = this.config.enum.enumValues;
+  constructor(table, config) {
+    super(table, config);
+    this.enum = config.enum;
+  }
+  getSQLType() {
+    return this.enum.enumName;
+  }
+};
+
+// node_modules/drizzle-orm/subquery.js
+var Subquery = class {
+  static [entityKind] = "Subquery";
+  constructor(sql2, selection, alias, isWith = false) {
+    this._ = {
+      brand: "Subquery",
+      sql: sql2,
+      selectedFields: selection,
+      alias,
+      isWith
+    };
+  }
+  // getSQL(): SQL<unknown> {
+  // 	return new SQL([this]);
+  // }
+};
+var WithSubquery = class extends Subquery {
+  static [entityKind] = "WithSubquery";
+};
+
+// node_modules/drizzle-orm/version.js
+var version = "0.39.1";
+
+// node_modules/drizzle-orm/tracing.js
+var otel;
+var rawTracer;
+var tracer = {
+  startActiveSpan(name, fn) {
+    if (!otel) {
+      return fn();
+    }
+    if (!rawTracer) {
+      rawTracer = otel.trace.getTracer("drizzle-orm", version);
+    }
+    return iife(
+      (otel2, rawTracer2) => rawTracer2.startActiveSpan(
+        name,
+        (span) => {
+          try {
+            return fn(span);
+          } catch (e) {
+            span.setStatus({
+              code: otel2.SpanStatusCode.ERROR,
+              message: e instanceof Error ? e.message : "Unknown error"
+              // eslint-disable-line no-instanceof/no-instanceof
+            });
+            throw e;
+          } finally {
+            span.end();
+          }
+        }
+      ),
+      otel,
+      rawTracer
+    );
+  }
+};
+
+// node_modules/drizzle-orm/view-common.js
+var ViewBaseConfig = Symbol.for("drizzle:ViewBaseConfig");
+
+// node_modules/drizzle-orm/table.js
+var Schema = Symbol.for("drizzle:Schema");
+var Columns = Symbol.for("drizzle:Columns");
+var ExtraConfigColumns = Symbol.for("drizzle:ExtraConfigColumns");
+var OriginalName = Symbol.for("drizzle:OriginalName");
+var BaseName = Symbol.for("drizzle:BaseName");
+var IsAlias = Symbol.for("drizzle:IsAlias");
+var ExtraConfigBuilder = Symbol.for("drizzle:ExtraConfigBuilder");
+var IsDrizzleTable = Symbol.for("drizzle:IsDrizzleTable");
+var Table = class {
+  static [entityKind] = "Table";
+  /** @internal */
+  static Symbol = {
+    Name: TableName,
+    Schema,
+    OriginalName,
+    Columns,
+    ExtraConfigColumns,
+    BaseName,
+    IsAlias,
+    ExtraConfigBuilder
+  };
+  /**
+   * @internal
+   * Can be changed if the table is aliased.
+   */
+  [TableName];
+  /**
+   * @internal
+   * Used to store the original name of the table, before any aliasing.
+   */
+  [OriginalName];
+  /** @internal */
+  [Schema];
+  /** @internal */
+  [Columns];
+  /** @internal */
+  [ExtraConfigColumns];
+  /**
+   *  @internal
+   * Used to store the table name before the transformation via the `tableCreator` functions.
+   */
+  [BaseName];
+  /** @internal */
+  [IsAlias] = false;
+  /** @internal */
+  [IsDrizzleTable] = true;
+  /** @internal */
+  [ExtraConfigBuilder] = void 0;
+  constructor(name, schema, baseName) {
+    this[TableName] = this[OriginalName] = name;
+    this[Schema] = schema;
+    this[BaseName] = baseName;
+  }
+};
+function isTable(table) {
+  return typeof table === "object" && table !== null && IsDrizzleTable in table;
+}
+
+// node_modules/drizzle-orm/sql/sql.js
+var FakePrimitiveParam = class {
+  static [entityKind] = "FakePrimitiveParam";
+};
+function isSQLWrapper(value) {
+  return value !== null && value !== void 0 && typeof value.getSQL === "function";
+}
+function mergeQueries(queries) {
+  const result = { sql: "", params: [] };
+  for (const query of queries) {
+    result.sql += query.sql;
+    result.params.push(...query.params);
+    if (query.typings?.length) {
+      if (!result.typings) {
+        result.typings = [];
+      }
+      result.typings.push(...query.typings);
+    }
+  }
+  return result;
+}
+var StringChunk = class {
+  static [entityKind] = "StringChunk";
+  value;
+  constructor(value) {
+    this.value = Array.isArray(value) ? value : [value];
+  }
+  getSQL() {
+    return new SQL([this]);
+  }
+};
+var SQL = class _SQL {
+  constructor(queryChunks) {
+    this.queryChunks = queryChunks;
+  }
+  static [entityKind] = "SQL";
+  /** @internal */
+  decoder = noopDecoder;
+  shouldInlineParams = false;
+  append(query) {
+    this.queryChunks.push(...query.queryChunks);
+    return this;
+  }
+  toQuery(config) {
+    return tracer.startActiveSpan("drizzle.buildSQL", (span) => {
+      const query = this.buildQueryFromSourceParams(this.queryChunks, config);
+      span?.setAttributes({
+        "drizzle.query.text": query.sql,
+        "drizzle.query.params": JSON.stringify(query.params)
+      });
+      return query;
+    });
+  }
+  buildQueryFromSourceParams(chunks, _config) {
+    const config = Object.assign({}, _config, {
+      inlineParams: _config.inlineParams || this.shouldInlineParams,
+      paramStartIndex: _config.paramStartIndex || { value: 0 }
+    });
+    const {
+      casing,
+      escapeName,
+      escapeParam,
+      prepareTyping,
+      inlineParams,
+      paramStartIndex
+    } = config;
+    return mergeQueries(chunks.map((chunk) => {
+      if (is(chunk, StringChunk)) {
+        return { sql: chunk.value.join(""), params: [] };
+      }
+      if (is(chunk, Name)) {
+        return { sql: escapeName(chunk.value), params: [] };
+      }
+      if (chunk === void 0) {
+        return { sql: "", params: [] };
+      }
+      if (Array.isArray(chunk)) {
+        const result = [new StringChunk("(")];
+        for (const [i, p] of chunk.entries()) {
+          result.push(p);
+          if (i < chunk.length - 1) {
+            result.push(new StringChunk(", "));
+          }
+        }
+        result.push(new StringChunk(")"));
+        return this.buildQueryFromSourceParams(result, config);
+      }
+      if (is(chunk, _SQL)) {
+        return this.buildQueryFromSourceParams(chunk.queryChunks, {
+          ...config,
+          inlineParams: inlineParams || chunk.shouldInlineParams
+        });
+      }
+      if (is(chunk, Table)) {
+        const schemaName = chunk[Table.Symbol.Schema];
+        const tableName = chunk[Table.Symbol.Name];
+        return {
+          sql: schemaName === void 0 || chunk[IsAlias] ? escapeName(tableName) : escapeName(schemaName) + "." + escapeName(tableName),
+          params: []
+        };
+      }
+      if (is(chunk, Column)) {
+        const columnName = casing.getColumnCasing(chunk);
+        if (_config.invokeSource === "indexes") {
+          return { sql: escapeName(columnName), params: [] };
+        }
+        const schemaName = chunk.table[Table.Symbol.Schema];
+        return {
+          sql: chunk.table[IsAlias] || schemaName === void 0 ? escapeName(chunk.table[Table.Symbol.Name]) + "." + escapeName(columnName) : escapeName(schemaName) + "." + escapeName(chunk.table[Table.Symbol.Name]) + "." + escapeName(columnName),
+          params: []
+        };
+      }
+      if (is(chunk, View)) {
+        const schemaName = chunk[ViewBaseConfig].schema;
+        const viewName = chunk[ViewBaseConfig].name;
+        return {
+          sql: schemaName === void 0 || chunk[ViewBaseConfig].isAlias ? escapeName(viewName) : escapeName(schemaName) + "." + escapeName(viewName),
+          params: []
+        };
+      }
+      if (is(chunk, Param)) {
+        if (is(chunk.value, Placeholder)) {
+          return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+        }
+        const mappedValue = chunk.value === null ? null : chunk.encoder.mapToDriverValue(chunk.value);
+        if (is(mappedValue, _SQL)) {
+          return this.buildQueryFromSourceParams([mappedValue], config);
+        }
+        if (inlineParams) {
+          return { sql: this.mapInlineParam(mappedValue, config), params: [] };
+        }
+        let typings = ["none"];
+        if (prepareTyping) {
+          typings = [prepareTyping(chunk.encoder)];
+        }
+        return { sql: escapeParam(paramStartIndex.value++, mappedValue), params: [mappedValue], typings };
+      }
+      if (is(chunk, Placeholder)) {
+        return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+      }
+      if (is(chunk, _SQL.Aliased) && chunk.fieldAlias !== void 0) {
+        return { sql: escapeName(chunk.fieldAlias), params: [] };
+      }
+      if (is(chunk, Subquery)) {
+        if (chunk._.isWith) {
+          return { sql: escapeName(chunk._.alias), params: [] };
+        }
+        return this.buildQueryFromSourceParams([
+          new StringChunk("("),
+          chunk._.sql,
+          new StringChunk(") "),
+          new Name(chunk._.alias)
+        ], config);
+      }
+      if (isPgEnum(chunk)) {
+        if (chunk.schema) {
+          return { sql: escapeName(chunk.schema) + "." + escapeName(chunk.enumName), params: [] };
+        }
+        return { sql: escapeName(chunk.enumName), params: [] };
+      }
+      if (isSQLWrapper(chunk)) {
+        if (chunk.shouldOmitSQLParens?.()) {
+          return this.buildQueryFromSourceParams([chunk.getSQL()], config);
+        }
+        return this.buildQueryFromSourceParams([
+          new StringChunk("("),
+          chunk.getSQL(),
+          new StringChunk(")")
+        ], config);
+      }
+      if (inlineParams) {
+        return { sql: this.mapInlineParam(chunk, config), params: [] };
+      }
+      return { sql: escapeParam(paramStartIndex.value++, chunk), params: [chunk], typings: ["none"] };
+    }));
+  }
+  mapInlineParam(chunk, { escapeString }) {
+    if (chunk === null) {
+      return "null";
+    }
+    if (typeof chunk === "number" || typeof chunk === "boolean") {
+      return chunk.toString();
+    }
+    if (typeof chunk === "string") {
+      return escapeString(chunk);
+    }
+    if (typeof chunk === "object") {
+      const mappedValueAsString = chunk.toString();
+      if (mappedValueAsString === "[object Object]") {
+        return escapeString(JSON.stringify(chunk));
+      }
+      return escapeString(mappedValueAsString);
+    }
+    throw new Error("Unexpected param value: " + chunk);
+  }
+  getSQL() {
+    return this;
+  }
+  as(alias) {
+    if (alias === void 0) {
+      return this;
+    }
+    return new _SQL.Aliased(this, alias);
+  }
+  mapWith(decoder) {
+    this.decoder = typeof decoder === "function" ? { mapFromDriverValue: decoder } : decoder;
+    return this;
+  }
+  inlineParams() {
+    this.shouldInlineParams = true;
+    return this;
+  }
+  /**
+   * This method is used to conditionally include a part of the query.
+   *
+   * @param condition - Condition to check
+   * @returns itself if the condition is `true`, otherwise `undefined`
+   */
+  if(condition) {
+    return condition ? this : void 0;
+  }
+};
+var Name = class {
+  constructor(value) {
+    this.value = value;
+  }
+  static [entityKind] = "Name";
+  brand;
+  getSQL() {
+    return new SQL([this]);
+  }
+};
+var noopDecoder = {
+  mapFromDriverValue: (value) => value
+};
+var noopEncoder = {
+  mapToDriverValue: (value) => value
+};
+var noopMapper = {
+  ...noopDecoder,
+  ...noopEncoder
+};
+var Param = class {
+  /**
+   * @param value - Parameter value
+   * @param encoder - Encoder to convert the value to a driver parameter
+   */
+  constructor(value, encoder = noopEncoder) {
+    this.value = value;
+    this.encoder = encoder;
+  }
+  static [entityKind] = "Param";
+  brand;
+  getSQL() {
+    return new SQL([this]);
+  }
+};
+function sql(strings, ...params) {
+  const queryChunks = [];
+  if (params.length > 0 || strings.length > 0 && strings[0] !== "") {
+    queryChunks.push(new StringChunk(strings[0]));
+  }
+  for (const [paramIndex, param2] of params.entries()) {
+    queryChunks.push(param2, new StringChunk(strings[paramIndex + 1]));
+  }
+  return new SQL(queryChunks);
+}
+((sql2) => {
+  function empty() {
+    return new SQL([]);
+  }
+  sql2.empty = empty;
+  function fromList(list) {
+    return new SQL(list);
+  }
+  sql2.fromList = fromList;
+  function raw(str2) {
+    return new SQL([new StringChunk(str2)]);
+  }
+  sql2.raw = raw;
+  function join(chunks, separator) {
+    const result = [];
+    for (const [i, chunk] of chunks.entries()) {
+      if (i > 0 && separator !== void 0) {
+        result.push(separator);
+      }
+      result.push(chunk);
+    }
+    return new SQL(result);
+  }
+  sql2.join = join;
+  function identifier(value) {
+    return new Name(value);
+  }
+  sql2.identifier = identifier;
+  function placeholder2(name2) {
+    return new Placeholder(name2);
+  }
+  sql2.placeholder = placeholder2;
+  function param2(value, encoder) {
+    return new Param(value, encoder);
+  }
+  sql2.param = param2;
+})(sql || (sql = {}));
+((SQL2) => {
+  class Aliased {
+    constructor(sql2, fieldAlias) {
+      this.sql = sql2;
+      this.fieldAlias = fieldAlias;
+    }
+    static [entityKind] = "SQL.Aliased";
+    /** @internal */
+    isSelectionField = false;
+    getSQL() {
+      return this.sql;
+    }
+    /** @internal */
+    clone() {
+      return new Aliased(this.sql, this.fieldAlias);
+    }
+  }
+  SQL2.Aliased = Aliased;
+})(SQL || (SQL = {}));
+var Placeholder = class {
+  constructor(name2) {
+    this.name = name2;
+  }
+  static [entityKind] = "Placeholder";
+  getSQL() {
+    return new SQL([this]);
+  }
+};
+var IsDrizzleView = Symbol.for("drizzle:IsDrizzleView");
+var View = class {
+  static [entityKind] = "View";
+  /** @internal */
+  [ViewBaseConfig];
+  /** @internal */
+  [IsDrizzleView] = true;
+  constructor({ name: name2, schema, selectedFields, query }) {
+    this[ViewBaseConfig] = {
+      name: name2,
+      originalName: name2,
+      schema,
+      selectedFields,
+      query,
+      isExisting: !query,
+      isAlias: false
+    };
+  }
+  getSQL() {
+    return new SQL([this]);
+  }
+};
+function isView(view) {
+  return typeof view === "object" && view !== null && IsDrizzleView in view;
+}
+Column.prototype.getSQL = function() {
+  return new SQL([this]);
+};
+Table.prototype.getSQL = function() {
+  return new SQL([this]);
+};
+Subquery.prototype.getSQL = function() {
+  return new SQL([this]);
+};
+
+// node_modules/drizzle-orm/utils.js
+function getTableColumns(table) {
+  return table[Table.Symbol.Columns];
+}
+function getViewSelectedFields(view) {
+  return view[ViewBaseConfig].selectedFields;
+}
+function getColumnNameAndConfig(a, b) {
+  return {
+    name: typeof a === "string" && a.length > 0 ? a : "",
+    config: typeof a === "object" ? a : b
+  };
+}
+
+// node_modules/drizzle-orm/pg-core/columns/int.common.js
+var PgIntColumnBaseBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgIntColumnBaseBuilder";
+  generatedAlwaysAsIdentity(sequence) {
+    if (sequence) {
+      const { name, ...options } = sequence;
+      this.config.generatedIdentity = {
+        type: "always",
+        sequenceName: name,
+        sequenceOptions: options
+      };
+    } else {
+      this.config.generatedIdentity = {
+        type: "always"
+      };
+    }
+    this.config.hasDefault = true;
+    this.config.notNull = true;
+    return this;
+  }
+  generatedByDefaultAsIdentity(sequence) {
+    if (sequence) {
+      const { name, ...options } = sequence;
+      this.config.generatedIdentity = {
+        type: "byDefault",
+        sequenceName: name,
+        sequenceOptions: options
+      };
+    } else {
+      this.config.generatedIdentity = {
+        type: "byDefault"
+      };
+    }
+    this.config.hasDefault = true;
+    this.config.notNull = true;
+    return this;
+  }
+};
+
+// node_modules/drizzle-orm/pg-core/columns/bigint.js
+var PgBigInt53Builder = class extends PgIntColumnBaseBuilder {
+  static [entityKind] = "PgBigInt53Builder";
+  constructor(name) {
+    super(name, "number", "PgBigInt53");
+  }
+  /** @internal */
+  build(table) {
+    return new PgBigInt53(table, this.config);
+  }
+};
+var PgBigInt53 = class extends PgColumn {
+  static [entityKind] = "PgBigInt53";
+  getSQLType() {
+    return "bigint";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "number") {
+      return value;
+    }
+    return Number(value);
+  }
+};
+var PgBigInt64Builder = class extends PgIntColumnBaseBuilder {
+  static [entityKind] = "PgBigInt64Builder";
+  constructor(name) {
+    super(name, "bigint", "PgBigInt64");
+  }
+  /** @internal */
+  build(table) {
+    return new PgBigInt64(
+      table,
+      this.config
+    );
+  }
+};
+var PgBigInt64 = class extends PgColumn {
+  static [entityKind] = "PgBigInt64";
+  getSQLType() {
+    return "bigint";
+  }
+  // eslint-disable-next-line unicorn/prefer-native-coercion-functions
+  mapFromDriverValue(value) {
+    return BigInt(value);
+  }
+};
+function bigint(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config.mode === "number") {
+    return new PgBigInt53Builder(name);
+  }
+  return new PgBigInt64Builder(name);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/bigserial.js
+var PgBigSerial53Builder = class extends PgColumnBuilder {
+  static [entityKind] = "PgBigSerial53Builder";
+  constructor(name) {
+    super(name, "number", "PgBigSerial53");
+    this.config.hasDefault = true;
+    this.config.notNull = true;
+  }
+  /** @internal */
+  build(table) {
+    return new PgBigSerial53(
+      table,
+      this.config
+    );
+  }
+};
+var PgBigSerial53 = class extends PgColumn {
+  static [entityKind] = "PgBigSerial53";
+  getSQLType() {
+    return "bigserial";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "number") {
+      return value;
+    }
+    return Number(value);
+  }
+};
+var PgBigSerial64Builder = class extends PgColumnBuilder {
+  static [entityKind] = "PgBigSerial64Builder";
+  constructor(name) {
+    super(name, "bigint", "PgBigSerial64");
+    this.config.hasDefault = true;
+  }
+  /** @internal */
+  build(table) {
+    return new PgBigSerial64(
+      table,
+      this.config
+    );
+  }
+};
+var PgBigSerial64 = class extends PgColumn {
+  static [entityKind] = "PgBigSerial64";
+  getSQLType() {
+    return "bigserial";
+  }
+  // eslint-disable-next-line unicorn/prefer-native-coercion-functions
+  mapFromDriverValue(value) {
+    return BigInt(value);
+  }
+};
+function bigserial(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config.mode === "number") {
+    return new PgBigSerial53Builder(name);
+  }
+  return new PgBigSerial64Builder(name);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/boolean.js
+var PgBooleanBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgBooleanBuilder";
+  constructor(name) {
+    super(name, "boolean", "PgBoolean");
+  }
+  /** @internal */
+  build(table) {
+    return new PgBoolean(table, this.config);
+  }
+};
+var PgBoolean = class extends PgColumn {
+  static [entityKind] = "PgBoolean";
+  getSQLType() {
+    return "boolean";
+  }
+};
+function boolean(name) {
+  return new PgBooleanBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/char.js
+var PgCharBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgCharBuilder";
+  constructor(name, config) {
+    super(name, "string", "PgChar");
+    this.config.length = config.length;
+    this.config.enumValues = config.enum;
+  }
+  /** @internal */
+  build(table) {
+    return new PgChar(
+      table,
+      this.config
+    );
+  }
+};
+var PgChar = class extends PgColumn {
+  static [entityKind] = "PgChar";
+  length = this.config.length;
+  enumValues = this.config.enumValues;
+  getSQLType() {
+    return this.length === void 0 ? `char` : `char(${this.length})`;
+  }
+};
+function char(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgCharBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/cidr.js
+var PgCidrBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgCidrBuilder";
+  constructor(name) {
+    super(name, "string", "PgCidr");
+  }
+  /** @internal */
+  build(table) {
+    return new PgCidr(table, this.config);
+  }
+};
+var PgCidr = class extends PgColumn {
+  static [entityKind] = "PgCidr";
+  getSQLType() {
+    return "cidr";
+  }
+};
+function cidr(name) {
+  return new PgCidrBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/custom.js
+var PgCustomColumnBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgCustomColumnBuilder";
+  constructor(name, fieldConfig, customTypeParams) {
+    super(name, "custom", "PgCustomColumn");
+    this.config.fieldConfig = fieldConfig;
+    this.config.customTypeParams = customTypeParams;
+  }
+  /** @internal */
+  build(table) {
+    return new PgCustomColumn(
+      table,
+      this.config
+    );
+  }
+};
+var PgCustomColumn = class extends PgColumn {
+  static [entityKind] = "PgCustomColumn";
+  sqlName;
+  mapTo;
+  mapFrom;
+  constructor(table, config) {
+    super(table, config);
+    this.sqlName = config.customTypeParams.dataType(config.fieldConfig);
+    this.mapTo = config.customTypeParams.toDriver;
+    this.mapFrom = config.customTypeParams.fromDriver;
+  }
+  getSQLType() {
+    return this.sqlName;
+  }
+  mapFromDriverValue(value) {
+    return typeof this.mapFrom === "function" ? this.mapFrom(value) : value;
+  }
+  mapToDriverValue(value) {
+    return typeof this.mapTo === "function" ? this.mapTo(value) : value;
+  }
+};
+function customType(customTypeParams) {
+  return (a, b) => {
+    const { name, config } = getColumnNameAndConfig(a, b);
+    return new PgCustomColumnBuilder(name, config, customTypeParams);
+  };
+}
+
+// node_modules/drizzle-orm/pg-core/columns/date.common.js
+var PgDateColumnBaseBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgDateColumnBaseBuilder";
+  defaultNow() {
+    return this.default(sql`now()`);
+  }
+};
+
+// node_modules/drizzle-orm/pg-core/columns/date.js
+var PgDateBuilder = class extends PgDateColumnBaseBuilder {
+  static [entityKind] = "PgDateBuilder";
+  constructor(name) {
+    super(name, "date", "PgDate");
+  }
+  /** @internal */
+  build(table) {
+    return new PgDate(table, this.config);
+  }
+};
+var PgDate = class extends PgColumn {
+  static [entityKind] = "PgDate";
+  getSQLType() {
+    return "date";
+  }
+  mapFromDriverValue(value) {
+    return new Date(value);
+  }
+  mapToDriverValue(value) {
+    return value.toISOString();
+  }
+};
+var PgDateStringBuilder = class extends PgDateColumnBaseBuilder {
+  static [entityKind] = "PgDateStringBuilder";
+  constructor(name) {
+    super(name, "string", "PgDateString");
+  }
+  /** @internal */
+  build(table) {
+    return new PgDateString(
+      table,
+      this.config
+    );
+  }
+};
+var PgDateString = class extends PgColumn {
+  static [entityKind] = "PgDateString";
+  getSQLType() {
+    return "date";
+  }
+};
+function date(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config?.mode === "date") {
+    return new PgDateBuilder(name);
+  }
+  return new PgDateStringBuilder(name);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/double-precision.js
+var PgDoublePrecisionBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgDoublePrecisionBuilder";
+  constructor(name) {
+    super(name, "number", "PgDoublePrecision");
+  }
+  /** @internal */
+  build(table) {
+    return new PgDoublePrecision(
+      table,
+      this.config
+    );
+  }
+};
+var PgDoublePrecision = class extends PgColumn {
+  static [entityKind] = "PgDoublePrecision";
+  getSQLType() {
+    return "double precision";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      return Number.parseFloat(value);
+    }
+    return value;
+  }
+};
+function doublePrecision(name) {
+  return new PgDoublePrecisionBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/inet.js
+var PgInetBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgInetBuilder";
+  constructor(name) {
+    super(name, "string", "PgInet");
+  }
+  /** @internal */
+  build(table) {
+    return new PgInet(table, this.config);
+  }
+};
+var PgInet = class extends PgColumn {
+  static [entityKind] = "PgInet";
+  getSQLType() {
+    return "inet";
+  }
+};
+function inet(name) {
+  return new PgInetBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/integer.js
+var PgIntegerBuilder = class extends PgIntColumnBaseBuilder {
+  static [entityKind] = "PgIntegerBuilder";
+  constructor(name) {
+    super(name, "number", "PgInteger");
+  }
+  /** @internal */
+  build(table) {
+    return new PgInteger(table, this.config);
+  }
+};
+var PgInteger = class extends PgColumn {
+  static [entityKind] = "PgInteger";
+  getSQLType() {
+    return "integer";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      return Number.parseInt(value);
+    }
+    return value;
+  }
+};
+function integer(name) {
+  return new PgIntegerBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/interval.js
+var PgIntervalBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgIntervalBuilder";
+  constructor(name, intervalConfig) {
+    super(name, "string", "PgInterval");
+    this.config.intervalConfig = intervalConfig;
+  }
+  /** @internal */
+  build(table) {
+    return new PgInterval(table, this.config);
+  }
+};
+var PgInterval = class extends PgColumn {
+  static [entityKind] = "PgInterval";
+  fields = this.config.intervalConfig.fields;
+  precision = this.config.intervalConfig.precision;
+  getSQLType() {
+    const fields = this.fields ? ` ${this.fields}` : "";
+    const precision = this.precision ? `(${this.precision})` : "";
+    return `interval${fields}${precision}`;
+  }
+};
+function interval(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgIntervalBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/json.js
+var PgJsonBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgJsonBuilder";
+  constructor(name) {
+    super(name, "json", "PgJson");
+  }
+  /** @internal */
+  build(table) {
+    return new PgJson(table, this.config);
+  }
+};
+var PgJson = class extends PgColumn {
+  static [entityKind] = "PgJson";
+  constructor(table, config) {
+    super(table, config);
+  }
+  getSQLType() {
+    return "json";
+  }
+  mapToDriverValue(value) {
+    return JSON.stringify(value);
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+};
+function json(name) {
+  return new PgJsonBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/jsonb.js
+var PgJsonbBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgJsonbBuilder";
+  constructor(name) {
+    super(name, "json", "PgJsonb");
+  }
+  /** @internal */
+  build(table) {
+    return new PgJsonb(table, this.config);
+  }
+};
+var PgJsonb = class extends PgColumn {
+  static [entityKind] = "PgJsonb";
+  constructor(table, config) {
+    super(table, config);
+  }
+  getSQLType() {
+    return "jsonb";
+  }
+  mapToDriverValue(value) {
+    return JSON.stringify(value);
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+};
+function jsonb(name) {
+  return new PgJsonbBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/line.js
+var PgLineBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgLineBuilder";
+  constructor(name) {
+    super(name, "array", "PgLine");
+  }
+  /** @internal */
+  build(table) {
+    return new PgLineTuple(
+      table,
+      this.config
+    );
+  }
+};
+var PgLineTuple = class extends PgColumn {
+  static [entityKind] = "PgLine";
+  getSQLType() {
+    return "line";
+  }
+  mapFromDriverValue(value) {
+    const [a, b, c] = value.slice(1, -1).split(",");
+    return [Number.parseFloat(a), Number.parseFloat(b), Number.parseFloat(c)];
+  }
+  mapToDriverValue(value) {
+    return `{${value[0]},${value[1]},${value[2]}}`;
+  }
+};
+var PgLineABCBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgLineABCBuilder";
+  constructor(name) {
+    super(name, "json", "PgLineABC");
+  }
+  /** @internal */
+  build(table) {
+    return new PgLineABC(
+      table,
+      this.config
+    );
+  }
+};
+var PgLineABC = class extends PgColumn {
+  static [entityKind] = "PgLineABC";
+  getSQLType() {
+    return "line";
+  }
+  mapFromDriverValue(value) {
+    const [a, b, c] = value.slice(1, -1).split(",");
+    return { a: Number.parseFloat(a), b: Number.parseFloat(b), c: Number.parseFloat(c) };
+  }
+  mapToDriverValue(value) {
+    return `{${value.a},${value.b},${value.c}}`;
+  }
+};
+function line(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (!config?.mode || config.mode === "tuple") {
+    return new PgLineBuilder(name);
+  }
+  return new PgLineABCBuilder(name);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/macaddr.js
+var PgMacaddrBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgMacaddrBuilder";
+  constructor(name) {
+    super(name, "string", "PgMacaddr");
+  }
+  /** @internal */
+  build(table) {
+    return new PgMacaddr(table, this.config);
+  }
+};
+var PgMacaddr = class extends PgColumn {
+  static [entityKind] = "PgMacaddr";
+  getSQLType() {
+    return "macaddr";
+  }
+};
+function macaddr(name) {
+  return new PgMacaddrBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/macaddr8.js
+var PgMacaddr8Builder = class extends PgColumnBuilder {
+  static [entityKind] = "PgMacaddr8Builder";
+  constructor(name) {
+    super(name, "string", "PgMacaddr8");
+  }
+  /** @internal */
+  build(table) {
+    return new PgMacaddr8(table, this.config);
+  }
+};
+var PgMacaddr8 = class extends PgColumn {
+  static [entityKind] = "PgMacaddr8";
+  getSQLType() {
+    return "macaddr8";
+  }
+};
+function macaddr8(name) {
+  return new PgMacaddr8Builder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/numeric.js
+var PgNumericBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgNumericBuilder";
+  constructor(name, precision, scale) {
+    super(name, "string", "PgNumeric");
+    this.config.precision = precision;
+    this.config.scale = scale;
+  }
+  /** @internal */
+  build(table) {
+    return new PgNumeric(table, this.config);
+  }
+};
+var PgNumeric = class extends PgColumn {
+  static [entityKind] = "PgNumeric";
+  precision;
+  scale;
+  constructor(table, config) {
+    super(table, config);
+    this.precision = config.precision;
+    this.scale = config.scale;
+  }
+  getSQLType() {
+    if (this.precision !== void 0 && this.scale !== void 0) {
+      return `numeric(${this.precision}, ${this.scale})`;
+    } else if (this.precision === void 0) {
+      return "numeric";
+    } else {
+      return `numeric(${this.precision})`;
+    }
+  }
+};
+function numeric(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgNumericBuilder(name, config?.precision, config?.scale);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/point.js
+var PgPointTupleBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgPointTupleBuilder";
+  constructor(name) {
+    super(name, "array", "PgPointTuple");
+  }
+  /** @internal */
+  build(table) {
+    return new PgPointTuple(
+      table,
+      this.config
+    );
+  }
+};
+var PgPointTuple = class extends PgColumn {
+  static [entityKind] = "PgPointTuple";
+  getSQLType() {
+    return "point";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      const [x, y] = value.slice(1, -1).split(",");
+      return [Number.parseFloat(x), Number.parseFloat(y)];
+    }
+    return [value.x, value.y];
+  }
+  mapToDriverValue(value) {
+    return `(${value[0]},${value[1]})`;
+  }
+};
+var PgPointObjectBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgPointObjectBuilder";
+  constructor(name) {
+    super(name, "json", "PgPointObject");
+  }
+  /** @internal */
+  build(table) {
+    return new PgPointObject(
+      table,
+      this.config
+    );
+  }
+};
+var PgPointObject = class extends PgColumn {
+  static [entityKind] = "PgPointObject";
+  getSQLType() {
+    return "point";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      const [x, y] = value.slice(1, -1).split(",");
+      return { x: Number.parseFloat(x), y: Number.parseFloat(y) };
+    }
+    return value;
+  }
+  mapToDriverValue(value) {
+    return `(${value.x},${value.y})`;
+  }
+};
+function point(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (!config?.mode || config.mode === "tuple") {
+    return new PgPointTupleBuilder(name);
+  }
+  return new PgPointObjectBuilder(name);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/postgis_extension/utils.js
+function hexToBytes(hex) {
+  const bytes = [];
+  for (let c = 0; c < hex.length; c += 2) {
+    bytes.push(Number.parseInt(hex.slice(c, c + 2), 16));
+  }
+  return new Uint8Array(bytes);
+}
+function bytesToFloat64(bytes, offset) {
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+  for (let i = 0; i < 8; i++) {
+    view.setUint8(i, bytes[offset + i]);
+  }
+  return view.getFloat64(0, true);
+}
+function parseEWKB(hex) {
+  const bytes = hexToBytes(hex);
+  let offset = 0;
+  const byteOrder = bytes[offset];
+  offset += 1;
+  const view = new DataView(bytes.buffer);
+  const geomType = view.getUint32(offset, byteOrder === 1);
+  offset += 4;
+  let _srid;
+  if (geomType & 536870912) {
+    _srid = view.getUint32(offset, byteOrder === 1);
+    offset += 4;
+  }
+  if ((geomType & 65535) === 1) {
+    const x = bytesToFloat64(bytes, offset);
+    offset += 8;
+    const y = bytesToFloat64(bytes, offset);
+    offset += 8;
+    return [x, y];
+  }
+  throw new Error("Unsupported geometry type");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/postgis_extension/geometry.js
+var PgGeometryBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgGeometryBuilder";
+  constructor(name) {
+    super(name, "array", "PgGeometry");
+  }
+  /** @internal */
+  build(table) {
+    return new PgGeometry(
+      table,
+      this.config
+    );
+  }
+};
+var PgGeometry = class extends PgColumn {
+  static [entityKind] = "PgGeometry";
+  getSQLType() {
+    return "geometry(point)";
+  }
+  mapFromDriverValue(value) {
+    return parseEWKB(value);
+  }
+  mapToDriverValue(value) {
+    return `point(${value[0]} ${value[1]})`;
+  }
+};
+var PgGeometryObjectBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgGeometryObjectBuilder";
+  constructor(name) {
+    super(name, "json", "PgGeometryObject");
+  }
+  /** @internal */
+  build(table) {
+    return new PgGeometryObject(
+      table,
+      this.config
+    );
+  }
+};
+var PgGeometryObject = class extends PgColumn {
+  static [entityKind] = "PgGeometryObject";
+  getSQLType() {
+    return "geometry(point)";
+  }
+  mapFromDriverValue(value) {
+    const parsed = parseEWKB(value);
+    return { x: parsed[0], y: parsed[1] };
+  }
+  mapToDriverValue(value) {
+    return `point(${value.x} ${value.y})`;
+  }
+};
+function geometry(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (!config?.mode || config.mode === "tuple") {
+    return new PgGeometryBuilder(name);
+  }
+  return new PgGeometryObjectBuilder(name);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/real.js
+var PgRealBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgRealBuilder";
+  constructor(name, length) {
+    super(name, "number", "PgReal");
+    this.config.length = length;
+  }
+  /** @internal */
+  build(table) {
+    return new PgReal(table, this.config);
+  }
+};
+var PgReal = class extends PgColumn {
+  static [entityKind] = "PgReal";
+  constructor(table, config) {
+    super(table, config);
+  }
+  getSQLType() {
+    return "real";
+  }
+  mapFromDriverValue = (value) => {
+    if (typeof value === "string") {
+      return Number.parseFloat(value);
+    }
+    return value;
+  };
+};
+function real(name) {
+  return new PgRealBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/serial.js
+var PgSerialBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgSerialBuilder";
+  constructor(name) {
+    super(name, "number", "PgSerial");
+    this.config.hasDefault = true;
+    this.config.notNull = true;
+  }
+  /** @internal */
+  build(table) {
+    return new PgSerial(table, this.config);
+  }
+};
+var PgSerial = class extends PgColumn {
+  static [entityKind] = "PgSerial";
+  getSQLType() {
+    return "serial";
+  }
+};
+function serial(name) {
+  return new PgSerialBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/smallint.js
+var PgSmallIntBuilder = class extends PgIntColumnBaseBuilder {
+  static [entityKind] = "PgSmallIntBuilder";
+  constructor(name) {
+    super(name, "number", "PgSmallInt");
+  }
+  /** @internal */
+  build(table) {
+    return new PgSmallInt(table, this.config);
+  }
+};
+var PgSmallInt = class extends PgColumn {
+  static [entityKind] = "PgSmallInt";
+  getSQLType() {
+    return "smallint";
+  }
+  mapFromDriverValue = (value) => {
+    if (typeof value === "string") {
+      return Number(value);
+    }
+    return value;
+  };
+};
+function smallint(name) {
+  return new PgSmallIntBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/smallserial.js
+var PgSmallSerialBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgSmallSerialBuilder";
+  constructor(name) {
+    super(name, "number", "PgSmallSerial");
+    this.config.hasDefault = true;
+    this.config.notNull = true;
+  }
+  /** @internal */
+  build(table) {
+    return new PgSmallSerial(
+      table,
+      this.config
+    );
+  }
+};
+var PgSmallSerial = class extends PgColumn {
+  static [entityKind] = "PgSmallSerial";
+  getSQLType() {
+    return "smallserial";
+  }
+};
+function smallserial(name) {
+  return new PgSmallSerialBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/text.js
+var PgTextBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgTextBuilder";
+  constructor(name, config) {
+    super(name, "string", "PgText");
+    this.config.enumValues = config.enum;
+  }
+  /** @internal */
+  build(table) {
+    return new PgText(table, this.config);
+  }
+};
+var PgText = class extends PgColumn {
+  static [entityKind] = "PgText";
+  enumValues = this.config.enumValues;
+  getSQLType() {
+    return "text";
+  }
+};
+function text(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgTextBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/time.js
+var PgTimeBuilder = class extends PgDateColumnBaseBuilder {
+  constructor(name, withTimezone, precision) {
+    super(name, "string", "PgTime");
+    this.withTimezone = withTimezone;
+    this.precision = precision;
+    this.config.withTimezone = withTimezone;
+    this.config.precision = precision;
+  }
+  static [entityKind] = "PgTimeBuilder";
+  /** @internal */
+  build(table) {
+    return new PgTime(table, this.config);
+  }
+};
+var PgTime = class extends PgColumn {
+  static [entityKind] = "PgTime";
+  withTimezone;
+  precision;
+  constructor(table, config) {
+    super(table, config);
+    this.withTimezone = config.withTimezone;
+    this.precision = config.precision;
+  }
+  getSQLType() {
+    const precision = this.precision === void 0 ? "" : `(${this.precision})`;
+    return `time${precision}${this.withTimezone ? " with time zone" : ""}`;
+  }
+};
+function time(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgTimeBuilder(name, config.withTimezone ?? false, config.precision);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/timestamp.js
+var PgTimestampBuilder = class extends PgDateColumnBaseBuilder {
+  static [entityKind] = "PgTimestampBuilder";
+  constructor(name, withTimezone, precision) {
+    super(name, "date", "PgTimestamp");
+    this.config.withTimezone = withTimezone;
+    this.config.precision = precision;
+  }
+  /** @internal */
+  build(table) {
+    return new PgTimestamp(table, this.config);
+  }
+};
+var PgTimestamp = class extends PgColumn {
+  static [entityKind] = "PgTimestamp";
+  withTimezone;
+  precision;
+  constructor(table, config) {
+    super(table, config);
+    this.withTimezone = config.withTimezone;
+    this.precision = config.precision;
+  }
+  getSQLType() {
+    const precision = this.precision === void 0 ? "" : ` (${this.precision})`;
+    return `timestamp${precision}${this.withTimezone ? " with time zone" : ""}`;
+  }
+  mapFromDriverValue = (value) => {
+    return new Date(this.withTimezone ? value : value + "+0000");
+  };
+  mapToDriverValue = (value) => {
+    return value.toISOString();
+  };
+};
+var PgTimestampStringBuilder = class extends PgDateColumnBaseBuilder {
+  static [entityKind] = "PgTimestampStringBuilder";
+  constructor(name, withTimezone, precision) {
+    super(name, "string", "PgTimestampString");
+    this.config.withTimezone = withTimezone;
+    this.config.precision = precision;
+  }
+  /** @internal */
+  build(table) {
+    return new PgTimestampString(
+      table,
+      this.config
+    );
+  }
+};
+var PgTimestampString = class extends PgColumn {
+  static [entityKind] = "PgTimestampString";
+  withTimezone;
+  precision;
+  constructor(table, config) {
+    super(table, config);
+    this.withTimezone = config.withTimezone;
+    this.precision = config.precision;
+  }
+  getSQLType() {
+    const precision = this.precision === void 0 ? "" : `(${this.precision})`;
+    return `timestamp${precision}${this.withTimezone ? " with time zone" : ""}`;
+  }
+};
+function timestamp(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  if (config?.mode === "string") {
+    return new PgTimestampStringBuilder(name, config.withTimezone ?? false, config.precision);
+  }
+  return new PgTimestampBuilder(name, config?.withTimezone ?? false, config?.precision);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/uuid.js
+var PgUUIDBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgUUIDBuilder";
+  constructor(name) {
+    super(name, "string", "PgUUID");
+  }
+  /**
+   * Adds `default gen_random_uuid()` to the column definition.
+   */
+  defaultRandom() {
+    return this.default(sql`gen_random_uuid()`);
+  }
+  /** @internal */
+  build(table) {
+    return new PgUUID(table, this.config);
+  }
+};
+var PgUUID = class extends PgColumn {
+  static [entityKind] = "PgUUID";
+  getSQLType() {
+    return "uuid";
+  }
+};
+function uuid(name) {
+  return new PgUUIDBuilder(name ?? "");
+}
+
+// node_modules/drizzle-orm/pg-core/columns/varchar.js
+var PgVarcharBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgVarcharBuilder";
+  constructor(name, config) {
+    super(name, "string", "PgVarchar");
+    this.config.length = config.length;
+    this.config.enumValues = config.enum;
+  }
+  /** @internal */
+  build(table) {
+    return new PgVarchar(
+      table,
+      this.config
+    );
+  }
+};
+var PgVarchar = class extends PgColumn {
+  static [entityKind] = "PgVarchar";
+  length = this.config.length;
+  enumValues = this.config.enumValues;
+  getSQLType() {
+    return this.length === void 0 ? `varchar` : `varchar(${this.length})`;
+  }
+};
+function varchar(a, b = {}) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgVarcharBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/vector_extension/bit.js
+var PgBinaryVectorBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgBinaryVectorBuilder";
+  constructor(name, config) {
+    super(name, "string", "PgBinaryVector");
+    this.config.dimensions = config.dimensions;
+  }
+  /** @internal */
+  build(table) {
+    return new PgBinaryVector(
+      table,
+      this.config
+    );
+  }
+};
+var PgBinaryVector = class extends PgColumn {
+  static [entityKind] = "PgBinaryVector";
+  dimensions = this.config.dimensions;
+  getSQLType() {
+    return `bit(${this.dimensions})`;
+  }
+};
+function bit(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgBinaryVectorBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/vector_extension/halfvec.js
+var PgHalfVectorBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgHalfVectorBuilder";
+  constructor(name, config) {
+    super(name, "array", "PgHalfVector");
+    this.config.dimensions = config.dimensions;
+  }
+  /** @internal */
+  build(table) {
+    return new PgHalfVector(
+      table,
+      this.config
+    );
+  }
+};
+var PgHalfVector = class extends PgColumn {
+  static [entityKind] = "PgHalfVector";
+  dimensions = this.config.dimensions;
+  getSQLType() {
+    return `halfvec(${this.dimensions})`;
+  }
+  mapToDriverValue(value) {
+    return JSON.stringify(value);
+  }
+  mapFromDriverValue(value) {
+    return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
+  }
+};
+function halfvec(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgHalfVectorBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/vector_extension/sparsevec.js
+var PgSparseVectorBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgSparseVectorBuilder";
+  constructor(name, config) {
+    super(name, "string", "PgSparseVector");
+    this.config.dimensions = config.dimensions;
+  }
+  /** @internal */
+  build(table) {
+    return new PgSparseVector(
+      table,
+      this.config
+    );
+  }
+};
+var PgSparseVector = class extends PgColumn {
+  static [entityKind] = "PgSparseVector";
+  dimensions = this.config.dimensions;
+  getSQLType() {
+    return `sparsevec(${this.dimensions})`;
+  }
+};
+function sparsevec(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgSparseVectorBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/vector_extension/vector.js
+var PgVectorBuilder = class extends PgColumnBuilder {
+  static [entityKind] = "PgVectorBuilder";
+  constructor(name, config) {
+    super(name, "array", "PgVector");
+    this.config.dimensions = config.dimensions;
+  }
+  /** @internal */
+  build(table) {
+    return new PgVector(
+      table,
+      this.config
+    );
+  }
+};
+var PgVector = class extends PgColumn {
+  static [entityKind] = "PgVector";
+  dimensions = this.config.dimensions;
+  getSQLType() {
+    return `vector(${this.dimensions})`;
+  }
+  mapToDriverValue(value) {
+    return JSON.stringify(value);
+  }
+  mapFromDriverValue(value) {
+    return value.slice(1, -1).split(",").map((v) => Number.parseFloat(v));
+  }
+};
+function vector(a, b) {
+  const { name, config } = getColumnNameAndConfig(a, b);
+  return new PgVectorBuilder(name, config);
+}
+
+// node_modules/drizzle-orm/pg-core/columns/all.js
+function getPgColumnBuilders() {
+  return {
+    bigint,
+    bigserial,
+    boolean,
+    char,
+    cidr,
+    customType,
+    date,
+    doublePrecision,
+    inet,
+    integer,
+    interval,
+    json,
+    jsonb,
+    line,
+    macaddr,
+    macaddr8,
+    numeric,
+    point,
+    geometry,
+    real,
+    serial,
+    smallint,
+    smallserial,
+    text,
+    time,
+    timestamp,
+    uuid,
+    varchar,
+    bit,
+    halfvec,
+    sparsevec,
+    vector
+  };
+}
+
+// node_modules/drizzle-orm/pg-core/table.js
+var InlineForeignKeys = Symbol.for("drizzle:PgInlineForeignKeys");
+var EnableRLS = Symbol.for("drizzle:EnableRLS");
+var PgTable = class extends Table {
+  static [entityKind] = "PgTable";
+  /** @internal */
+  static Symbol = Object.assign({}, Table.Symbol, {
+    InlineForeignKeys,
+    EnableRLS
+  });
+  /**@internal */
+  [InlineForeignKeys] = [];
+  /** @internal */
+  [EnableRLS] = false;
+  /** @internal */
+  [Table.Symbol.ExtraConfigBuilder] = void 0;
+};
+function pgTableWithSchema(name, columns, extraConfig, schema, baseName = name) {
+  const rawTable = new PgTable(name, schema, baseName);
+  const parsedColumns = typeof columns === "function" ? columns(getPgColumnBuilders()) : columns;
+  const builtColumns = Object.fromEntries(
+    Object.entries(parsedColumns).map(([name2, colBuilderBase]) => {
+      const colBuilder = colBuilderBase;
+      colBuilder.setName(name2);
+      const column = colBuilder.build(rawTable);
+      rawTable[InlineForeignKeys].push(...colBuilder.buildForeignKeys(column, rawTable));
+      return [name2, column];
+    })
+  );
+  const builtColumnsForExtraConfig = Object.fromEntries(
+    Object.entries(parsedColumns).map(([name2, colBuilderBase]) => {
+      const colBuilder = colBuilderBase;
+      colBuilder.setName(name2);
+      const column = colBuilder.buildExtraConfigColumn(rawTable);
+      return [name2, column];
+    })
+  );
+  const table = Object.assign(rawTable, builtColumns);
+  table[Table.Symbol.Columns] = builtColumns;
+  table[Table.Symbol.ExtraConfigColumns] = builtColumnsForExtraConfig;
+  if (extraConfig) {
+    table[PgTable.Symbol.ExtraConfigBuilder] = extraConfig;
+  }
+  return Object.assign(table, {
+    enableRLS: () => {
+      table[PgTable.Symbol.EnableRLS] = true;
+      return table;
+    }
+  });
+}
+var pgTable = (name, columns, extraConfig) => {
+  return pgTableWithSchema(name, columns, extraConfig, void 0);
+};
+
+// node_modules/drizzle-zod/index.mjs
 import { z } from "zod";
+var CONSTANTS = {
+  INT8_MIN: -128,
+  INT8_MAX: 127,
+  INT8_UNSIGNED_MAX: 255,
+  INT16_MIN: -32768,
+  INT16_MAX: 32767,
+  INT16_UNSIGNED_MAX: 65535,
+  INT24_MIN: -8388608,
+  INT24_MAX: 8388607,
+  INT24_UNSIGNED_MAX: 16777215,
+  INT32_MIN: -2147483648,
+  INT32_MAX: 2147483647,
+  INT32_UNSIGNED_MAX: 4294967295,
+  INT48_MIN: -140737488355328,
+  INT48_MAX: 140737488355327,
+  INT48_UNSIGNED_MAX: 281474976710655,
+  INT64_MIN: -9223372036854775808n,
+  INT64_MAX: 9223372036854775807n,
+  INT64_UNSIGNED_MAX: 18446744073709551615n
+};
+function isColumnType(column, columnTypes) {
+  return columnTypes.includes(column.columnType);
+}
+function isWithEnum(column) {
+  return "enumValues" in column && Array.isArray(column.enumValues) && column.enumValues.length > 0;
+}
+var literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+var jsonSchema = z.union([literalSchema, z.record(z.any()), z.array(z.any())]);
+var bufferSchema = z.custom((v) => v instanceof Buffer);
+function columnToSchema(column, factory) {
+  const z$1 = factory?.zodInstance ?? z;
+  const coerce = factory?.coerce ?? {};
+  let schema;
+  if (isWithEnum(column)) {
+    schema = column.enumValues.length ? z$1.enum(column.enumValues) : z$1.string();
+  }
+  if (!schema) {
+    if (isColumnType(column, ["PgGeometry", "PgPointTuple"])) {
+      schema = z$1.tuple([z$1.number(), z$1.number()]);
+    } else if (isColumnType(column, ["PgGeometryObject", "PgPointObject"])) {
+      schema = z$1.object({ x: z$1.number(), y: z$1.number() });
+    } else if (isColumnType(column, ["PgHalfVector", "PgVector"])) {
+      schema = z$1.array(z$1.number());
+      schema = column.dimensions ? schema.length(column.dimensions) : schema;
+    } else if (isColumnType(column, ["PgLine"])) {
+      schema = z$1.tuple([z$1.number(), z$1.number(), z$1.number()]);
+    } else if (isColumnType(column, ["PgLineABC"])) {
+      schema = z$1.object({
+        a: z$1.number(),
+        b: z$1.number(),
+        c: z$1.number()
+      });
+    } else if (isColumnType(column, ["PgArray"])) {
+      schema = z$1.array(columnToSchema(column.baseColumn, z$1));
+      schema = column.size ? schema.length(column.size) : schema;
+    } else if (column.dataType === "array") {
+      schema = z$1.array(z$1.any());
+    } else if (column.dataType === "number") {
+      schema = numberColumnToSchema(column, z$1, coerce);
+    } else if (column.dataType === "bigint") {
+      schema = bigintColumnToSchema(column, z$1, coerce);
+    } else if (column.dataType === "boolean") {
+      schema = coerce === true || coerce.boolean ? z$1.coerce.boolean() : z$1.boolean();
+    } else if (column.dataType === "date") {
+      schema = coerce === true || coerce.date ? z$1.coerce.date() : z$1.date();
+    } else if (column.dataType === "string") {
+      schema = stringColumnToSchema(column, z$1, coerce);
+    } else if (column.dataType === "json") {
+      schema = jsonSchema;
+    } else if (column.dataType === "custom") {
+      schema = z$1.any();
+    } else if (column.dataType === "buffer") {
+      schema = bufferSchema;
+    }
+  }
+  if (!schema) {
+    schema = z$1.any();
+  }
+  return schema;
+}
+function numberColumnToSchema(column, z3, coerce) {
+  let unsigned = column.getSQLType().includes("unsigned");
+  let min;
+  let max;
+  let integer2 = false;
+  if (isColumnType(column, ["MySqlTinyInt", "SingleStoreTinyInt"])) {
+    min = unsigned ? 0 : CONSTANTS.INT8_MIN;
+    max = unsigned ? CONSTANTS.INT8_UNSIGNED_MAX : CONSTANTS.INT8_MAX;
+    integer2 = true;
+  } else if (isColumnType(column, [
+    "PgSmallInt",
+    "PgSmallSerial",
+    "MySqlSmallInt",
+    "SingleStoreSmallInt"
+  ])) {
+    min = unsigned ? 0 : CONSTANTS.INT16_MIN;
+    max = unsigned ? CONSTANTS.INT16_UNSIGNED_MAX : CONSTANTS.INT16_MAX;
+    integer2 = true;
+  } else if (isColumnType(column, [
+    "PgReal",
+    "MySqlFloat",
+    "MySqlMediumInt",
+    "SingleStoreMediumInt",
+    "SingleStoreFloat"
+  ])) {
+    min = unsigned ? 0 : CONSTANTS.INT24_MIN;
+    max = unsigned ? CONSTANTS.INT24_UNSIGNED_MAX : CONSTANTS.INT24_MAX;
+    integer2 = isColumnType(column, ["MySqlMediumInt", "SingleStoreMediumInt"]);
+  } else if (isColumnType(column, [
+    "PgInteger",
+    "PgSerial",
+    "MySqlInt",
+    "SingleStoreInt"
+  ])) {
+    min = unsigned ? 0 : CONSTANTS.INT32_MIN;
+    max = unsigned ? CONSTANTS.INT32_UNSIGNED_MAX : CONSTANTS.INT32_MAX;
+    integer2 = true;
+  } else if (isColumnType(column, [
+    "PgDoublePrecision",
+    "MySqlReal",
+    "MySqlDouble",
+    "SingleStoreReal",
+    "SingleStoreDouble",
+    "SQLiteReal"
+  ])) {
+    min = unsigned ? 0 : CONSTANTS.INT48_MIN;
+    max = unsigned ? CONSTANTS.INT48_UNSIGNED_MAX : CONSTANTS.INT48_MAX;
+  } else if (isColumnType(column, [
+    "PgBigInt53",
+    "PgBigSerial53",
+    "MySqlBigInt53",
+    "MySqlSerial",
+    "SingleStoreBigInt53",
+    "SingleStoreSerial",
+    "SQLiteInteger"
+  ])) {
+    unsigned = unsigned || isColumnType(column, ["MySqlSerial", "SingleStoreSerial"]);
+    min = unsigned ? 0 : Number.MIN_SAFE_INTEGER;
+    max = Number.MAX_SAFE_INTEGER;
+    integer2 = true;
+  } else if (isColumnType(column, ["MySqlYear", "SingleStoreYear"])) {
+    min = 1901;
+    max = 2155;
+    integer2 = true;
+  } else {
+    min = Number.MIN_SAFE_INTEGER;
+    max = Number.MAX_SAFE_INTEGER;
+  }
+  let schema = coerce === true || coerce?.number ? z3.coerce.number() : z3.number();
+  schema = schema.min(min).max(max);
+  return integer2 ? schema.int() : schema;
+}
+function bigintColumnToSchema(column, z3, coerce) {
+  const unsigned = column.getSQLType().includes("unsigned");
+  const min = unsigned ? 0n : CONSTANTS.INT64_MIN;
+  const max = unsigned ? CONSTANTS.INT64_UNSIGNED_MAX : CONSTANTS.INT64_MAX;
+  const schema = coerce === true || coerce?.bigint ? z3.coerce.bigint() : z3.bigint();
+  return schema.min(min).max(max);
+}
+function stringColumnToSchema(column, z3, coerce) {
+  if (isColumnType(column, ["PgUUID"])) {
+    return z3.string().uuid();
+  }
+  let max;
+  let regex;
+  let fixed = false;
+  if (isColumnType(column, ["PgVarchar", "SQLiteText"])) {
+    max = column.length;
+  } else if (isColumnType(column, ["MySqlVarChar", "SingleStoreVarChar"])) {
+    max = column.length ?? CONSTANTS.INT16_UNSIGNED_MAX;
+  } else if (isColumnType(column, ["MySqlText", "SingleStoreText"])) {
+    if (column.textType === "longtext") {
+      max = CONSTANTS.INT32_UNSIGNED_MAX;
+    } else if (column.textType === "mediumtext") {
+      max = CONSTANTS.INT24_UNSIGNED_MAX;
+    } else if (column.textType === "text") {
+      max = CONSTANTS.INT16_UNSIGNED_MAX;
+    } else {
+      max = CONSTANTS.INT8_UNSIGNED_MAX;
+    }
+  }
+  if (isColumnType(column, [
+    "PgChar",
+    "MySqlChar",
+    "SingleStoreChar"
+  ])) {
+    max = column.length;
+    fixed = true;
+  }
+  if (isColumnType(column, ["PgBinaryVector"])) {
+    regex = /^[01]+$/;
+    max = column.dimensions;
+  }
+  let schema = coerce === true || coerce?.string ? z3.coerce.string() : z3.string();
+  schema = regex ? schema.regex(regex) : schema;
+  return max && fixed ? schema.length(max) : max ? schema.max(max) : schema;
+}
+function getColumns(tableLike) {
+  return isTable(tableLike) ? getTableColumns(tableLike) : getViewSelectedFields(tableLike);
+}
+function handleColumns(columns, refinements, conditions, factory) {
+  const columnSchemas = {};
+  for (const [key, selected] of Object.entries(columns)) {
+    if (!is(selected, Column) && !is(selected, SQL) && !is(selected, SQL.Aliased) && typeof selected === "object") {
+      const columns2 = isTable(selected) || isView(selected) ? getColumns(selected) : selected;
+      columnSchemas[key] = handleColumns(columns2, refinements[key] ?? {}, conditions, factory);
+      continue;
+    }
+    const refinement = refinements[key];
+    if (refinement !== void 0 && typeof refinement !== "function") {
+      columnSchemas[key] = refinement;
+      continue;
+    }
+    const column = is(selected, Column) ? selected : void 0;
+    const schema = column ? columnToSchema(column, factory) : z.any();
+    const refined = typeof refinement === "function" ? refinement(schema) : schema;
+    if (conditions.never(column)) {
+      continue;
+    } else {
+      columnSchemas[key] = refined;
+    }
+    if (column) {
+      if (conditions.nullable(column)) {
+        columnSchemas[key] = columnSchemas[key].nullable();
+      }
+      if (conditions.optional(column)) {
+        columnSchemas[key] = columnSchemas[key].optional();
+      }
+    }
+  }
+  return z.object(columnSchemas);
+}
+var insertConditions = {
+  never: (column) => column?.generated?.type === "always" || column?.generatedIdentity?.type === "always",
+  optional: (column) => !column.notNull || column.notNull && column.hasDefault,
+  nullable: (column) => !column.notNull
+};
+var createInsertSchema = (entity, refine) => {
+  const columns = getColumns(entity);
+  return handleColumns(columns, refine ?? {}, insertConditions);
+};
+
+// shared/schema.ts
+var clinics = pgTable("clinics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var insertClinicSchema = createInsertSchema(clinics).omit({
+  id: true,
+  createdAt: true
+});
+var users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  role: text("role").notNull().default("recepcion"),
+  // "admin", "recepcion", "dentista"
+  clinicId: varchar("clinic_id").references(() => clinics.id),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true
+});
+var pacientes = pgTable("pacientes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clinicId: varchar("clinic_id").references(() => clinics.id),
+  nombre: text("nombre").notNull(),
+  ultimaVisita: timestamp("ultima_visita").notNull(),
+  diagnostico: text("diagnostico").notNull(),
+  telefono: text("telefono").notNull(),
+  email: text("email").notNull(),
+  whatsapp: text("whatsapp"),
+  edad: integer("edad").notNull(),
+  estado: text("estado").notNull(),
+  // "activo", "perdido", "sin cita"
+  prioridad: text("prioridad"),
+  // "Alta", "Media", "Baja"
+  tieneCitaFutura: boolean("tiene_cita_futura").default(false),
+  mesesSinVisita: integer("meses_sin_visita"),
+  enCampana: boolean("en_campana").default(false),
+  notes: text("notes")
+  // Additional notes about patient
+});
+var insertPacienteSchema = createInsertSchema(pacientes).omit({
+  id: true
+});
+var campanas = pgTable("campanas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nombre: text("nombre").notNull(),
+  canales: text("canales").array().notNull(),
+  // ["SMS", "Email", "Llamadas"]
+  cadencia: text("cadencia").notNull(),
+  // "Opción 1", "Opción 2", "Opción 3"
+  plantillaSMS: text("plantilla_sms"),
+  plantillaEmail: text("plantilla_email"),
+  guionLlamada: text("guion_llamada"),
+  estado: text("estado").notNull(),
+  // "activa", "pausada", "completada"
+  pacientesIncluidos: integer("pacientes_incluidos").default(0),
+  contactosEnviados: integer("contactos_enviados").default(0),
+  citasGeneradas: integer("citas_generadas").default(0),
+  fechaCreacion: timestamp("fecha_creacion").defaultNow()
+});
+var insertCampanaSchema = createInsertSchema(campanas).omit({
+  id: true,
+  fechaCreacion: true
+});
+var tareasLlamadas = pgTable("tareas_llamadas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pacienteId: varchar("paciente_id").notNull(),
+  pacienteNombre: text("paciente_nombre").notNull(),
+  telefono: text("telefono").notNull(),
+  email: text("email"),
+  // email del paciente para acciones de tipo email
+  motivo: text("motivo").notNull(),
+  prioridad: text("prioridad").notNull(),
+  // "Alta", "Media", "Baja"
+  tipoAccion: text("tipo_accion").notNull().default("llamada"),
+  // "llamada", "email", "carta", "añadir_campana", "añadir_campana_riesgo"
+  estado: text("estado").notNull(),
+  // "pendiente", "contactado", "cita_agendada", "no_contactado", "completada"
+  aprobado: boolean("aprobado").default(false),
+  // si la tarea ha sido aprobada por supervisor
+  fechaProgramada: timestamp("fecha_programada"),
+  // fecha en que se programa la tarea
+  fechaCreacion: timestamp("fecha_creacion").defaultNow(),
+  fechaContacto: timestamp("fecha_contacto"),
+  fechaCompletada: timestamp("fecha_completada"),
+  // fecha de finalización
+  notas: text("notas"),
+  campanaId: text("campana_id"),
+  // ID de la campaña para acciones de tipo añadir_campana
+  cantidadPacientes: integer("cantidad_pacientes")
+  // Cantidad de pacientes para acciones de campaña
+});
+var insertTareaLlamadaSchema = createInsertSchema(tareasLlamadas).omit({
+  id: true,
+  fechaCreacion: true
+});
+var conversaciones = pgTable("conversaciones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pacienteId: varchar("paciente_id").notNull(),
+  canal: text("canal").notNull(),
+  // "whatsapp", "sms", "email"
+  ultimoMensaje: text("ultimo_mensaje"),
+  fechaUltimoMensaje: timestamp("fecha_ultimo_mensaje"),
+  noLeidos: integer("no_leidos").default(0),
+  estado: text("estado").notNull()
+  // "activa", "archivada"
+});
+var insertConversacionSchema = createInsertSchema(conversaciones).omit({
+  id: true
+});
+var budgets = pgTable("budgets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  patientId: varchar("patient_id").references(() => pacientes.id).notNull(),
+  clinicId: varchar("clinic_id").references(() => clinics.id).notNull(),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  urgencyScore: integer("urgency_score"),
+  // 0-100 AI calculated
+  acceptanceProb: integer("acceptance_prob"),
+  // 0-100 AI calculated
+  status: text("status").notNull().default("pending"),
+  // "pending", "accepted", "rejected"
+  treatmentDetails: jsonb("treatment_details"),
+  // {procedures: [], total: number}
+  priority: text("priority"),
+  // "high", "medium", "low" - auto calculated by AI
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var insertBudgetSchema = createInsertSchema(budgets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  urgencyScore: true,
+  acceptanceProb: true,
+  priority: true
+});
+var mensajes = pgTable("mensajes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversacionId: varchar("conversacion_id"),
+  budgetId: varchar("budget_id").references(() => budgets.id),
+  patientId: varchar("patient_id").references(() => pacientes.id),
+  type: text("type").notNull(),
+  // "relance", "reminder", "postvisit", "conversation"
+  channel: text("channel").notNull(),
+  // "sms", "email", "whatsapp"
+  contenido: text("contenido").notNull(),
+  direccion: text("direccion").notNull().default("saliente"),
+  // "entrante", "saliente"
+  fechaEnvio: timestamp("fecha_envio").notNull(),
+  openedAt: timestamp("opened_at"),
+  leido: boolean("leido").default(false)
+});
+var insertMensajeSchema = createInsertSchema(mensajes).omit({
+  id: true
+});
+var citas = pgTable("citas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pacienteId: varchar("paciente_id").notNull(),
+  pacienteNombre: text("paciente_nombre").notNull(),
+  telefono: text("telefono").notNull(),
+  fechaHora: timestamp("fecha_hora").notNull(),
+  duracionMinutos: integer("duracion_minutos").default(30),
+  tipo: text("tipo").notNull(),
+  // "revision", "limpieza", "tratamiento", "consulta", "urgencia"
+  estado: text("estado").notNull(),
+  // "programada", "confirmada", "completada", "cancelada", "no_asistio"
+  notas: text("notas"),
+  doctor: text("doctor"),
+  sala: text("sala"),
+  origen: text("origen")
+  // "reactivacion", "web", "telefono", "presencial"
+});
+var insertCitaSchema = createInsertSchema(citas).omit({
+  id: true
+});
+var recordatorios = pgTable("recordatorios", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nombre: text("nombre").notNull(),
+  canal: text("canal").notNull(),
+  // "sms", "whatsapp", "email"
+  mensaje: text("mensaje").notNull(),
+  horasAntes: integer("horas_antes").notNull(),
+  // tiempo de antelación en horas
+  activo: boolean("activo").default(true)
+});
+var insertRecordatorioSchema = createInsertSchema(recordatorios).omit({
+  id: true
+});
+var analytics = pgTable("analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clinicId: varchar("clinic_id").references(() => clinics.id).notNull(),
+  fecha: timestamp("fecha").defaultNow(),
+  tasaTransformacion: numeric("tasa_transformacion", { precision: 5, scale: 2 }),
+  // percentage
+  facturacion: numeric("facturacion", { precision: 10, scale: 2 }),
+  rechazosPorMotivo: jsonb("rechazos_por_motivo"),
+  // {precio: number, miedo: number, comprension: number, etc}
+  budgetsTotales: integer("budgets_totales").default(0),
+  budgetsAceptados: integer("budgets_aceptados").default(0),
+  budgetsRechazados: integer("budgets_rechazados").default(0),
+  relancesEnviados: integer("relances_enviados").default(0)
+});
+var insertAnalyticsSchema = createInsertSchema(analytics).omit({
+  id: true
+});
+var acciones = pgTable("acciones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tipo: text("tipo").notNull(),
+  // "relance", "recordatorio", "post_visita", "scoring", "analisis", "preventivo"
+  estado: text("estado").notNull().default("pendiente"),
+  // "pendiente", "ejecutada", "confirmada", "rechazada", "error"
+  titulo: text("titulo").notNull(),
+  descripcion: text("descripcion"),
+  pacienteId: varchar("patient_id").references(() => pacientes.id),
+  budgetId: varchar("budget_id").references(() => budgets.id),
+  citaId: varchar("cita_id").references(() => citas.id),
+  canal: text("canal"),
+  // "sms", "email", "whatsapp"
+  mensaje: text("mensaje"),
+  // Contenido del mensaje generado
+  metadata: jsonb("metadata"),
+  // Datos adicionales
+  requiereConfirmacion: boolean("requiere_confirmacion").default(false),
+  ejecutadaAt: timestamp("ejecutada_at"),
+  confirmadaAt: timestamp("confirmada_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var insertAccionSchema = createInsertSchema(acciones).omit({
+  id: true,
+  createdAt: true
+});
+var tratamientosPreventivos = pgTable("tratamientos_preventivos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pacienteId: varchar("patient_id").references(() => pacientes.id).notNull(),
+  clinicId: varchar("clinic_id").references(() => clinics.id).notNull(),
+  tipoTratamiento: text("tipo_tratamiento").notNull(),
+  // "limpieza", "revision", "fluorizacion", "selladores", etc.
+  fechaRealizacion: timestamp("fecha_realizacion").notNull(),
+  proximaFechaRecomendada: timestamp("proxima_fecha_recomendada").notNull(),
+  frecuenciaMeses: integer("frecuencia_meses").notNull(),
+  // 6 para limpieza, 12 para revision, etc.
+  citaId: varchar("cita_id").references(() => citas.id),
+  // Si está ligado a una cita
+  budgetId: varchar("budget_id").references(() => budgets.id),
+  // Si está ligado a un presupuesto
+  notas: text("notas"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var insertTratamientoPreventivoSchema = createInsertSchema(tratamientosPreventivos).omit({
+  id: true,
+  createdAt: true
+});
+var reglasComunicacion = pgTable("reglas_comunicacion", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nombre: text("nombre").notNull(),
+  tipo: text("tipo").notNull(),
+  // "relance_presupuesto", "recordatorio_cita", "post_visita", "salud_preventiva", "recall_paciente"
+  activa: boolean("activa").default(true),
+  secuencia: jsonb("secuencia").notNull(),
+  // Array de pasos: [{canal: "whatsapp", diasDespues: 2, accion: "enviar"}, ...]
+  criterios: jsonb("criterios"),
+  // Criterios para asignación: {diagnosticos: [], mesesSinVisitaMin: number, mesesSinVisitaMax: number, interaccionesPrevias: boolean, ...}
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var insertReglaComunicacionSchema = createInsertSchema(reglasComunicacion).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var secuenciasComunicacion = pgTable("secuencias_comunicacion", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reglaId: varchar("regla_id").references(() => reglasComunicacion.id).notNull(),
+  pacienteId: varchar("patient_id").references(() => pacientes.id).notNull(),
+  budgetId: varchar("budget_id").references(() => budgets.id),
+  citaId: varchar("cita_id").references(() => citas.id),
+  tipo: text("tipo").notNull(),
+  // Mismo que regla.tipo
+  estado: text("estado").notNull().default("activa"),
+  // "activa", "pausada", "completada", "cancelada"
+  pasoActual: integer("paso_actual").default(0),
+  fechaInicio: timestamp("fecha_inicio").notNull(),
+  ultimaAccion: timestamp("ultima_accion"),
+  proximaAccion: timestamp("proxima_accion"),
+  respuestaRecibida: boolean("respuesta_recibida").default(false),
+  metadata: jsonb("metadata"),
+  // Historial de acciones ejecutadas
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var insertSecuenciaComunicacionSchema = createInsertSchema(secuenciasComunicacion).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+// server/routes.ts
+import { z as z2 } from "zod";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 var _storage = null;
@@ -10967,9 +13916,9 @@ async function registerRoutes(app) {
       console.log("[API] /api/pacientes called");
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const pacientes = await storage2.getPacientes();
-      console.log("[API] /api/pacientes returning", pacientes.length, "pacientes");
-      res.json(pacientes);
+      const pacientes2 = await storage2.getPacientes();
+      console.log("[API] /api/pacientes returning", pacientes2.length, "pacientes");
+      res.json(pacientes2);
     } catch (error) {
       console.error("[API] Error in /api/pacientes:", error);
       if (error instanceof Error) {
@@ -10999,17 +13948,17 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const filtrosSchema = z.object({
-        prioridad: z.enum(["Alta", "Media", "Baja", "Todas"]).optional(),
-        diagnostico: z.string().optional(),
-        edadMin: z.number().optional(),
-        edadMax: z.number().optional()
+      const filtrosSchema = z2.object({
+        prioridad: z2.enum(["Alta", "Media", "Baja", "Todas"]).optional(),
+        diagnostico: z2.string().optional(),
+        edadMin: z2.number().optional(),
+        edadMax: z2.number().optional()
       });
       const filtros = filtrosSchema.parse(req.body);
-      const pacientes = await storage2.getPacientesPerdidos(filtros);
-      res.json(pacientes);
+      const pacientes2 = await storage2.getPacientesPerdidos(filtros);
+      res.json(pacientes2);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Filtros inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al obtener pacientes perdidos" });
@@ -11019,14 +13968,14 @@ async function registerRoutes(app) {
   app.post("/api/pacientes/anadir-a-campana", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        pacienteIds: z.array(z.string())
+      const schema = z2.object({
+        pacienteIds: z2.array(z2.string())
       });
       const { pacienteIds } = schema.parse(req.body);
       await storage2.anadirPacientesACampana(pacienteIds);
       res.json({ success: true, count: pacienteIds.length });
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al a\xF1adir pacientes a campa\xF1a" });
@@ -11037,8 +13986,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const campanas = await storage2.getCampanas();
-      res.json(campanas);
+      const campanas2 = await storage2.getCampanas();
+      res.json(campanas2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener campa\xF1as" });
     }
@@ -11050,7 +13999,7 @@ async function registerRoutes(app) {
       const campana = await storage2.createCampana(campanaData);
       res.status(201).json(campana);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al crear campa\xF1a" });
@@ -11061,8 +14010,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        estado: z.string()
+      const schema = z2.object({
+        estado: z2.string()
       });
       const { estado } = schema.parse(req.body);
       const campana = await storage2.updateCampanaEstado(id, estado);
@@ -11072,7 +14021,7 @@ async function registerRoutes(app) {
       }
       res.json(campana);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al actualizar campa\xF1a" });
@@ -11117,13 +14066,13 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        estado: z.string().optional(),
-        notas: z.string().nullable().optional(),
-        aprobado: z.boolean().optional(),
-        fechaProgramada: z.string().nullable().optional(),
-        fechaContacto: z.string().nullable().optional(),
-        fechaCompletada: z.string().nullable().optional()
+      const schema = z2.object({
+        estado: z2.string().optional(),
+        notas: z2.string().nullable().optional(),
+        aprobado: z2.boolean().optional(),
+        fechaProgramada: z2.string().nullable().optional(),
+        fechaContacto: z2.string().nullable().optional(),
+        fechaCompletada: z2.string().nullable().optional()
       });
       const updates = schema.parse(req.body);
       const tarea = await storage2.updateTarea(id, updates);
@@ -11133,7 +14082,7 @@ async function registerRoutes(app) {
       }
       res.json(tarea);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al actualizar tarea" });
@@ -11166,8 +14115,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const pacientes = await storage2.getPacientesEnRiesgo();
-      res.json(pacientes);
+      const pacientes2 = await storage2.getPacientesEnRiesgo();
+      res.json(pacientes2);
     } catch (error) {
       console.error("[API] Error in /api/pacientes/en-riesgo:", error);
       if (error instanceof Error) {
@@ -11181,8 +14130,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { campanaId } = req.params;
-      const pacientes = await storage2.getPacientesListosParaCampana(campanaId);
-      res.json(pacientes);
+      const pacientes2 = await storage2.getPacientesListosParaCampana(campanaId);
+      res.json(pacientes2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener pacientes listos para campa\xF1a" });
     }
@@ -11191,8 +14140,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const conversaciones = await storage2.getConversaciones();
-      res.json(conversaciones);
+      const conversaciones2 = await storage2.getConversaciones();
+      res.json(conversaciones2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener conversaciones" });
     }
@@ -11206,8 +14155,8 @@ async function registerRoutes(app) {
         res.status(404).json({ error: "Conversaci\xF3n no encontrada" });
         return;
       }
-      const mensajes = await storage2.getMensajes(id);
-      res.json({ conversacion, mensajes });
+      const mensajes2 = await storage2.getMensajes(id);
+      res.json({ conversacion, mensajes: mensajes2 });
     } catch (error) {
       res.status(500).json({ error: "Error al obtener conversaci\xF3n" });
     }
@@ -11216,8 +14165,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        contenido: z.string().min(1)
+      const schema = z2.object({
+        contenido: z2.string().min(1)
       });
       const { contenido } = schema.parse(req.body);
       const mensaje = await storage2.createMensaje({
@@ -11231,7 +14180,7 @@ async function registerRoutes(app) {
       });
       res.status(201).json(mensaje);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Contenido inv\xE1lido", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al enviar mensaje" });
@@ -11262,8 +14211,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const citas = await storage2.getCitas();
-      res.json(citas);
+      const citas2 = await storage2.getCitas();
+      res.json(citas2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener citas" });
     }
@@ -11294,16 +14243,16 @@ async function registerRoutes(app) {
         console.log("[API] Primera cita en storage:", primeraCita.fechaHora.toISOString(), "timestamp:", primeraCita.fechaHora.getTime());
         console.log("[API] \xDAltima cita en storage:", ultimaCita.fechaHora.toISOString(), "timestamp:", ultimaCita.fechaHora.getTime());
       }
-      const citas = await storage2.getCitasPorSemana(fechaInicio, fechaFin);
-      console.log("[API] Citas encontradas en rango:", citas.length);
-      if (citas.length > 0) {
+      const citas2 = await storage2.getCitasPorSemana(fechaInicio, fechaFin);
+      console.log("[API] Citas encontradas en rango:", citas2.length);
+      if (citas2.length > 0) {
         console.log("[API] Primera cita:", {
-          id: citas[0].id,
-          fechaHora: citas[0].fechaHora,
-          pacienteId: citas[0].pacienteId
+          id: citas2[0].id,
+          fechaHora: citas2[0].fechaHora,
+          pacienteId: citas2[0].pacienteId
         });
       }
-      res.json(citas);
+      res.json(citas2);
     } catch (error) {
       console.error("[API] Error in /api/citas/semana:", error);
       if (error instanceof Error) {
@@ -11372,12 +14321,12 @@ async function registerRoutes(app) {
   app.post("/api/citas/contactar-pacientes-hueco", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        fecha: z.string(),
-        horaInicio: z.number(),
-        horaFin: z.number(),
-        pacienteIds: z.array(z.string()),
-        tipoCita: z.string().default("revision")
+      const schema = z2.object({
+        fecha: z2.string(),
+        horaInicio: z2.number(),
+        horaFin: z2.number(),
+        pacienteIds: z2.array(z2.string()),
+        tipoCita: z2.string().default("revision")
       });
       const { fecha, horaInicio, horaFin, pacienteIds, tipoCita } = schema.parse(req.body);
       const resultados = [];
@@ -11457,9 +14406,9 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        estado: z.string().optional(),
-        fechaHora: z.string().optional()
+      const schema = z2.object({
+        estado: z2.string().optional(),
+        fechaHora: z2.string().optional()
       });
       const data = schema.parse(req.body);
       let cita;
@@ -11475,7 +14424,7 @@ async function registerRoutes(app) {
       }
       res.json(cita);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al actualizar cita" });
@@ -11486,8 +14435,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const recordatorios = await storage2.getRecordatorios();
-      res.json(recordatorios);
+      const recordatorios2 = await storage2.getRecordatorios();
+      res.json(recordatorios2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener recordatorios" });
     }
@@ -11499,7 +14448,7 @@ async function registerRoutes(app) {
       const recordatorio = await storage2.createRecordatorio(recordatorioData);
       res.status(201).json(recordatorio);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al crear recordatorio" });
@@ -11539,9 +14488,9 @@ async function registerRoutes(app) {
       const storage2 = await getStorage();
       console.log("[API] /api/budgets called");
       await storage2.ensureInitialized();
-      const budgets = await storage2.getBudgets();
-      console.log("[API] /api/budgets returning", budgets.length, "budgets");
-      res.json(budgets);
+      const budgets2 = await storage2.getBudgets();
+      console.log("[API] /api/budgets returning", budgets2.length, "budgets");
+      res.json(budgets2);
     } catch (error) {
       console.error("[API] Error in /api/budgets:", error);
       if (error instanceof Error) {
@@ -11590,8 +14539,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const acciones = await storage2.getAcciones({ tipo: "relance", limit: 100 });
-      const touchpoints = acciones.filter((a) => a.budgetId === id);
+      const acciones2 = await storage2.getAcciones({ tipo: "relance", limit: 100 });
+      const touchpoints = acciones2.filter((a) => a.budgetId === id);
       res.json(touchpoints);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener touchpoints" });
@@ -11600,15 +14549,15 @@ async function registerRoutes(app) {
   app.post("/api/budgets", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        patientId: z.string(),
-        amount: z.string(),
-        treatmentDetails: z.string(),
-        clinicId: z.string().optional()
+      const schema = z2.object({
+        patientId: z2.string(),
+        amount: z2.string(),
+        treatmentDetails: z2.string(),
+        clinicId: z2.string().optional()
       });
       const data = schema.parse(req.body);
-      const pacientes = await storage2.getPacientes();
-      const patient = pacientes.find((p) => p.id === data.patientId);
+      const pacientes2 = await storage2.getPacientes();
+      const patient = pacientes2.find((p) => p.id === data.patientId);
       const clinicId = data.clinicId || patient?.clinicId || "default-clinic";
       const budget = await storage2.createBudget({
         patientId: data.patientId,
@@ -11618,7 +14567,7 @@ async function registerRoutes(app) {
       });
       res.status(201).json(budget);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         console.error("Error creating budget:", error);
@@ -11630,8 +14579,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        status: z.enum(["pending", "accepted", "rejected"])
+      const schema = z2.object({
+        status: z2.enum(["pending", "accepted", "rejected"])
       });
       const { status } = schema.parse(req.body);
       const budget = await storage2.updateBudgetStatus(id, status);
@@ -11641,7 +14590,7 @@ async function registerRoutes(app) {
       }
       res.json(budget);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al actualizar presupuesto" });
@@ -11652,8 +14601,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        channel: z.enum(["sms", "email", "whatsapp"])
+      const schema = z2.object({
+        channel: z2.enum(["sms", "email", "whatsapp"])
       });
       const { channel } = schema.parse(req.body);
       const budget = await storage2.getBudget(id);
@@ -11661,8 +14610,8 @@ async function registerRoutes(app) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
         return;
       }
-      const pacientes = await storage2.getPacientes();
-      const patient = pacientes.find((p) => p.id === budget.patientId);
+      const pacientes2 = await storage2.getPacientes();
+      const patient = pacientes2.find((p) => p.id === budget.patientId);
       if (!patient) {
         res.status(404).json({ error: "Paciente no encontrado" });
         return;
@@ -11694,9 +14643,9 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        message: z.string(),
-        channel: z.enum(["sms", "email", "whatsapp"])
+      const schema = z2.object({
+        message: z2.string(),
+        channel: z2.enum(["sms", "email", "whatsapp"])
       });
       const { message, channel } = schema.parse(req.body);
       const budget = await storage2.getBudget(id);
@@ -11704,7 +14653,7 @@ async function registerRoutes(app) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
         return;
       }
-      const mensajes = await storage2.getMensajes("");
+      const mensajes2 = await storage2.getMensajes("");
       const messageId = `msg-${Date.now()}`;
       res.json({
         success: true,
@@ -11726,8 +14675,8 @@ async function registerRoutes(app) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
         return;
       }
-      const pacientes = await storage2.getPacientes();
-      const patient = pacientes.find((p) => p.id === budget.patientId);
+      const pacientes2 = await storage2.getPacientes();
+      const patient = pacientes2.find((p) => p.id === budget.patientId);
       if (!patient) {
         res.status(404).json({ error: "Paciente no encontrado" });
         return;
@@ -11751,8 +14700,8 @@ async function registerRoutes(app) {
   app.post("/api/budgets/:id/send-post-visit", async (req, res) => {
     try {
       const { id } = req.params;
-      const schema = z.object({
-        message: z.string()
+      const schema = z2.object({
+        message: z2.string()
       });
       const { message } = schema.parse(req.body);
       res.json({
@@ -11768,8 +14717,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       const { id } = req.params;
-      const schema = z.object({
-        channel: z.enum(["sms", "email", "whatsapp"])
+      const schema = z2.object({
+        channel: z2.enum(["sms", "email", "whatsapp"])
       });
       const { channel } = schema.parse(req.body);
       const cita = await storage2.getCita(id);
@@ -11777,8 +14726,8 @@ async function registerRoutes(app) {
         res.status(404).json({ error: "Cita no encontrada" });
         return;
       }
-      const pacientes = await storage2.getPacientes();
-      const patient = pacientes.find((p) => p.id === cita.pacienteId);
+      const pacientes2 = await storage2.getPacientes();
+      const patient = pacientes2.find((p) => p.id === cita.pacienteId);
       if (!patient) {
         res.status(404).json({ error: "Paciente no encontrado" });
         return;
@@ -11810,14 +14759,14 @@ async function registerRoutes(app) {
   app.post("/api/citas/send-bulk-reminders", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        date: z.string(),
-        channel: z.enum(["sms", "email", "whatsapp"])
+      const schema = z2.object({
+        date: z2.string(),
+        channel: z2.enum(["sms", "email", "whatsapp"])
       });
-      const { date, channel } = schema.parse(req.body);
-      const targetDate = new Date(date);
-      const citas = await storage2.getCitas();
-      const citasDelDia = citas.filter((c) => {
+      const { date: date2, channel } = schema.parse(req.body);
+      const targetDate = new Date(date2);
+      const citas2 = await storage2.getCitas();
+      const citasDelDia = citas2.filter((c) => {
         const fechaCita = new Date(c.fechaHora);
         return fechaCita.getDate() === targetDate.getDate() && fechaCita.getMonth() === targetDate.getMonth() && fechaCita.getFullYear() === targetDate.getFullYear() && c.estado === "programada";
       });
@@ -11845,15 +14794,15 @@ async function registerRoutes(app) {
   app.post("/api/tratamientos-preventivos", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        pacienteId: z.string(),
-        clinicId: z.string(),
-        tipoTratamiento: z.string(),
-        fechaRealizacion: z.string(),
-        frecuenciaMeses: z.number(),
-        citaId: z.string().nullable().optional(),
-        budgetId: z.string().nullable().optional(),
-        notas: z.string().nullable().optional()
+      const schema = z2.object({
+        pacienteId: z2.string(),
+        clinicId: z2.string(),
+        tipoTratamiento: z2.string(),
+        fechaRealizacion: z2.string(),
+        frecuenciaMeses: z2.number(),
+        citaId: z2.string().nullable().optional(),
+        budgetId: z2.string().nullable().optional(),
+        notas: z2.string().nullable().optional()
       });
       const data = schema.parse(req.body);
       const fechaRealizacion = new Date(data.fechaRealizacion);
@@ -11872,7 +14821,7 @@ async function registerRoutes(app) {
       });
       res.status(201).json(tratamiento);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         console.error("Error creating tratamiento preventivo:", error);
@@ -11884,8 +14833,8 @@ async function registerRoutes(app) {
     try {
       const storage2 = await getStorage();
       await storage2.ensureInitialized();
-      const recordatorios = await storage2.getRecordatoriosPreventivosPendientes();
-      res.json(recordatorios);
+      const recordatorios2 = await storage2.getRecordatoriosPreventivosPendientes();
+      res.json(recordatorios2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener recordatorios preventivos pendientes" });
     }
@@ -11917,25 +14866,25 @@ async function registerRoutes(app) {
   app.post("/api/reglas-comunicacion", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        nombre: z.string(),
-        tipo: z.enum(["relance_presupuesto", "recordatorio_cita", "post_visita", "salud_preventiva", "recall_paciente"]),
-        activa: z.boolean().optional(),
-        secuencia: z.array(z.object({
-          orden: z.number(),
-          canal: z.enum(["whatsapp", "sms", "email", "llamada"]),
-          diasDespues: z.number(),
-          accion: z.enum(["enviar", "programar_llamada", "escalar"]),
-          mensaje: z.string().optional(),
-          requiereConfirmacion: z.boolean().optional()
+      const schema = z2.object({
+        nombre: z2.string(),
+        tipo: z2.enum(["relance_presupuesto", "recordatorio_cita", "post_visita", "salud_preventiva", "recall_paciente"]),
+        activa: z2.boolean().optional(),
+        secuencia: z2.array(z2.object({
+          orden: z2.number(),
+          canal: z2.enum(["whatsapp", "sms", "email", "llamada"]),
+          diasDespues: z2.number(),
+          accion: z2.enum(["enviar", "programar_llamada", "escalar"]),
+          mensaje: z2.string().optional(),
+          requiereConfirmacion: z2.boolean().optional()
         })),
-        criterios: z.any().optional()
+        criterios: z2.any().optional()
       });
       const data = schema.parse(req.body);
       const regla = await storage2.createReglaComunicacion(data);
       res.status(201).json(regla);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         console.error("Error creating regla:", error);
@@ -11946,18 +14895,18 @@ async function registerRoutes(app) {
   app.put("/api/reglas-comunicacion/:id", async (req, res) => {
     try {
       const storage2 = await getStorage();
-      const schema = z.object({
-        nombre: z.string().optional(),
-        activa: z.boolean().optional(),
-        secuencia: z.array(z.object({
-          orden: z.number(),
-          canal: z.enum(["whatsapp", "sms", "email", "llamada"]),
-          diasDespues: z.number(),
-          accion: z.enum(["enviar", "programar_llamada", "escalar"]),
-          mensaje: z.string().optional(),
-          requiereConfirmacion: z.boolean().optional()
+      const schema = z2.object({
+        nombre: z2.string().optional(),
+        activa: z2.boolean().optional(),
+        secuencia: z2.array(z2.object({
+          orden: z2.number(),
+          canal: z2.enum(["whatsapp", "sms", "email", "llamada"]),
+          diasDespues: z2.number(),
+          accion: z2.enum(["enviar", "programar_llamada", "escalar"]),
+          mensaje: z2.string().optional(),
+          requiereConfirmacion: z2.boolean().optional()
         })).optional(),
-        criterios: z.any().optional()
+        criterios: z2.any().optional()
       });
       const data = schema.parse(req.body);
       const regla = await storage2.updateReglaComunicacion(req.params.id, data);
@@ -11967,7 +14916,7 @@ async function registerRoutes(app) {
       }
       res.json(regla);
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         res.status(500).json({ error: "Error al actualizar regla" });
@@ -12026,8 +14975,8 @@ async function registerRoutes(app) {
       const estado = req.query.estado;
       const tipo = req.query.tipo;
       const limit2 = req.query.limit ? parseInt(req.query.limit) : void 0;
-      const acciones = await storage2.getAcciones({ estado, tipo, limit: limit2 });
-      res.json(acciones);
+      const acciones2 = await storage2.getAcciones({ estado, tipo, limit: limit2 });
+      res.json(acciones2);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener acciones" });
     }
@@ -12065,8 +15014,8 @@ async function registerRoutes(app) {
       const storage2 = await getStorage();
       console.log("[API] /api/dashboard/dentaliq-kpis called");
       await storage2.ensureInitialized();
-      const budgets = await storage2.getBudgets();
-      console.log("[API] Budgets count:", budgets.length);
+      const budgets2 = await storage2.getBudgets();
+      console.log("[API] Budgets count:", budgets2.length);
       const kpis = await storage2.getDentalIQKPIs();
       console.log("[API] KPIs returned:", JSON.stringify(kpis));
       res.json(kpis);
@@ -12129,8 +15078,8 @@ async function registerRoutes(app) {
       const ma\u00F1ana = new Date(hoy);
       ma\u00F1ana.setDate(ma\u00F1ana.getDate() + 1);
       const accionesHoy = [];
-      const citas = await storage2.getCitas();
-      const citasRecordatorio = citas.filter((c) => {
+      const citas2 = await storage2.getCitas();
+      const citasRecordatorio = citas2.filter((c) => {
         if (c.estado !== "programada") return false;
         const fechaCita = new Date(c.fechaHora);
         const horasAntes = (fechaCita.getTime() - hoy.getTime()) / (1e3 * 60 * 60);
@@ -12237,8 +15186,8 @@ async function registerRoutes(app) {
           }
         }
       }
-      const tareasLlamadas = await storage2.getTareas();
-      const tareasHoy = tareasLlamadas.filter((t) => {
+      const tareasLlamadas2 = await storage2.getTareas();
+      const tareasHoy = tareasLlamadas2.filter((t) => {
         if (t.estado !== "pendiente") return false;
         if (!t.fechaProgramada) return false;
         const fechaProgramada = new Date(t.fechaProgramada);
@@ -12289,8 +15238,8 @@ async function registerRoutes(app) {
       const hoy = /* @__PURE__ */ new Date();
       hoy.setHours(0, 0, 0, 0);
       const accionesHoy = [];
-      const citas = await storage2.getCitas();
-      const citasRecordatorio = citas.filter((c) => {
+      const citas2 = await storage2.getCitas();
+      const citasRecordatorio = citas2.filter((c) => {
         if (c.estado !== "programada") return false;
         const fechaCita = new Date(c.fechaHora);
         const horasAntes = (fechaCita.getTime() - hoy.getTime()) / (1e3 * 60 * 60);
@@ -12347,17 +15296,17 @@ async function registerRoutes(app) {
   app.post("/api/ia/generar-mensaje", async (req, res) => {
     try {
       const { generateCommunicationRuleMessage: generateCommunicationRuleMessage2 } = await Promise.resolve().then(() => (init_openai2(), openai_exports));
-      const schema = z.object({
-        tipo: z.enum(["relance_presupuesto", "recordatorio_cita", "post_visita", "salud_preventiva", "recall_paciente"]),
-        canal: z.enum(["sms", "email", "whatsapp", "llamada"]),
-        pasoNumero: z.number().int().positive(),
-        contexto: z.object({
-          nombrePaciente: z.string().optional(),
-          monto: z.number().optional(),
-          tratamiento: z.string().optional(),
-          diasPendientes: z.number().optional(),
-          fechaCita: z.string().optional(),
-          tipoTratamiento: z.string().optional()
+      const schema = z2.object({
+        tipo: z2.enum(["relance_presupuesto", "recordatorio_cita", "post_visita", "salud_preventiva", "recall_paciente"]),
+        canal: z2.enum(["sms", "email", "whatsapp", "llamada"]),
+        pasoNumero: z2.number().int().positive(),
+        contexto: z2.object({
+          nombrePaciente: z2.string().optional(),
+          monto: z2.number().optional(),
+          tratamiento: z2.string().optional(),
+          diasPendientes: z2.number().optional(),
+          fechaCita: z2.string().optional(),
+          tipoTratamiento: z2.string().optional()
         }).optional()
       });
       const { tipo, canal, pasoNumero, contexto } = schema.parse(req.body);
@@ -12368,7 +15317,7 @@ async function registerRoutes(app) {
       const mensaje = await generateCommunicationRuleMessage2(tipo, canal, pasoNumero, contextoFormateado);
       res.json({ mensaje });
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof z2.ZodError) {
         res.status(400).json({ error: "Datos inv\xE1lidos", details: error.errors });
       } else {
         console.error("Error generando mensaje con IA:", error);
