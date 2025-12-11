@@ -7,6 +7,10 @@ import express, {
   NextFunction,
 } from "express";
 
+// Cache para módulos importados
+let storageModule: any = null;
+let routesModule: any = null;
+
 let routesRegistered = false;
 let appInstance: Express | null = null;
 
@@ -57,21 +61,26 @@ function getApp(): Express {
 
 // Función para obtener storage de forma lazy
 async function getStorage() {
-  // En Vercel, los archivos están en /var/task/
-  // Intentar diferentes rutas hasta que una funcione
+  // Si ya se importó estáticamente, usarlo
+  if (storageModule && storageModule.storage) {
+    return storageModule.storage;
+  }
+  
+  // Si no, intentar importación dinámica
   const importPaths = [
-    '../server/storage',  // Ruta relativa estándar
-    './server/storage',   // Ruta relativa desde api/
-    '/var/task/server/storage',  // Ruta absoluta en Vercel
+    '../server/storage',
+    './server/storage',
+    '/var/task/server/storage',
   ];
   
   for (const importPath of importPaths) {
     try {
       console.log(`[Vercel] Trying to import storage from: ${importPath}`);
-      const storageModule = await import(importPath);
-      if (storageModule.storage) {
+      const module = await import(importPath);
+      if (module.storage) {
         console.log(`[Vercel] Successfully imported storage from: ${importPath}`);
-        return storageModule.storage;
+        storageModule = module;
+        return module.storage;
       }
     } catch (error) {
       console.log(`[Vercel] Failed to import from ${importPath}:`, error instanceof Error ? error.message : String(error));
@@ -79,17 +88,7 @@ async function getStorage() {
     }
   }
   
-  // Si todas fallan, intentar con path.join
-  try {
-    const path = await import('path');
-    const storagePath = path.join(process.cwd(), 'server', 'storage');
-    console.log(`[Vercel] Trying storage path: ${storagePath}`);
-    const storageModule = await import(storagePath);
-    return storageModule.storage;
-  } catch (error) {
-    console.error('[Vercel] All storage import attempts failed:', error);
-    throw new Error(`Cannot import storage from any path. Tried: ${importPaths.join(', ')}`);
-  }
+  throw new Error(`Cannot import storage from any path. Tried: ${importPaths.join(', ')}`);
 }
 
 // Función para inicializar datos de forma robusta
@@ -137,40 +136,37 @@ async function registerRoutesOnce() {
     console.log('[Vercel] Registering routes...');
     const app = getApp();
     
-    // Importar routes dinámicamente
-    // Intentar diferentes rutas hasta que una funcione
-    const routesImportPaths = [
-      '../server/routes',
-      './server/routes',
-      '/var/task/server/routes',
-    ];
-    
+    // Importar routes
     let registerRoutes;
-    for (const importPath of routesImportPaths) {
-      try {
-        console.log(`[Vercel] Trying to import routes from: ${importPath}`);
-        const routesModule = await import(importPath);
-        if (routesModule.registerRoutes) {
-          registerRoutes = routesModule.registerRoutes;
-          console.log(`[Vercel] Successfully imported routes from: ${importPath}`);
-          break;
-        }
-      } catch (error) {
-        console.log(`[Vercel] Failed to import routes from ${importPath}:`, error instanceof Error ? error.message : String(error));
-        continue;
-      }
-    }
     
-    if (!registerRoutes) {
-      // Último intento con path.join
-      try {
-        const path = await import('path');
-        const routesPath = path.join(process.cwd(), 'server', 'routes');
-        console.log(`[Vercel] Trying routes path: ${routesPath}`);
-        const routesModule = await import(routesPath);
-        registerRoutes = routesModule.registerRoutes;
-      } catch (error) {
-        console.error('[Vercel] All routes import attempts failed:', error);
+    // Si ya se importó estáticamente, usarlo
+    if (routesModule && routesModule.registerRoutes) {
+      registerRoutes = routesModule.registerRoutes;
+    } else {
+      // Si no, intentar importación dinámica
+      const routesImportPaths = [
+        '../server/routes',
+        './server/routes',
+        '/var/task/server/routes',
+      ];
+      
+      for (const importPath of routesImportPaths) {
+        try {
+          console.log(`[Vercel] Trying to import routes from: ${importPath}`);
+          const module = await import(importPath);
+          if (module.registerRoutes) {
+            registerRoutes = module.registerRoutes;
+            routesModule = module;
+            console.log(`[Vercel] Successfully imported routes from: ${importPath}`);
+            break;
+          }
+        } catch (error) {
+          console.log(`[Vercel] Failed to import routes from ${importPath}:`, error instanceof Error ? error.message : String(error));
+          continue;
+        }
+      }
+      
+      if (!registerRoutes) {
         throw new Error(`Cannot import routes from any path. Tried: ${routesImportPaths.join(', ')}`);
       }
     }
