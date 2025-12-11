@@ -46,7 +46,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/pacientes/calcular-perdidos", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const resultado = await storage.calcularPacientesPerdidos();
       res.json(resultado);
@@ -58,7 +57,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener pacientes perdidos con filtros
   app.post("/api/pacientes/perdidos", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const filtrosSchema = z.object({
@@ -103,7 +101,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las campañas
   app.get("/api/campanas", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const campanas = await storage.getCampanas();
@@ -161,7 +158,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tareas", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const tareas = await storage.getTareas();
       res.json(tareas);
@@ -188,7 +184,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener tareas programadas para hoy
   app.get("/api/tareas/hoy", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const tareas = await storage.getTareasParaHoy();
@@ -235,7 +230,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/kpis", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const kpis = await storage.getDashboardKPIs();
       res.json(kpis);
@@ -249,7 +243,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/conversion-canal", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const conversion = await storage.getConversionPorCanal();
       res.json(conversion);
@@ -262,7 +255,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener pacientes en riesgo (cerca de estar dormidos)
   app.get("/api/pacientes/en-riesgo", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const pacientes = await storage.getPacientesEnRiesgo();
@@ -295,7 +287,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversaciones", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const conversaciones = await storage.getConversaciones();
       res.json(conversaciones);
@@ -307,7 +298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener una conversación con sus mensajes
   app.get("/api/conversaciones/:id", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       const { id } = req.params;
       const conversacion = await storage.getConversacion(id);
@@ -370,7 +360,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversaciones/sin-leer/count", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const count = await storage.getConversacionesSinLeerCount();
       res.json({ count });
@@ -385,7 +374,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/citas", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const citas = await storage.getCitas();
       res.json(citas);
@@ -397,7 +385,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener citas por semana
   app.get("/api/citas/semana", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const { inicio, fin } = req.query;
@@ -477,7 +464,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contactar pacientes para rellenar huecos
   app.post("/api/citas/contactar-pacientes-hueco", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       const schema = z.object({
         fecha: z.string(),
@@ -579,7 +565,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/citas/:id", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         estado: z.string().optional(),
@@ -617,7 +602,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los recordatorios
   app.get("/api/recordatorios", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const recordatorios = await storage.getRecordatorios();
@@ -685,7 +669,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       console.log('[API] /api/budgets called');
       await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
@@ -726,7 +709,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets/:id/secuencia", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       const { id } = req.params;
       const secuencia = await storage.getSecuenciaComunicacionPorBudget(id);
       if (!secuencia) {
@@ -761,7 +743,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Crear un nuevo presupuesto
   app.post("/api/budgets", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       const schema = z.object({
         patientId: z.string(),
@@ -825,7 +806,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/budgets/:id/generate-relance", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         channel: z.enum(["sms", "email", "whatsapp"]),
@@ -875,7 +855,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/budgets/:id/send-relance", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         message: z.string(),
@@ -911,7 +890,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generar mensaje post-visita
   app.post("/api/budgets/:id/generate-post-visit", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       const { id } = req.params;
       const budget = await storage.getBudget(id);
@@ -971,7 +949,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enviar recordatorio de cita
   app.post("/api/citas/:id/send-reminder", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
@@ -1059,7 +1036,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tratamientos-preventivos", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const pacienteId = req.query.pacienteId as string | undefined;
       const tratamientos = await storage.getTratamientosPreventivos({ pacienteId });
@@ -1114,7 +1090,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tratamientos-preventivos/pendientes", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const recordatorios = await storage.getRecordatoriosPreventivosPendientes();
       res.json(recordatorios);
@@ -1127,7 +1102,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/reglas-comunicacion", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const reglas = await storage.getReglasComunicacion();
@@ -1233,7 +1207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/secuencias-comunicacion", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
       console.log('[API] /api/secuencias-comunicacion called with tipo:', req.query.tipo, 'estado:', req.query.estado);
       await storage.ensureInitialized();
       const tipo = req.query.tipo as string | undefined;
@@ -1270,7 +1243,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/acciones", async (req, res) => {
     try {
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const estado = req.query.estado as string | undefined;
@@ -1323,8 +1295,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/dentaliq-kpis", async (req, res) => {
     try {
       const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
       console.log('[API] /api/dashboard/dentaliq-kpis called');
       await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
@@ -1346,9 +1316,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener acciones del día para presupuestos
   app.get("/api/presupuestos/acciones-hoy", async (req, res) => {
     try {
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const hoy = new Date();
@@ -1404,19 +1371,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las acciones del día (combinadas)
   app.get("/api/acciones-del-dia", async (req, res) => {
     try {
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const hoy = new Date();
@@ -1599,12 +1553,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener acciones del día para pacientes
   app.get("/api/pacientes/acciones-hoy", async (req, res) => {
     try {
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
-      const storage = await getStorage();
       const storage = await getStorage();
       await storage.ensureInitialized();
       const hoy = new Date();

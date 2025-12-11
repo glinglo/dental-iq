@@ -11,28 +11,33 @@ async function getStorage() {
 }
 
 // Función para inicializar datos de forma robusta
+// En serverless, cada instancia puede ser nueva, así que siempre verificamos
 async function initializeStorage() {
-  if (storageInitialized) return;
-  
   try {
-    console.log('[Vercel] Initializing storage...');
     const storage = await getStorage();
     
-    // Forzar inicialización
-    await storage.ensureInitialized();
-    
-    // Verificar que los datos se cargaron
+    // Verificar si ya hay datos
     const pacientes = await storage.getPacientes();
     const budgets = await storage.getBudgets();
     
-    console.log(`[Vercel] Storage initialized - pacientes: ${pacientes.length}, budgets: ${budgets.length}`);
-    
+    // Si no hay datos, inicializar
     if (pacientes.length === 0 || budgets.length === 0) {
-      console.error('[Vercel] CRITICAL: Storage is empty after initialization!');
-      throw new Error(`Storage initialization failed - pacientes: ${pacientes.length}, budgets: ${budgets.length}`);
+      console.log('[Vercel] Storage empty, initializing...');
+      await storage.ensureInitialized();
+      
+      // Verificar después de inicializar
+      const pacientesAfter = await storage.getPacientes();
+      const budgetsAfter = await storage.getBudgets();
+      
+      console.log(`[Vercel] Storage initialized - pacientes: ${pacientesAfter.length}, budgets: ${budgetsAfter.length}`);
+      
+      if (pacientesAfter.length === 0 || budgetsAfter.length === 0) {
+        console.error('[Vercel] CRITICAL: Storage is still empty after initialization!');
+        throw new Error(`Storage initialization failed - pacientes: ${pacientesAfter.length}, budgets: ${budgetsAfter.length}`);
+      }
+    } else {
+      console.log(`[Vercel] Storage already initialized - pacientes: ${pacientes.length}, budgets: ${budgets.length}`);
     }
-    
-    storageInitialized = true;
   } catch (error) {
     console.error('[Vercel] CRITICAL ERROR initializing storage:', error);
     if (error instanceof Error) {
