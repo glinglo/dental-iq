@@ -385,17 +385,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener citas por semana
   app.get("/api/citas/semana", async (req, res) => {
     try {
+      console.log('[API] /api/citas/semana called');
       const storage = await getStorage();
       await storage.ensureInitialized();
+      
       const { inicio, fin } = req.query;
+      console.log('[API] Query params - inicio:', inicio, 'fin:', fin);
+      
       if (!inicio || !fin) {
+        console.error('[API] Missing inicio or fin parameters');
         res.status(400).json({ error: "Se requieren las fechas inicio y fin" });
         return;
       }
-      const citas = await storage.getCitasPorSemana(new Date(inicio as string), new Date(fin as string));
+      
+      const fechaInicio = new Date(inicio as string);
+      const fechaFin = new Date(fin as string);
+      console.log('[API] Date range - inicio:', fechaInicio.toISOString(), 'fin:', fechaFin.toISOString());
+      
+      // Verificar cuántas citas hay en total
+      const todasLasCitas = await storage.getCitas();
+      console.log('[API] Total citas en storage:', todasLasCitas.length);
+      
+      const citas = await storage.getCitasPorSemana(fechaInicio, fechaFin);
+      console.log('[API] Citas encontradas en rango:', citas.length);
+      
+      if (citas.length > 0) {
+        console.log('[API] Primera cita:', {
+          id: citas[0].id,
+          fechaHora: citas[0].fechaHora,
+          pacienteId: citas[0].pacienteId
+        });
+      }
+      
       res.json(citas);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener citas de la semana" });
+      console.error('[API] Error in /api/citas/semana:', error);
+      if (error instanceof Error) {
+        console.error('[API] Error message:', error.message);
+        console.error('[API] Error stack:', error.stack);
+      }
+      res.status(500).json({ 
+        error: "Error al obtener citas de la semana",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
