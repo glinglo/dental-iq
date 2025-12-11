@@ -12,8 +12,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los pacientes
   app.get("/api/pacientes", async (req, res) => {
     try {
+      console.log('[API] /api/pacientes called');
       await storage.ensureInitialized();
       const pacientes = await storage.getPacientes();
+      console.log('[API] /api/pacientes returning', pacientes.length, 'pacientes');
       res.json(pacientes);
     } catch (error) {
       console.error('[API] Error in /api/pacientes:', error);
@@ -21,7 +23,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('[API] Error message:', error.message);
         console.error('[API] Error stack:', error.stack);
       }
-      res.status(500).json({ error: "Error al obtener pacientes", details: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({ 
+        error: "Error al obtener pacientes", 
+        details: error instanceof Error ? error.message : String(error),
+        pacientesCount: (await storage.getPacientes()).length
+      });
     }
   });
 

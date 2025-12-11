@@ -213,16 +213,46 @@ export class MemStorage implements IStorage {
   // Método para asegurar que la inicialización esté completa
   async ensureInitialized(): Promise<void> {
     try {
-      // Verificar que hay datos básicos
+      // Verificar que hay datos básicos - SIEMPRE re-inicializar si están vacíos
       if (this.pacientes.size === 0 || this.budgets.size === 0) {
         console.log('[Storage] ensureInitialized: No data found, reinitializing...');
+        console.log('[Storage] Current state - pacientes:', this.pacientes.size, 'budgets:', this.budgets.size);
+        
+        // Limpiar todo primero
+        this.pacientes.clear();
+        this.budgets.clear();
+        this.citas.clear();
+        this.campanas.clear();
+        this.tareas.clear();
+        this.conversaciones.clear();
+        this.mensajes.clear();
+        this.clinics.clear();
+        this.tratamientosPreventivos.clear();
+        this.reglasComunicacion.clear();
+        this.secuenciasComunicacion.clear();
+        
+        // Re-inicializar datos mock (síncrono)
         this.inicializarMockData();
-        // Esperar un momento para que se carguen los datos
-        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Verificar inmediatamente después
+        const pacientesCount = this.pacientes.size;
+        const budgetsCount = this.budgets.size;
+        console.log(`[Storage] After reinitialization - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
+        
+        if (pacientesCount === 0 || budgetsCount === 0) {
+          console.error('[Storage] CRITICAL: Data still empty after reinitialization!');
+          throw new Error(`Storage initialization failed: pacientes=${pacientesCount}, budgets=${budgetsCount}`);
+        }
       }
       
+      // Esperar a que la inicialización asíncrona complete (si existe)
       if (this.initializationPromise) {
-        await this.initializationPromise;
+        try {
+          await this.initializationPromise;
+        } catch (error) {
+          console.error('[Storage] Error in async initialization, but continuing:', error);
+          // No fallar si la inicialización asíncrona falla
+        }
       }
       
       // Verificación final
@@ -230,38 +260,39 @@ export class MemStorage implements IStorage {
       const budgetsCount = this.budgets.size;
       console.log(`[Storage] ensureInitialized completed - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
       
-      if (pacientesCount === 0 || budgetsCount === 0) {
-        console.error(`[Storage] WARNING: Storage appears empty but continuing anyway`);
-        console.error(`[Storage] This may cause API errors but won't crash the server`);
-        // No lanzar error, solo loguear - permitir que el servidor continúe
-        // Los endpoints manejarán el caso de datos vacíos
-      }
     } catch (error) {
-      console.error('[Storage] Error in ensureInitialized:', error);
-      // No lanzar error para evitar que el servidor falle completamente
-      // Los endpoints manejarán el caso de datos vacíos
+      console.error('[Storage] CRITICAL ERROR in ensureInitialized:', error);
+      if (error instanceof Error) {
+        console.error('[Storage] Error message:', error.message);
+        console.error('[Storage] Error stack:', error.stack);
+      }
+      // Re-lanzar el error para que los endpoints lo manejen
+      throw error;
     }
   }
   
   
   private inicializarMockData() {
-    console.log('[Storage] Starting mock data initialization...');
-    console.log('[Storage] Environment:', process.env.NODE_ENV, 'VERCEL:', process.env.VERCEL);
-    
-    // Verificar si ya hay datos (en caso de reinicialización)
-    const hasData = this.pacientes.size > 0 || this.budgets.size > 0;
-    if (hasData) {
-      console.log('[Storage] WARNING: Data already exists! Clearing before reinitialization...');
-      this.pacientes.clear();
-      this.budgets.clear();
-      this.citas.clear();
-      this.campanas.clear();
-      this.tareas.clear();
-      this.conversaciones.clear();
-      this.mensajes.clear();
-      this.clinics.clear();
-      this.tratamientosPreventivos.clear();
-    }
+    try {
+      console.log('[Storage] Starting mock data initialization...');
+      console.log('[Storage] Environment:', process.env.NODE_ENV, 'VERCEL:', process.env.VERCEL);
+      
+      // Verificar si ya hay datos (en caso de reinicialización)
+      const hasData = this.pacientes.size > 0 || this.budgets.size > 0;
+      if (hasData) {
+        console.log('[Storage] WARNING: Data already exists! Clearing before reinitialization...');
+        this.pacientes.clear();
+        this.budgets.clear();
+        this.citas.clear();
+        this.campanas.clear();
+        this.tareas.clear();
+        this.conversaciones.clear();
+        this.mensajes.clear();
+        this.clinics.clear();
+        this.tratamientosPreventivos.clear();
+        this.reglasComunicacion.clear();
+        this.secuenciasComunicacion.clear();
+      }
     
     // Generar y cargar clínicas primero
     const clinics = generarClinicsMock();
@@ -332,16 +363,41 @@ export class MemStorage implements IStorage {
     this.inicializarReglasComunicacionDefault();
     console.log(`[Storage] ✓ Initialized reglas de comunicación`);
     
-    // Verificación final
-    console.log(`[Storage] Mock data initialization completed:`);
-    console.log(`[Storage]   - Pacientes: ${this.pacientes.size}`);
-    console.log(`[Storage]   - Budgets: ${this.budgets.size}`);
-    console.log(`[Storage]   - Citas: ${this.citas.size}`);
-    console.log(`[Storage]   - Campañas: ${this.campanas.size}`);
-    console.log(`[Storage]   - Tareas: ${this.tareas.size}`);
-    console.log(`[Storage]   - Conversaciones: ${this.conversaciones.size}`);
-    
-    // Las secuencias se inicializan en initializeAsync() para asegurar que se completen
+      // Verificación final
+      console.log(`[Storage] Mock data initialization completed:`);
+      console.log(`[Storage]   - Pacientes: ${this.pacientes.size}`);
+      console.log(`[Storage]   - Budgets: ${this.budgets.size}`);
+      console.log(`[Storage]   - Citas: ${this.citas.size}`);
+      console.log(`[Storage]   - Campañas: ${this.campanas.size}`);
+      console.log(`[Storage]   - Tareas: ${this.tareas.size}`);
+      console.log(`[Storage]   - Conversaciones: ${this.conversaciones.size}`);
+      
+      // Verificar que los datos críticos se cargaron
+      if (this.pacientes.size === 0) {
+        throw new Error('Failed to load pacientes - pacientes.size is 0');
+      }
+      if (this.budgets.size === 0) {
+        throw new Error('Failed to load budgets - budgets.size is 0');
+      }
+      if (this.citas.size === 0) {
+        throw new Error('Failed to load citas - citas.size is 0');
+      }
+      if (this.campanas.size === 0) {
+        throw new Error('Failed to load campanas - campanas.size is 0');
+      }
+      
+      console.log('[Storage] ✓ All critical data loaded successfully');
+      
+      // Las secuencias se inicializan en initializeAsync() para asegurar que se completen
+    } catch (error) {
+      console.error('[Storage] CRITICAL ERROR in inicializarMockData:', error);
+      if (error instanceof Error) {
+        console.error('[Storage] Error message:', error.message);
+        console.error('[Storage] Error stack:', error.stack);
+      }
+      // Re-lanzar el error para que se maneje arriba
+      throw error;
+    }
   }
   
   // Crear secuencias para presupuestos pendientes que ya existen

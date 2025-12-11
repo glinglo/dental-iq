@@ -22,11 +22,19 @@ async function initialize() {
     // Esto fuerza la inicialización de los datos mock
     const { storage } = await import('../server/storage');
     
-    // Esperar un momento para que el constructor complete
-    await new Promise(resolve => setTimeout(resolve, 50));
+    console.log('[Vercel] Storage module imported');
+    console.log('[Vercel] Initial storage state - pacientes:', (await storage.getPacientes()).length, 'budgets:', (await storage.getBudgets()).length);
     
     // Esperar a que el storage esté completamente inicializado (incluyendo async)
-    await storage.ensureInitialized();
+    try {
+      await storage.ensureInitialized();
+      console.log('[Vercel] Storage ensureInitialized completed');
+    } catch (error) {
+      console.error('[Vercel] ERROR in ensureInitialized:', error);
+      // Intentar una vez más
+      console.log('[Vercel] Retrying ensureInitialized...');
+      await storage.ensureInitialized();
+    }
     
     // Verificar que los datos estén cargados con retry
     let pacientes: any[] = [];
