@@ -520,10 +520,11 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   console.log('[MockData] Inicio semana (lunes):', inicioSemana.toISOString());
   
-  // Generar citas para las últimas 2 semanas, esta semana y las próximas 4 semanas
+  // Generar citas para las últimas 2 semanas, esta semana y las próximas 6 semanas
   // Esto asegura que siempre haya citas visibles independientemente de cuándo se inicialice
+  // Aumentado a 6 semanas adelante para cubrir más rango futuro
   const semanasAtras = 2;
-  const semanasAdelante = 4;
+  const semanasAdelante = 6;
   
   // Horarios de trabajo: 9:00 a 20:00
   const horariosDisponibles = [9, 10, 11, 12, 13, 16, 17, 18, 19];
@@ -537,6 +538,15 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   // Generar citas para el rango completo (semanasAtras + semanasAdelante semanas)
   // Incluir TODOS los días de la semana (0-6 = lunes a domingo) para coincidir con date-fns
+  // IMPORTANTE: Generar desde el lunes de la semana más antigua hasta el domingo de la semana más futura
+  const fechaInicioRango = new Date(inicioSemana);
+  fechaInicioRango.setDate(inicioSemana.getDate() - (semanasAtras * 7));
+  
+  const fechaFinRango = new Date(inicioSemana);
+  fechaFinRango.setDate(inicioSemana.getDate() + (semanasAdelante * 7) + 6); // +6 para llegar al domingo de la última semana
+  
+  console.log('[MockData] Rango de fechas para citas - inicio:', fechaInicioRango.toISOString(), 'fin:', fechaFinRango.toISOString());
+  
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 7; dia++) { // Lunes a domingo (0-6 días desde el lunes)
       const fechaDia = new Date(inicioSemana);
