@@ -34,6 +34,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calcular pacientes perdidos
   app.post("/api/pacientes/calcular-perdidos", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const resultado = await storage.calcularPacientesPerdidos();
       res.json(resultado);
     } catch (error) {
@@ -44,6 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener pacientes perdidos con filtros
   app.post("/api/pacientes/perdidos", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const filtrosSchema = z.object({
         prioridad: z.enum(["Alta", "Media", "Baja", "Todas"]).optional(),
         diagnostico: z.string().optional(),
@@ -85,6 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las campañas
   app.get("/api/campanas", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const campanas = await storage.getCampanas();
       res.json(campanas);
     } catch (error) {
@@ -137,6 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las tareas
   app.get("/api/tareas", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const tareas = await storage.getTareas();
       res.json(tareas);
     } catch (error) {
@@ -161,6 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener tareas programadas para hoy
   app.get("/api/tareas/hoy", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const tareas = await storage.getTareasParaHoy();
       res.json(tareas);
     } catch (error) {
@@ -256,6 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las conversaciones
   app.get("/api/conversaciones", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const conversaciones = await storage.getConversaciones();
       res.json(conversaciones);
     } catch (error) {
@@ -324,6 +330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener conteo de conversaciones sin leer
   app.get("/api/conversaciones/sin-leer/count", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const count = await storage.getConversacionesSinLeerCount();
       res.json({ count });
     } catch (error) {
@@ -336,6 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las citas
   app.get("/api/citas", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const citas = await storage.getCitas();
       res.json(citas);
     } catch (error) {
@@ -346,6 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener citas por semana
   app.get("/api/citas/semana", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const { inicio, fin } = req.query;
       if (!inicio || !fin) {
         res.status(400).json({ error: "Se requieren las fechas inicio y fin" });
@@ -556,6 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los recordatorios
   app.get("/api/recordatorios", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const recordatorios = await storage.getRecordatorios();
       res.json(recordatorios);
     } catch (error) {
@@ -617,6 +627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los presupuestos
   app.get("/api/budgets", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
       res.json(budgets);
     } catch (error) {
@@ -962,6 +973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/tratamientos-preventivos", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const pacienteId = req.query.pacienteId as string | undefined;
       const tratamientos = await storage.getTratamientosPreventivos({ pacienteId });
       res.json(tratamientos);
@@ -1013,6 +1025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tratamientos-preventivos/pendientes", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const recordatorios = await storage.getRecordatoriosPreventivosPendientes();
       res.json(recordatorios);
     } catch (error) {
@@ -1158,6 +1171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/acciones", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const estado = req.query.estado as string | undefined;
       const tipo = req.query.tipo as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
@@ -1226,6 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener acciones del día para presupuestos
   app.get("/api/presupuestos/acciones-hoy", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const mañana = new Date(hoy);
@@ -1460,6 +1475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener acciones del día para pacientes
   app.get("/api/pacientes/acciones-hoy", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const accionesHoy = [];
