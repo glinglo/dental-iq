@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[API] /api/pacientes called');
       const storage = await getStorage();
       await storage.ensureInitialized();
-      const pacientes = const storage = await getStorage(); await storage.getPacientes();
+      const pacientes = await storage.getPacientes();
       console.log('[API] /api/pacientes returning', pacientes.length, 'pacientes');
       res.json(pacientes);
     } catch (error) {
