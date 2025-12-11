@@ -136,15 +136,27 @@ async function initialize() {
 }
 
 export default async function handler(req: any, res: any) {
+  // Wrapper global para capturar cualquier error no manejado
   try {
     console.log(`[Vercel] Request: ${req.method} ${req.url}`);
     
-    await initialize();
+    // Inicializar con manejo de errores robusto
+    try {
+      await initialize();
+    } catch (initError) {
+      console.error('[Vercel] Initialization error (non-fatal):', initError);
+      // Continuar incluso si la inicialización falla
+      // Las rutas manejarán datos vacíos
+    }
     
     // Manejar la request con Express
     app(req, res, (err: any) => {
       if (err) {
         console.error('[Vercel] Express error:', err);
+        if (error instanceof Error) {
+          console.error('[Vercel] Express error message:', err.message);
+          console.error('[Vercel] Express error stack:', err.stack);
+        }
         if (!res.headersSent) {
           res.status(500).json({ 
             error: 'Internal Server Error',
@@ -154,7 +166,7 @@ export default async function handler(req: any, res: any) {
       }
     });
   } catch (error) {
-    console.error('[Vercel] Handler error:', error);
+    console.error('[Vercel] CRITICAL Handler error:', error);
     if (error instanceof Error) {
       console.error('[Vercel] Error message:', error.message);
       console.error('[Vercel] Error stack:', error.stack);

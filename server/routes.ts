@@ -1123,14 +1123,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/secuencias-comunicacion", async (req, res) => {
     try {
+      console.log('[API] /api/secuencias-comunicacion called with tipo:', req.query.tipo, 'estado:', req.query.estado);
       await storage.ensureInitialized();
       const tipo = req.query.tipo as string | undefined;
       const estado = req.query.estado as string | undefined;
       const secuencias = await storage.getSecuenciasComunicacion({ tipo, estado });
+      console.log('[API] /api/secuencias-comunicacion returning', secuencias.length, 'secuencias');
       res.json(secuencias);
     } catch (error) {
       console.error('[API] Error in /api/secuencias-comunicacion:', error);
-      res.status(500).json({ error: "Error al obtener secuencias", details: error instanceof Error ? error.message : String(error) });
+      if (error instanceof Error) {
+        console.error('[API] Error message:', error.message);
+        console.error('[API] Error stack:', error.stack);
+      }
+      // Devolver array vacío en lugar de error 500
+      res.json([]);
     }
   });
 

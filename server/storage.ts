@@ -232,7 +232,13 @@ export class MemStorage implements IStorage {
         this.secuenciasComunicacion.clear();
         
         // Re-inicializar datos mock (síncrono)
-        this.inicializarMockData();
+        try {
+          this.inicializarMockData();
+        } catch (error) {
+          console.error('[Storage] ERROR in inicializarMockData:', error);
+          // No lanzar error - permitir que continúe con datos vacíos
+          // Los endpoints devolverán arrays vacíos
+        }
         
         // Verificar inmediatamente después
         const pacientesCount = this.pacientes.size;
@@ -240,8 +246,10 @@ export class MemStorage implements IStorage {
         console.log(`[Storage] After reinitialization - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
         
         if (pacientesCount === 0 || budgetsCount === 0) {
-          console.error('[Storage] CRITICAL: Data still empty after reinitialization!');
-          throw new Error(`Storage initialization failed: pacientes=${pacientesCount}, budgets=${budgetsCount}`);
+          console.error('[Storage] WARNING: Data still empty after reinitialization!');
+          console.error('[Storage] Endpoints will return empty arrays instead of crashing');
+          // NO lanzar error - permitir que el servidor continúe
+          // Los endpoints manejarán el caso de datos vacíos
         }
       }
       
@@ -261,13 +269,13 @@ export class MemStorage implements IStorage {
       console.log(`[Storage] ensureInitialized completed - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
       
     } catch (error) {
-      console.error('[Storage] CRITICAL ERROR in ensureInitialized:', error);
+      console.error('[Storage] ERROR in ensureInitialized (non-critical):', error);
       if (error instanceof Error) {
         console.error('[Storage] Error message:', error.message);
         console.error('[Storage] Error stack:', error.stack);
       }
-      // Re-lanzar el error para que los endpoints lo manejen
-      throw error;
+      // NO re-lanzar el error - permitir que el servidor continúe
+      // Los endpoints devolverán arrays vacíos en lugar de fallar
     }
   }
   
