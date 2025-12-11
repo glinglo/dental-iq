@@ -509,13 +509,9 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   console.log('[MockData] Generating citas - Current date:', ahora.toISOString());
   
   // Obtener inicio de la semana actual (lunes)
-  // Usar el mismo método que el frontend (startOfWeek con weekStartsOn: 1)
-  const inicioSemana = new Date(ahora);
-  const diaSemana = ahora.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
-  // Calcular días hasta el lunes más reciente
-  // Si es domingo (0), retroceder 6 días. Si es lunes (1), no retroceder. Si es otro día, retroceder (diaSemana - 1)
-  const diasHastaLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
-  inicioSemana.setDate(ahora.getDate() + diasHastaLunes);
+  // Usar date-fns startOfWeek para que coincida exactamente con el frontend
+  const { startOfWeek } = await import('date-fns');
+  const inicioSemana = startOfWeek(ahora, { weekStartsOn: 1 });
   inicioSemana.setHours(0, 0, 0, 0);
   
   console.log('[MockData] Inicio semana (lunes):', inicioSemana.toISOString());
