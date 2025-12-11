@@ -1172,9 +1172,9 @@ export class MemStorage implements IStorage {
       const finTime = fin.getTime();
       const dentroRango = fechaCita >= inicioTime && fechaCita <= finTime;
       
-      if (!dentroRango && todasLasCitas.length <= 10) {
-        // Solo log para debugging si hay pocas citas
-        console.log(`[Storage] Cita fuera de rango: ${cita.id} - ${cita.fechaHora.toISOString()}`);
+      // Log las primeras 5 citas para debug
+      if (todasLasCitas.indexOf(cita) < 5) {
+        console.log(`[Storage] Cita ${todasLasCitas.indexOf(cita)}: ${cita.fechaHora.toISOString()} (${cita.fechaHora.getTime()}) - Rango: ${inicio.toISOString()} (${inicioTime}) a ${fin.toISOString()} (${finTime}) - Dentro: ${dentroRango}`);
       }
       
       return dentroRango;

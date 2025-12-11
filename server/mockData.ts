@@ -543,6 +543,10 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   console.log('[MockData] Rango de fechas para citas - inicio:', fechaInicioRango.toISOString(), 'fin:', fechaFinRango.toISOString());
   
+  // Log para debug: verificar qué semana estamos generando
+  console.log('[MockData] Generando citas desde semana', -semanasAtras, 'hasta semana', semanasAdelante);
+  console.log('[MockData] Semana 0 (actual) debería ser:', inicioSemana.toISOString(), 'hasta', new Date(inicioSemana.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString());
+  
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 7; dia++) { // Lunes a domingo (0-6 días desde el lunes)
       const fechaDia = new Date(inicioSemana);
@@ -561,6 +565,11 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
         const paciente = pacientesSeleccionados[citaIndex];
         const fechaHora = new Date(fechaDia);
         fechaHora.setHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
+        
+        // Log para debug: verificar citas de la semana actual (semana 0)
+        if (semana === 0 && dia === 0 && hora === horariosDisponibles[0]) {
+          console.log('[MockData] Ejemplo cita semana actual (semana=0, dia=0):', fechaHora.toISOString());
+        }
         
         const tipo = tiposCita[Math.floor(Math.random() * tiposCita.length)];
         const duracion = tipo === "urgencia" ? 45 : tipo === "tratamiento" ? 60 : 30;
