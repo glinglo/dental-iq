@@ -45,6 +45,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calcular pacientes perdidos
   app.post("/api/pacientes/calcular-perdidos", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const resultado = await storage.calcularPacientesPerdidos();
       res.json(resultado);
@@ -56,6 +58,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener pacientes perdidos con filtros
   app.post("/api/pacientes/perdidos", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const filtrosSchema = z.object({
         prioridad: z.enum(["Alta", "Media", "Baja", "Todas"]).optional(),
@@ -78,6 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Añadir pacientes a campaña
   app.post("/api/pacientes/anadir-a-campana", async (req, res) => {
     try {
+      const storage = await getStorage();
       const schema = z.object({
         pacienteIds: z.array(z.string()),
       });
@@ -98,6 +103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las campañas
   app.get("/api/campanas", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const campanas = await storage.getCampanas();
       res.json(campanas);
@@ -109,6 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Crear una nueva campaña
   app.post("/api/campanas", async (req, res) => {
     try {
+      const storage = await getStorage();
       const campanaData = insertCampanaSchema.parse(req.body);
       const campana = await storage.createCampana(campanaData);
       res.status(201).json(campana);
@@ -124,6 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Actualizar estado de campaña
   app.patch("/api/campanas/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         estado: z.string(),
@@ -151,6 +160,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las tareas
   app.get("/api/tareas", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const tareas = await storage.getTareas();
       res.json(tareas);
@@ -161,6 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tareas/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const tareas = await storage.getTareas();
       const tarea = tareas.find(t => t.id === id);
@@ -176,6 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener tareas programadas para hoy
   app.get("/api/tareas/hoy", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const tareas = await storage.getTareasParaHoy();
       res.json(tareas);
@@ -187,6 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Actualizar tarea (estado, aprobación, fechas)
   app.patch("/api/tareas/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         estado: z.string().optional(),
@@ -219,6 +234,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener KPIs del dashboard
   app.get("/api/dashboard/kpis", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const kpis = await storage.getDashboardKPIs();
       res.json(kpis);
@@ -231,6 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener conversión por canal
   app.get("/api/dashboard/conversion-canal", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const conversion = await storage.getConversionPorCanal();
       res.json(conversion);
@@ -243,6 +262,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener pacientes en riesgo (cerca de estar dormidos)
   app.get("/api/pacientes/en-riesgo", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const pacientes = await storage.getPacientesEnRiesgo();
       res.json(pacientes);
@@ -259,6 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener pacientes listos para añadir a una campaña específica
   app.get("/api/pacientes/listos-campana/:campanaId", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { campanaId } = req.params;
       const pacientes = await storage.getPacientesListosParaCampana(campanaId);
       res.json(pacientes);
@@ -272,6 +294,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las conversaciones
   app.get("/api/conversaciones", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const conversaciones = await storage.getConversaciones();
       res.json(conversaciones);
@@ -283,6 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener una conversación con sus mensajes
   app.get("/api/conversaciones/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const conversacion = await storage.getConversacion(id);
       
@@ -301,6 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enviar un mensaje en una conversación
   app.post("/api/conversaciones/:id/mensajes", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         contenido: z.string().min(1),
@@ -330,6 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Marcar conversación como leída
   app.patch("/api/conversaciones/:id/leer", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       await storage.marcarComoLeido(id);
       res.json({ success: true });
@@ -341,6 +369,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener conteo de conversaciones sin leer
   app.get("/api/conversaciones/sin-leer/count", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const count = await storage.getConversacionesSinLeerCount();
       res.json({ count });
@@ -354,6 +384,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las citas
   app.get("/api/citas", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const citas = await storage.getCitas();
       res.json(citas);
@@ -365,6 +397,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener citas por semana
   app.get("/api/citas/semana", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const { inicio, fin } = req.query;
       if (!inicio || !fin) {
@@ -382,6 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Usamos /api/huecos-libres en lugar de /api/citas/huecos-libres para evitar conflictos con /api/citas/:id
   app.get("/api/huecos-libres", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { inicio, fin, duracionMinutos } = req.query;
       if (!inicio || !fin) {
         res.status(400).json({ error: "Se requieren las fechas inicio y fin" });
@@ -420,6 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sugerir pacientes para un hueco específico
   app.get("/api/citas/sugerir-pacientes", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { fecha, horaInicio, horaFin, limite } = req.query;
       if (!fecha || horaInicio === undefined || horaFin === undefined) {
         res.status(400).json({ error: "Se requieren fecha, horaInicio y horaFin" });
@@ -441,6 +477,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contactar pacientes para rellenar huecos
   app.post("/api/citas/contactar-pacientes-hueco", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const schema = z.object({
         fecha: z.string(),
         horaInicio: z.number(),
@@ -522,6 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const cita = await storage.getCita(id);
       
@@ -539,6 +578,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Actualizar estado de cita
   app.patch("/api/citas/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         estado: z.string().optional(),
@@ -576,6 +617,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los recordatorios
   app.get("/api/recordatorios", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const recordatorios = await storage.getRecordatorios();
       res.json(recordatorios);
@@ -587,6 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Crear un nuevo recordatorio
   app.post("/api/recordatorios", async (req, res) => {
     try {
+      const storage = await getStorage();
       const recordatorioData = insertRecordatorioSchema.parse(req.body);
       const recordatorio = await storage.createRecordatorio(recordatorioData);
       res.status(201).json(recordatorio);
@@ -602,6 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Actualizar un recordatorio
   app.patch("/api/recordatorios/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const recordatorio = await storage.updateRecordatorio(id, req.body);
       
@@ -619,6 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Eliminar un recordatorio
   app.delete("/api/recordatorios/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const deleted = await storage.deleteRecordatorio(id);
       
@@ -638,6 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los presupuestos
   app.get("/api/budgets", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       console.log('[API] /api/budgets called');
       await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
@@ -659,6 +707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener un presupuesto por ID
   app.get("/api/budgets/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const budget = await storage.getBudget(id);
       
@@ -676,6 +725,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener secuencia de comunicación de un presupuesto
   app.get("/api/budgets/:id/secuencia", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const secuencia = await storage.getSecuenciaComunicacionPorBudget(id);
       if (!secuencia) {
@@ -697,6 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener touchpoints (acciones) de un presupuesto
   app.get("/api/budgets/:id/touchpoints", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const acciones = await storage.getAcciones({ tipo: "relance", limit: 100 });
       const touchpoints = acciones.filter(a => a.budgetId === id);
@@ -709,6 +761,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Crear un nuevo presupuesto
   app.post("/api/budgets", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const schema = z.object({
         patientId: z.string(),
         amount: z.string(),
@@ -743,6 +797,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Actualizar estado de presupuesto
   app.patch("/api/budgets/:id/status", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         status: z.enum(["pending", "accepted", "rejected"]),
@@ -769,6 +824,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generar mensaje de relance con IA
   app.post("/api/budgets/:id/generate-relance", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         channel: z.enum(["sms", "email", "whatsapp"]),
@@ -817,6 +874,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enviar relance
   app.post("/api/budgets/:id/send-relance", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         message: z.string(),
@@ -852,6 +911,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generar mensaje post-visita
   app.post("/api/budgets/:id/generate-post-visit", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const budget = await storage.getBudget(id);
       if (!budget) {
@@ -910,6 +971,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enviar recordatorio de cita
   app.post("/api/citas/:id/send-reminder", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       const { id } = req.params;
       const schema = z.object({
         channel: z.enum(["sms", "email", "whatsapp"]),
@@ -960,6 +1023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enviar recordatorios masivos
   app.post("/api/citas/send-bulk-reminders", async (req, res) => {
     try {
+      const storage = await getStorage();
       const schema = z.object({
         date: z.string(),
         channel: z.enum(["sms", "email", "whatsapp"]),
@@ -994,6 +1058,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/tratamientos-preventivos", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const pacienteId = req.query.pacienteId as string | undefined;
       const tratamientos = await storage.getTratamientosPreventivos({ pacienteId });
@@ -1005,6 +1071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tratamientos-preventivos", async (req, res) => {
     try {
+      const storage = await getStorage();
       const schema = z.object({
         pacienteId: z.string(),
         clinicId: z.string(),
@@ -1046,6 +1113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tratamientos-preventivos/pendientes", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const recordatorios = await storage.getRecordatoriosPreventivosPendientes();
       res.json(recordatorios);
@@ -1058,6 +1127,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/reglas-comunicacion", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const reglas = await storage.getReglasComunicacion();
       res.json(reglas);
@@ -1069,6 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/reglas-comunicacion/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const regla = await storage.getReglaComunicacion(req.params.id);
       if (!regla) {
         res.status(404).json({ error: "Regla no encontrada" });
@@ -1082,6 +1154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/reglas-comunicacion", async (req, res) => {
     try {
+      const storage = await getStorage();
       const schema = z.object({
         nombre: z.string(),
         tipo: z.enum(["relance_presupuesto", "recordatorio_cita", "post_visita", "salud_preventiva", "recall_paciente"]),
@@ -1111,6 +1184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/reglas-comunicacion/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const schema = z.object({
         nombre: z.string().optional(),
         activa: z.boolean().optional(),
@@ -1142,6 +1216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/reglas-comunicacion/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const deleted = await storage.deleteReglaComunicacion(req.params.id);
       if (!deleted) {
         res.status(404).json({ error: "Regla no encontrada" });
@@ -1157,6 +1232,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/secuencias-comunicacion", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       console.log('[API] /api/secuencias-comunicacion called with tipo:', req.query.tipo, 'estado:', req.query.estado);
       await storage.ensureInitialized();
       const tipo = req.query.tipo as string | undefined;
@@ -1177,6 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/secuencias-comunicacion/:id", async (req, res) => {
     try {
+      const storage = await getStorage();
       const secuencia = await storage.getSecuenciaComunicacion(req.params.id);
       if (!secuencia) {
         res.status(404).json({ error: "Secuencia no encontrada" });
@@ -1192,6 +1270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/acciones", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const estado = req.query.estado as string | undefined;
       const tipo = req.query.tipo as string | undefined;
@@ -1206,6 +1286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/acciones/:id/confirmar", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const accion = await storage.confirmarAccion(id);
       
@@ -1222,6 +1303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/acciones/:id/rechazar", async (req, res) => {
     try {
+      const storage = await getStorage();
       const { id } = req.params;
       const accion = await storage.updateAccionEstado(id, "rechazada");
       
@@ -1240,6 +1322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/dashboard/dentaliq-kpis", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
       console.log('[API] /api/dashboard/dentaliq-kpis called');
       await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
@@ -1261,6 +1346,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener acciones del día para presupuestos
   app.get("/api/presupuestos/acciones-hoy", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
@@ -1315,6 +1404,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las acciones del día (combinadas)
   app.get("/api/acciones-del-dia", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
@@ -1496,6 +1599,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener acciones del día para pacientes
   app.get("/api/pacientes/acciones-hoy", async (req, res) => {
     try {
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
+      const storage = await getStorage();
       await storage.ensureInitialized();
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
