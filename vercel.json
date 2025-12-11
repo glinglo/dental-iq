@@ -5,11 +5,12 @@
   "installCommand": "npm install",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "server/**",
+      "includeFiles": "api/server/**",
       "memory": 1024,
       "maxDuration": 30
     }
   },
+  "buildCommand": "npm run build && mkdir -p api/server && cp -r server/*.ts api/server/ && cp -r server/lib api/server/ 2>/dev/null || true",
   "rewrites": [
     {
       "source": "/api/(.*)",
