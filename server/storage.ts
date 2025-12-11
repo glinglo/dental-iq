@@ -212,62 +212,96 @@ export class MemStorage implements IStorage {
 
   // Método para asegurar que la inicialización esté completa
   async ensureInitialized(): Promise<void> {
+    // Verificar que hay datos básicos
+    if (this.pacientes.size === 0 || this.budgets.size === 0) {
+      console.log('[Storage] ensureInitialized: No data found, reinitializing...');
+      this.inicializarMockData();
+    }
+    
     if (this.initializationPromise) {
       await this.initializationPromise;
     }
+    
+    // Verificación final
+    const pacientesCount = this.pacientes.size;
+    const budgetsCount = this.budgets.size;
+    console.log(`[Storage] ensureInitialized completed - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
+    
+    if (pacientesCount === 0 || budgetsCount === 0) {
+      throw new Error(`Storage initialization failed: pacientes=${pacientesCount}, budgets=${budgetsCount}`);
+    }
   }
+  
   
   private inicializarMockData() {
     console.log('[Storage] Starting mock data initialization...');
+    console.log('[Storage] Environment:', process.env.NODE_ENV, 'VERCEL:', process.env.VERCEL);
+    
+    // Verificar si ya hay datos (en caso de reinicialización)
+    const hasData = this.pacientes.size > 0 || this.budgets.size > 0;
+    if (hasData) {
+      console.log('[Storage] WARNING: Data already exists! Clearing before reinitialization...');
+      this.pacientes.clear();
+      this.budgets.clear();
+      this.citas.clear();
+      this.campanas.clear();
+      this.tareas.clear();
+      this.conversaciones.clear();
+      this.mensajes.clear();
+      this.clinics.clear();
+      this.tratamientosPreventivos.clear();
+    }
     
     // Generar y cargar clínicas primero
     const clinics = generarClinicsMock();
     clinics.forEach((clinic: Clinic) => {
       this.clinics.set(clinic.id, clinic);
     });
-    console.log(`[Storage] Loaded ${clinics.length} clinics`);
+    console.log(`[Storage] ✓ Loaded ${clinics.length} clinics`);
     
     // Generar y cargar pacientes
     const pacientes = generarPacientesMock();
     pacientes.forEach((paciente: Paciente) => {
       this.pacientes.set(paciente.id, paciente);
     });
-    console.log(`[Storage] Loaded ${pacientes.length} pacientes`);
+    console.log(`[Storage] ✓ Loaded ${pacientes.length} pacientes`);
     
     // Generar y cargar budgets (50 budgets)
     const budgets = generarBudgetsMock(pacientes);
     budgets.forEach((budget: Budget) => {
       this.budgets.set(budget.id, budget);
     });
-    console.log(`[Storage] Loaded ${budgets.length} budgets`);
+    console.log(`[Storage] ✓ Loaded ${budgets.length} budgets`);
     
     // Generar y cargar citas primero (necesario para tratamientos preventivos)
     const citas = generarCitasMock(pacientes);
     citas.forEach((cita: Cita) => {
       this.citas.set(cita.id, cita);
     });
+    console.log(`[Storage] ✓ Loaded ${citas.length} citas`);
     
     // Generar y cargar tratamientos preventivos
     const tratamientosPreventivos = generarTratamientosPreventivosMock(pacientes, citas, budgets);
     tratamientosPreventivos.forEach((tratamiento: TratamientoPreventivo) => {
       this.tratamientosPreventivos.set(tratamiento.id, tratamiento);
     });
+    console.log(`[Storage] ✓ Loaded ${tratamientosPreventivos.length} tratamientos preventivos`);
     
     // Generar y cargar campañas
     const campanas = generarCampanasMock();
     campanas.forEach((campana: Campana) => {
       this.campanas.set(campana.id, campana);
     });
+    console.log(`[Storage] ✓ Loaded ${campanas.length} campanas`);
     
     // Generar y cargar tareas
     const tareas = generarTareasLlamadasMock(pacientes);
     const tareasCampana = generarTareasCampanaMock(pacientes, campanas);
-    [...tareas, ...tareasCampana].forEach((tarea: TareaLlamada) => {
+    const todasLasTareas = [...tareas, ...tareasCampana];
+    todasLasTareas.forEach((tarea: TareaLlamada) => {
       this.tareas.set(tarea.id, tarea);
     });
-    tareas.forEach((tarea: TareaLlamada) => {
-      this.tareas.set(tarea.id, tarea);
-    });
+    console.log(`[Storage] ✓ Loaded ${todasLasTareas.length} tareas (${tareas.length} llamadas + ${tareasCampana.length} campaña)`);
     
     // Generar y cargar conversaciones y mensajes
     const { conversaciones, mensajes } = generarConversacionesMock(pacientes);
@@ -277,13 +311,24 @@ export class MemStorage implements IStorage {
     mensajes.forEach((mensaje: Mensaje) => {
       this.mensajes.set(mensaje.id, mensaje);
     });
-    
+    console.log(`[Storage] ✓ Loaded ${conversaciones.length} conversaciones and ${mensajes.length} mensajes`);
     
     // Inicializar recordatorios por defecto
     this.inicializarRecordatoriosDefault();
+    console.log(`[Storage] ✓ Initialized recordatorios`);
     
     // Inicializar reglas de comunicación por defecto
     this.inicializarReglasComunicacionDefault();
+    console.log(`[Storage] ✓ Initialized reglas de comunicación`);
+    
+    // Verificación final
+    console.log(`[Storage] Mock data initialization completed:`);
+    console.log(`[Storage]   - Pacientes: ${this.pacientes.size}`);
+    console.log(`[Storage]   - Budgets: ${this.budgets.size}`);
+    console.log(`[Storage]   - Citas: ${this.citas.size}`);
+    console.log(`[Storage]   - Campañas: ${this.campanas.size}`);
+    console.log(`[Storage]   - Tareas: ${this.tareas.size}`);
+    console.log(`[Storage]   - Conversaciones: ${this.conversaciones.size}`);
     
     // Las secuencias se inicializan en initializeAsync() para asegurar que se completen
   }
@@ -2591,9 +2636,27 @@ export const storage = new MemStorage();
 // Verificar que los datos se cargaron correctamente
 (async () => {
   try {
+    // Esperar un poco para que la inicialización asíncrona pueda completarse
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     const pacientesCount = (await storage.getPacientes()).length;
     const budgetsCount = (await storage.getBudgets()).length;
-    console.log(`[Storage] Initialization verified - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
+    const citasCount = (await storage.getCitas()).length;
+    const campanasCount = (await storage.getCampanas()).length;
+    const tareasCount = (await storage.getTareas()).length;
+    
+    console.log(`[Storage] Initialization verified:`);
+    console.log(`[Storage]   - Pacientes: ${pacientesCount} (expected: 200)`);
+    console.log(`[Storage]   - Budgets: ${budgetsCount} (expected: 50)`);
+    console.log(`[Storage]   - Citas: ${citasCount} (expected: ~60)`);
+    console.log(`[Storage]   - Campañas: ${campanasCount} (expected: 3)`);
+    console.log(`[Storage]   - Tareas: ${tareasCount}`);
+    
+    if (pacientesCount === 0 || budgetsCount === 0) {
+      console.error('[Storage] ERROR: Storage appears to be empty! Reinitializing...');
+      // Forzar reinicialización si está vacío
+      storage.inicializarMockData();
+    }
   } catch (error) {
     console.error('[Storage] Error verifying initialization:', error);
   }
