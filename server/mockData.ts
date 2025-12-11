@@ -506,25 +506,33 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   const citas: Cita[] = [];
   const ahora = new Date();
   
-  // Obtener inicio y fin de la semana actual (lunes a domingo)
+  // Obtener inicio de la semana actual (lunes)
   const inicioSemana = new Date(ahora);
-  inicioSemana.setDate(ahora.getDate() - ahora.getDay() + 1); // Lunes
+  // Asegurar que sea lunes (weekStartsOn: 1)
+  const diaSemana = ahora.getDay(); // 0 = domingo, 1 = lunes, etc.
+  const diasHastaLunes = diaSemana === 0 ? 1 : (diaSemana === 1 ? 0 : 1 - diaSemana);
+  inicioSemana.setDate(ahora.getDate() + diasHastaLunes);
   inicioSemana.setHours(0, 0, 0, 0);
   
-  const finSemana = new Date(inicioSemana);
-  finSemana.setDate(inicioSemana.getDate() + 6); // Domingo
+  // Generar citas para las últimas 2 semanas, esta semana y las próximas 4 semanas
+  // Esto asegura que siempre haya citas visibles independientemente de cuándo se inicialice
+  const semanasAtras = 2;
+  const semanasAdelante = 4;
+  const inicioRango = new Date(inicioSemana);
+  inicioRango.setDate(inicioSemana.getDate() - (semanasAtras * 7));
   
   // Horarios de trabajo: 9:00 a 20:00
   const horariosDisponibles = [9, 10, 11, 12, 13, 16, 17, 18, 19];
   
-  // Generar citas para esta semana y la próxima
+  // Generar citas para un rango amplio
   const pacientesSeleccionados = pacientes
     .sort(() => Math.random() - 0.5)
     .slice(0, 60);
   
   let citaIndex = 0;
   
-  for (let semana = 0; semana < 2; semana++) {
+  // Generar citas para el rango completo (semanasAtras + semanasAdelante semanas)
+  for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 6; dia++) { // Lunes a sábado
       const fechaDia = new Date(inicioSemana);
       fechaDia.setDate(inicioSemana.getDate() + dia + (semana * 7));
