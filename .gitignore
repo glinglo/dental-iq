@@ -7,3 +7,5 @@ vite.config.ts.*
 .env
 .local/
 *.log
+api/server/*.ts
+api/server/lib
