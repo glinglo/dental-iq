@@ -512,16 +512,11 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   // Obtener inicio de la semana actual (lunes)
   // Usar date-fns startOfWeek para que coincida exactamente con el frontend
   const inicioSemana = startOfWeek(ahora, { weekStartsOn: 1 });
-  // Normalizar a UTC para evitar problemas de zona horaria
-  const inicioSemanaUTC = new Date(Date.UTC(
-    inicioSemana.getUTCFullYear(),
-    inicioSemana.getUTCMonth(),
-    inicioSemana.getUTCDate(),
-    0, 0, 0, 0
-  ));
+  // IMPORTANTE: Usar setHours en lugar de UTC para que coincida con el frontend
+  // El frontend hace: inicioSemana.setHours(0, 0, 0, 0) que usa hora local
+  inicioSemana.setHours(0, 0, 0, 0);
   
-  console.log('[MockData] Inicio semana (lunes) local:', inicioSemana.toISOString());
-  console.log('[MockData] Inicio semana (lunes) UTC:', inicioSemanaUTC.toISOString());
+  console.log('[MockData] Inicio semana (lunes):', inicioSemana.toISOString(), 'timestamp:', inicioSemana.getTime());
   
   // Generar citas para las últimas 2 semanas, esta semana y las próximas 6 semanas
   // Esto asegura que siempre haya citas visibles independientemente de cuándo se inicialice
@@ -541,26 +536,15 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   // Generar citas para el rango completo (semanasAtras + semanasAdelante semanas)
   // Incluir TODOS los días de la semana (0-6 = lunes a domingo) para coincidir con date-fns
-  // IMPORTANTE: Generar desde el lunes de la semana más antigua hasta el domingo de la semana más futura
-  // Usar UTC para consistencia
-  const fechaInicioRango = new Date(inicioSemanaUTC);
-  fechaInicioRango.setUTCDate(inicioSemanaUTC.getUTCDate() - (semanasAtras * 7));
-  
-  const fechaFinRango = new Date(inicioSemanaUTC);
-  fechaFinRango.setUTCDate(inicioSemanaUTC.getUTCDate() + (semanasAdelante * 7) + 6); // +6 para llegar al domingo de la última semana
-  
-  console.log('[MockData] Rango de fechas para citas - inicio:', fechaInicioRango.toISOString(), 'fin:', fechaFinRango.toISOString());
-  
-  // Log para debug: verificar qué semana estamos generando
+  // IMPORTANTE: Usar getTime() y sumar milisegundos para mantener la misma zona horaria que el frontend
+  // El frontend usa setHours que mantiene la zona horaria local
   console.log('[MockData] Generando citas desde semana', -semanasAtras, 'hasta semana', semanasAdelante);
-  console.log('[MockData] Semana 0 (actual) debería ser:', inicioSemana.toISOString(), 'hasta', new Date(inicioSemana.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString());
   
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 7; dia++) { // Lunes a domingo (0-6 días desde el lunes)
-      // Calcular fecha en UTC para evitar problemas de zona horaria
-      // Usar getTime() y sumar milisegundos para evitar problemas de zona horaria
+      // Calcular fecha usando milisegundos para mantener la misma zona horaria
       const diasOffset = dia + (semana * 7);
-      const fechaDia = new Date(inicioSemanaUTC.getTime() + (diasOffset * 24 * 60 * 60 * 1000));
+      const fechaDia = new Date(inicioSemana.getTime() + (diasOffset * 24 * 60 * 60 * 1000));
       
       // No generar citas los domingos (dia === 6)
       if (dia === 6) continue;
@@ -573,9 +557,9 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
         if (citaIndex >= pacientesSeleccionados.length) return;
         
         const paciente = pacientesSeleccionados[citaIndex];
-        // Crear fecha en UTC usando milisegundos para evitar problemas de zona horaria
-        const minutos = Math.random() < 0.5 ? 0 : 30;
-        const fechaHora = new Date(fechaDia.getTime() + (hora * 60 * 60 * 1000) + (minutos * 60 * 1000));
+        // Crear fecha usando setHours (hora local) para coincidir con el frontend
+        const fechaHora = new Date(fechaDia);
+        fechaHora.setHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
         
         // Log para debug: verificar citas de la semana actual (semana 0)
         if (semana === 0 && dia === 0 && citaIndex === 0) {
