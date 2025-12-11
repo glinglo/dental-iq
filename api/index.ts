@@ -30,10 +30,9 @@ async function initialize() {
       await storage.ensureInitialized();
       console.log('[Vercel] Storage ensureInitialized completed');
     } catch (error) {
-      console.error('[Vercel] ERROR in ensureInitialized:', error);
-      // Intentar una vez más
-      console.log('[Vercel] Retrying ensureInitialized...');
-      await storage.ensureInitialized();
+      console.error('[Vercel] ERROR in ensureInitialized (non-fatal):', error);
+      // No reintentar - ensureInitialized ya maneja errores internamente
+      // Continuar con la inicialización
     }
     
     // Verificar que los datos estén cargados con retry
@@ -153,7 +152,7 @@ export default async function handler(req: any, res: any) {
     app(req, res, (err: any) => {
       if (err) {
         console.error('[Vercel] Express error:', err);
-        if (error instanceof Error) {
+        if (err instanceof Error) {
           console.error('[Vercel] Express error message:', err.message);
           console.error('[Vercel] Express error stack:', err.stack);
         }
