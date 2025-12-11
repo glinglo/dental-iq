@@ -508,9 +508,10 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   // Obtener inicio de la semana actual (lunes)
   const inicioSemana = new Date(ahora);
-  // Asegurar que sea lunes (weekStartsOn: 1)
+  // Calcular días hasta el lunes (0 = domingo, 1 = lunes, ..., 6 = sábado)
   const diaSemana = ahora.getDay(); // 0 = domingo, 1 = lunes, etc.
-  const diasHastaLunes = diaSemana === 0 ? 1 : (diaSemana === 1 ? 0 : 1 - diaSemana);
+  // Si es domingo (0), necesitamos ir 1 día atrás, si es lunes (1) estamos bien, si es otro día, ir hacia atrás
+  const diasHastaLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
   inicioSemana.setDate(ahora.getDate() + diasHastaLunes);
   inicioSemana.setHours(0, 0, 0, 0);
   
