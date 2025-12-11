@@ -107,3 +107,4 @@ Una vez desplegado, puedes:
 2. Configurar variables de entorno para IA avanzada
 3. Configurar PostgreSQL si necesitas persistencia de datos
 4. Configurar webhooks para integraciones
+

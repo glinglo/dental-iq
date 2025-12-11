@@ -1155,12 +1155,34 @@ export class MemStorage implements IStorage {
   }
 
   async getCitasPorSemana(inicio: Date, fin: Date): Promise<Cita[]> {
-    return Array.from(this.citas.values())
-      .filter(cita => {
-        const fechaCita = cita.fechaHora.getTime();
-        return fechaCita >= inicio.getTime() && fechaCita <= fin.getTime();
-      })
-      .sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+    const todasLasCitas = Array.from(this.citas.values());
+    console.log(`[Storage] getCitasPorSemana - Total citas: ${todasLasCitas.length}`);
+    console.log(`[Storage] Rango buscado - inicio: ${inicio.toISOString()}, fin: ${fin.toISOString()}`);
+    
+    if (todasLasCitas.length > 0) {
+      const primeraCita = todasLasCitas[0];
+      const ultimaCita = todasLasCitas[todasLasCitas.length - 1];
+      console.log(`[Storage] Primera cita: ${primeraCita.fechaHora.toISOString()}`);
+      console.log(`[Storage] Última cita: ${ultimaCita.fechaHora.toISOString()}`);
+    }
+    
+    const citasFiltradas = todasLasCitas.filter(cita => {
+      const fechaCita = cita.fechaHora.getTime();
+      const inicioTime = inicio.getTime();
+      const finTime = fin.getTime();
+      const dentroRango = fechaCita >= inicioTime && fechaCita <= finTime;
+      
+      if (!dentroRango && todasLasCitas.length <= 10) {
+        // Solo log para debugging si hay pocas citas
+        console.log(`[Storage] Cita fuera de rango: ${cita.id} - ${cita.fechaHora.toISOString()}`);
+      }
+      
+      return dentroRango;
+    });
+    
+    console.log(`[Storage] Citas en rango: ${citasFiltradas.length}`);
+    
+    return citasFiltradas.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
   }
 
   async getCita(id: string): Promise<Cita | undefined> {

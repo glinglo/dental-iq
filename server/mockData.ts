@@ -506,21 +506,24 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   const citas: Cita[] = [];
   const ahora = new Date();
   
+  console.log('[MockData] Generating citas - Current date:', ahora.toISOString());
+  
   // Obtener inicio de la semana actual (lunes)
+  // Usar el mismo método que el frontend (startOfWeek con weekStartsOn: 1)
   const inicioSemana = new Date(ahora);
-  // Calcular días hasta el lunes (0 = domingo, 1 = lunes, ..., 6 = sábado)
-  const diaSemana = ahora.getDay(); // 0 = domingo, 1 = lunes, etc.
-  // Si es domingo (0), necesitamos ir 1 día atrás, si es lunes (1) estamos bien, si es otro día, ir hacia atrás
+  const diaSemana = ahora.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+  // Calcular días hasta el lunes más reciente
+  // Si es domingo (0), retroceder 6 días. Si es lunes (1), no retroceder. Si es otro día, retroceder (diaSemana - 1)
   const diasHastaLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
   inicioSemana.setDate(ahora.getDate() + diasHastaLunes);
   inicioSemana.setHours(0, 0, 0, 0);
+  
+  console.log('[MockData] Inicio semana (lunes):', inicioSemana.toISOString());
   
   // Generar citas para las últimas 2 semanas, esta semana y las próximas 4 semanas
   // Esto asegura que siempre haya citas visibles independientemente de cuándo se inicialice
   const semanasAtras = 2;
   const semanasAdelante = 4;
-  const inicioRango = new Date(inicioSemana);
-  inicioRango.setDate(inicioSemana.getDate() - (semanasAtras * 7));
   
   // Horarios de trabajo: 9:00 a 20:00
   const horariosDisponibles = [9, 10, 11, 12, 13, 16, 17, 18, 19];
@@ -583,7 +586,13 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
     }
   }
   
-  return citas.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+  const citasOrdenadas = citas.sort((a, b) => a.fechaHora.getTime() - b.fechaHora.getTime());
+  console.log(`[MockData] Generated ${citasOrdenadas.length} citas`);
+  if (citasOrdenadas.length > 0) {
+    console.log(`[MockData] Primera cita: ${citasOrdenadas[0].fechaHora.toISOString()}`);
+    console.log(`[MockData] Última cita: ${citasOrdenadas[citasOrdenadas.length - 1].fechaHora.toISOString()}`);
+  }
+  return citasOrdenadas;
 }
 
 // Generate clinics
