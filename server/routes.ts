@@ -627,11 +627,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los presupuestos
   app.get("/api/budgets", async (req, res) => {
     try {
+      console.log('[API] /api/budgets called');
       await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
+      console.log('[API] /api/budgets returning', budgets.length, 'budgets');
       res.json(budgets);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener presupuestos" });
+      console.error('[API] Error in /api/budgets:', error);
+      if (error instanceof Error) {
+        console.error('[API] Error message:', error.message);
+        console.error('[API] Error stack:', error.stack);
+      }
+      res.status(500).json({ 
+        error: "Error al obtener presupuestos",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

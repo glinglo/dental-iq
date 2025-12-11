@@ -4,151 +4,98 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-let initialized = false;
+let routesRegistered = false;
 
 // Obtener __dirname equivalente en ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function initialize() {
-  if (initialized) return;
+// Función para registrar rutas (solo una vez)
+async function registerRoutesOnce() {
+  if (routesRegistered) return;
   
   try {
-    console.log('[Vercel] Initializing application...');
-    console.log('[Vercel] NODE_ENV:', process.env.NODE_ENV);
-    console.log('[Vercel] VERCEL:', process.env.VERCEL);
+    console.log('[Vercel] Registering routes...');
     
-    // Asegurar que storage se inicialice antes de importar routes
-    // Esto fuerza la inicialización de los datos mock
-    const { storage } = await import('../server/storage');
-    
-    console.log('[Vercel] Storage module imported');
-    console.log('[Vercel] Initial storage state - pacientes:', (await storage.getPacientes()).length, 'budgets:', (await storage.getBudgets()).length);
-    
-    // Esperar a que el storage esté completamente inicializado (incluyendo async)
-    try {
-      await storage.ensureInitialized();
-      console.log('[Vercel] Storage ensureInitialized completed');
-    } catch (error) {
-      console.error('[Vercel] ERROR in ensureInitialized (non-fatal):', error);
-      // No reintentar - ensureInitialized ya maneja errores internamente
-      // Continuar con la inicialización
-    }
-    
-    // Verificar que los datos estén cargados con retry
-    let pacientes: any[] = [];
-    let budgets: any[] = [];
-    let campanas: any[] = [];
-    let citas: any[] = [];
-    
-    for (let attempt = 0; attempt < 5; attempt++) {
-      pacientes = await storage.getPacientes();
-      budgets = await storage.getBudgets();
-      campanas = await storage.getCampanas();
-      citas = await storage.getCitas();
-      
-      if (pacientes.length > 0 && budgets.length > 0) {
-        break;
-      }
-      
-      if (attempt < 4) {
-        console.log(`[Vercel] Retry ${attempt + 1}/5: Waiting for data...`);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-    
-    console.log(`[Vercel] Storage initialized:`);
-    console.log(`[Vercel]   - Pacientes: ${pacientes.length} (expected: 200)`);
-    console.log(`[Vercel]   - Budgets: ${budgets.length} (expected: 50)`);
-    console.log(`[Vercel]   - Campañas: ${campanas.length} (expected: 3)`);
-    console.log(`[Vercel]   - Citas: ${citas.length} (expected: ~60)`);
-    
-    if (pacientes.length === 0 || budgets.length === 0) {
-      console.error('[Vercel] WARNING: Storage appears to be empty after initialization!');
-      console.error('[Vercel] This indicates a serious initialization problem.');
-      console.error('[Vercel] Continuing anyway - endpoints will handle empty data gracefully');
-      // No lanzar error - permitir que el servidor continúe
-      // Los endpoints devolverán arrays vacíos en lugar de fallar
-    }
-    
-    // Importar registerRoutes dinámicamente
+    // Importar y registrar rutas
     const { registerRoutes } = await import('../server/routes');
     
-    // Registrar rutas de API
-    await registerRoutes(app);
-    console.log('[Vercel] Routes registered');
+    // En Vercel serverless, registerRoutes crea un servidor HTTP pero no lo necesitamos
+    // Solo necesitamos que registre las rutas en el app de Express
+    // El servidor HTTP se crea pero no se usa en serverless
+    const server = await registerRoutes(app);
     
-    // Configurar fallback para SPA
-    const possiblePaths = [
-      path.resolve(process.cwd(), 'dist', 'public'),
-      path.resolve(__dirname, '..', 'dist', 'public'),
-      path.resolve(__dirname, '..', '..', 'dist', 'public'),
-    ];
-
-    let distPath: string | null = null;
-    for (const possiblePath of possiblePaths) {
-      try {
-        if (fs.existsSync(possiblePath)) {
-          distPath = possiblePath;
-          console.log(`[Vercel] Found static files at: ${distPath}`);
-          break;
-        }
-      } catch (e) {
-        // Ignorar errores de acceso
-      }
-    }
-
-    // Fallback para SPA - solo para rutas que no sean API ni archivos estáticos
-    app.get('*', (req, res, next) => {
-      // Las rutas de API ya están manejadas arriba
-      if (req.path.startsWith('/api')) {
-        return next();
-      }
-      // Los archivos estáticos los sirve Vercel automáticamente
-      if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json)$/)) {
-        return res.status(404).json({ error: 'Static file not found' });
-      }
-      // Servir index.html para todas las demás rutas (SPA fallback)
-      if (distPath) {
-        const indexPath = path.resolve(distPath, 'index.html');
-        if (fs.existsSync(indexPath)) {
-          res.sendFile(indexPath);
-        } else {
-          res.status(404).json({ error: 'index.html not found' });
-        }
-      } else {
-        // Fallback básico si no encontramos los archivos
-        res.status(200).send('<!DOCTYPE html><html><head><title>DentalIQ</title></head><body><div id="root"></div><p>Loading...</p></body></html>');
-      }
-    });
+    // No necesitamos hacer nada con el server en Vercel
+    // Las rutas ya están registradas en el app
     
-    initialized = true;
-    console.log('[Vercel] Application initialized successfully');
+    routesRegistered = true;
+    console.log('[Vercel] Routes registered successfully');
   } catch (error) {
-    console.error('[Vercel] Error during initialization:', error);
+    console.error('[Vercel] Error registering routes:', error);
     if (error instanceof Error) {
       console.error('[Vercel] Error message:', error.message);
       console.error('[Vercel] Error stack:', error.stack);
     }
-    throw error;
+    throw error; // Re-lanzar para que Vercel lo capture
+  }
+}
+
+// Función para inicializar datos (se ejecuta en cada request si es necesario)
+async function ensureDataInitialized() {
+  try {
+    const { storage } = await import('../server/storage');
+    
+    // Verificar si ya hay datos
+    const pacientes = await storage.getPacientes();
+    const budgets = await storage.getBudgets();
+    
+    if (pacientes.length === 0 || budgets.length === 0) {
+      console.log('[Vercel] Data not initialized, initializing now...');
+      await storage.ensureInitialized();
+      
+      // Verificar después de inicializar
+      const pacientesAfter = await storage.getPacientes();
+      const budgetsAfter = await storage.getBudgets();
+      
+      console.log(`[Vercel] Data initialized - pacientes: ${pacientesAfter.length}, budgets: ${budgetsAfter.length}`);
+      
+      if (pacientesAfter.length === 0 || budgetsAfter.length === 0) {
+        console.error('[Vercel] WARNING: Data still empty after initialization!');
+      }
+    }
+  } catch (error) {
+    console.error('[Vercel] Error ensuring data initialization:', error);
+    if (error instanceof Error) {
+      console.error('[Vercel] Error message:', error.message);
+      console.error('[Vercel] Error stack:', error.stack);
+    }
+    // No re-lanzar - permitir que las rutas manejen datos vacíos
   }
 }
 
 export default async function handler(req: any, res: any) {
-  // Wrapper global para capturar cualquier error no manejado
   try {
-    console.log(`[Vercel] Request: ${req.method} ${req.url}`);
+    console.log(`[Vercel] ${req.method} ${req.url}`);
     
-    // Inicializar con manejo de errores robusto
+    // Paso 1: Registrar rutas (solo una vez, pero seguro en cada request)
     try {
-      await initialize();
-    } catch (initError) {
-      console.error('[Vercel] Initialization error (non-fatal):', initError);
-      // Continuar incluso si la inicialización falla
-      // Las rutas manejarán datos vacíos
+      await registerRoutesOnce();
+    } catch (routeError) {
+      console.error('[Vercel] Failed to register routes:', routeError);
+      if (!res.headersSent) {
+        return res.status(500).json({ 
+          error: 'Failed to initialize routes',
+          message: routeError instanceof Error ? routeError.message : 'Unknown error'
+        });
+      }
+      return;
     }
     
-    // Manejar la request con Express
+    // Paso 2: Asegurar que los datos estén inicializados
+    // Esto se hace en cada request porque en serverless cada instancia puede ser nueva
+    await ensureDataInitialized();
+    
+    // Paso 3: Manejar la request con Express
     app(req, res, (err: any) => {
       if (err) {
         console.error('[Vercel] Express error:', err);
@@ -178,4 +125,3 @@ export default async function handler(req: any, res: any) {
     }
   }
 }
-

@@ -236,8 +236,13 @@ export class MemStorage implements IStorage {
           this.inicializarMockData();
         } catch (error) {
           console.error('[Storage] ERROR in inicializarMockData:', error);
-          // No lanzar error - permitir que continúe con datos vacíos
-          // Los endpoints devolverán arrays vacíos
+          if (error instanceof Error) {
+            console.error('[Storage] Error message:', error.message);
+            console.error('[Storage] Error stack:', error.stack);
+          }
+          // Re-lanzar el error para que se capture arriba
+          // Esto es crítico - si no podemos inicializar, debemos saberlo
+          throw error;
         }
         
         // Verificar inmediatamente después
@@ -269,13 +274,14 @@ export class MemStorage implements IStorage {
       console.log(`[Storage] ensureInitialized completed - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
       
     } catch (error) {
-      console.error('[Storage] ERROR in ensureInitialized (non-critical):', error);
+      console.error('[Storage] ERROR in ensureInitialized:', error);
       if (error instanceof Error) {
         console.error('[Storage] Error message:', error.message);
         console.error('[Storage] Error stack:', error.stack);
       }
-      // NO re-lanzar el error - permitir que el servidor continúe
-      // Los endpoints devolverán arrays vacíos en lugar de fallar
+      // Re-lanzar el error para que las rutas lo capturen y devuelvan un error 500 apropiado
+      // Esto es mejor que devolver datos vacíos silenciosamente
+      throw error;
     }
   }
   
