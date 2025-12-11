@@ -1,14 +1,47 @@
 // Vercel serverless function wrapper
 import { app } from '../server/app';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 let routesRegistered = false;
+let storageInitialized = false;
 
-// Obtener __dirname equivalente en ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Función para obtener storage de forma lazy
+async function getStorage() {
+  const { storage } = await import('../server/storage');
+  return storage;
+}
+
+// Función para inicializar datos de forma robusta
+async function initializeStorage() {
+  if (storageInitialized) return;
+  
+  try {
+    console.log('[Vercel] Initializing storage...');
+    const storage = await getStorage();
+    
+    // Forzar inicialización
+    await storage.ensureInitialized();
+    
+    // Verificar que los datos se cargaron
+    const pacientes = await storage.getPacientes();
+    const budgets = await storage.getBudgets();
+    
+    console.log(`[Vercel] Storage initialized - pacientes: ${pacientes.length}, budgets: ${budgets.length}`);
+    
+    if (pacientes.length === 0 || budgets.length === 0) {
+      console.error('[Vercel] CRITICAL: Storage is empty after initialization!');
+      throw new Error(`Storage initialization failed - pacientes: ${pacientes.length}, budgets: ${budgets.length}`);
+    }
+    
+    storageInitialized = true;
+  } catch (error) {
+    console.error('[Vercel] CRITICAL ERROR initializing storage:', error);
+    if (error instanceof Error) {
+      console.error('[Vercel] Error message:', error.message);
+      console.error('[Vercel] Error stack:', error.stack);
+    }
+    throw error; // Re-lanzar para que se capture arriba
+  }
+}
 
 // Función para registrar rutas (solo una vez)
 async function registerRoutesOnce() {
@@ -17,70 +50,41 @@ async function registerRoutesOnce() {
   try {
     console.log('[Vercel] Registering routes...');
     
-    // Importar y registrar rutas
+    // Importar routes dinámicamente para evitar inicialización temprana del storage
     const { registerRoutes } = await import('../server/routes');
     
-    // En Vercel serverless, registerRoutes crea un servidor HTTP pero no lo necesitamos
-    // Solo necesitamos que registre las rutas en el app de Express
-    // El servidor HTTP se crea pero no se usa en serverless
-    const server = await registerRoutes(app);
-    
-    // No necesitamos hacer nada con el server en Vercel
-    // Las rutas ya están registradas en el app
+    // Registrar rutas en el app
+    await registerRoutes(app);
     
     routesRegistered = true;
     console.log('[Vercel] Routes registered successfully');
   } catch (error) {
-    console.error('[Vercel] Error registering routes:', error);
+    console.error('[Vercel] ERROR registering routes:', error);
     if (error instanceof Error) {
       console.error('[Vercel] Error message:', error.message);
       console.error('[Vercel] Error stack:', error.stack);
     }
-    throw error; // Re-lanzar para que Vercel lo capture
-  }
-}
-
-// Función para inicializar datos (se ejecuta en cada request si es necesario)
-async function ensureDataInitialized() {
-  try {
-    const { storage } = await import('../server/storage');
-    
-    // Verificar si ya hay datos
-    const pacientes = await storage.getPacientes();
-    const budgets = await storage.getBudgets();
-    
-    if (pacientes.length === 0 || budgets.length === 0) {
-      console.log('[Vercel] Data not initialized, initializing now...');
-      await storage.ensureInitialized();
-      
-      // Verificar después de inicializar
-      const pacientesAfter = await storage.getPacientes();
-      const budgetsAfter = await storage.getBudgets();
-      
-      console.log(`[Vercel] Data initialized - pacientes: ${pacientesAfter.length}, budgets: ${budgetsAfter.length}`);
-      
-      if (pacientesAfter.length === 0 || budgetsAfter.length === 0) {
-        console.error('[Vercel] WARNING: Data still empty after initialization!');
-      }
-    }
-  } catch (error) {
-    console.error('[Vercel] Error ensuring data initialization:', error);
-    if (error instanceof Error) {
-      console.error('[Vercel] Error message:', error.message);
-      console.error('[Vercel] Error stack:', error.stack);
-    }
-    // No re-lanzar - permitir que las rutas manejen datos vacíos
+    throw error;
   }
 }
 
 export default async function handler(req: any, res: any) {
+  // Timeout para evitar que la función se quede colgada
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error('[Vercel] Request timeout');
+      res.status(504).json({ error: 'Request timeout' });
+    }
+  }, 30000); // 30 segundos
+  
   try {
-    console.log(`[Vercel] ${req.method} ${req.url}`);
+    console.log(`[Vercel] ${req.method} ${req.url || req.path}`);
     
-    // Paso 1: Registrar rutas (solo una vez, pero seguro en cada request)
+    // Paso 1: Registrar rutas primero
     try {
       await registerRoutesOnce();
     } catch (routeError) {
+      clearTimeout(timeout);
       console.error('[Vercel] Failed to register routes:', routeError);
       if (!res.headersSent) {
         return res.status(500).json({ 
@@ -91,12 +95,25 @@ export default async function handler(req: any, res: any) {
       return;
     }
     
-    // Paso 2: Asegurar que los datos estén inicializados
-    // Esto se hace en cada request porque en serverless cada instancia puede ser nueva
-    await ensureDataInitialized();
+    // Paso 2: Inicializar storage ANTES de manejar la request
+    try {
+      await initializeStorage();
+    } catch (storageError) {
+      clearTimeout(timeout);
+      console.error('[Vercel] Failed to initialize storage:', storageError);
+      if (!res.headersSent) {
+        return res.status(500).json({ 
+          error: 'Failed to initialize data',
+          message: storageError instanceof Error ? storageError.message : 'Unknown error',
+          details: 'Storage initialization failed. Check server logs for details.'
+        });
+      }
+      return;
+    }
     
     // Paso 3: Manejar la request con Express
     app(req, res, (err: any) => {
+      clearTimeout(timeout);
       if (err) {
         console.error('[Vercel] Express error:', err);
         if (err instanceof Error) {
@@ -112,6 +129,7 @@ export default async function handler(req: any, res: any) {
       }
     });
   } catch (error) {
+    clearTimeout(timeout);
     console.error('[Vercel] CRITICAL Handler error:', error);
     if (error instanceof Error) {
       console.error('[Vercel] Error message:', error.message);

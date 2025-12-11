@@ -1,6 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+// Importar storage de forma lazy para evitar problemas en serverless
+let _storage: any = null;
+async function getStorage() {
+  if (!_storage) {
+    const module = await import("./storage");
+    _storage = module.storage;
+  }
+  return _storage;
+}
 import { insertCampanaSchema, insertCitaSchema, insertRecordatorioSchema, type Cita } from "@shared/schema";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -13,8 +21,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pacientes", async (req, res) => {
     try {
       console.log('[API] /api/pacientes called');
+      const storage = await getStorage();
       await storage.ensureInitialized();
-      const pacientes = await storage.getPacientes();
+      const pacientes = const storage = await getStorage(); await storage.getPacientes();
       console.log('[API] /api/pacientes returning', pacientes.length, 'pacientes');
       res.json(pacientes);
     } catch (error) {
@@ -26,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Error al obtener pacientes", 
         details: error instanceof Error ? error.message : String(error),
-        pacientesCount: (await storage.getPacientes()).length
+        pacientesCount: (const storage = await getStorage(); await storage.getPacientes()).length
       });
     }
   });
@@ -35,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/pacientes/calcular-perdidos", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const resultado = await storage.calcularPacientesPerdidos();
+      const resultado = const storage = await getStorage(); await storage.calcularPacientesPerdidos();
       res.json(resultado);
     } catch (error) {
       res.status(500).json({ error: "Error al calcular pacientes perdidos" });
@@ -53,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         edadMax: z.number().optional(),
       });
       const filtros = filtrosSchema.parse(req.body);
-      const pacientes = await storage.getPacientesPerdidos(filtros);
+      const pacientes = const storage = await getStorage(); await storage.getPacientesPerdidos(filtros);
       res.json(pacientes);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -71,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pacienteIds: z.array(z.string()),
       });
       const { pacienteIds } = schema.parse(req.body);
-      await storage.anadirPacientesACampana(pacienteIds);
+      const storage = await getStorage(); await storage.anadirPacientesACampana(pacienteIds);
       res.json({ success: true, count: pacienteIds.length });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -88,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/campanas", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const campanas = await storage.getCampanas();
+      const campanas = const storage = await getStorage(); await storage.getCampanas();
       res.json(campanas);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener campañas" });
@@ -99,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/campanas", async (req, res) => {
     try {
       const campanaData = insertCampanaSchema.parse(req.body);
-      const campana = await storage.createCampana(campanaData);
+      const campana = const storage = await getStorage(); await storage.createCampana(campanaData);
       res.status(201).json(campana);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -118,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estado: z.string(),
       });
       const { estado } = schema.parse(req.body);
-      const campana = await storage.updateCampanaEstado(id, estado);
+      const campana = const storage = await getStorage(); await storage.updateCampanaEstado(id, estado);
       
       if (!campana) {
         res.status(404).json({ error: "Campaña no encontrada" });
@@ -141,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tareas", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const tareas = await storage.getTareas();
+      const tareas = const storage = await getStorage(); await storage.getTareas();
       res.json(tareas);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener tareas" });
@@ -151,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tareas/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const tareas = await storage.getTareas();
+      const tareas = const storage = await getStorage(); await storage.getTareas();
       const tarea = tareas.find(t => t.id === id);
       if (!tarea) {
         return res.status(404).json({ error: "Tarea no encontrada" });
@@ -166,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tareas/hoy", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const tareas = await storage.getTareasParaHoy();
+      const tareas = const storage = await getStorage(); await storage.getTareasParaHoy();
       res.json(tareas);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener tareas para hoy" });
@@ -186,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fechaCompletada: z.string().nullable().optional(),
       });
       const updates = schema.parse(req.body);
-      const tarea = await storage.updateTarea(id, updates);
+      const tarea = const storage = await getStorage(); await storage.updateTarea(id, updates);
       
       if (!tarea) {
         res.status(404).json({ error: "Tarea no encontrada" });
@@ -209,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/kpis", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const kpis = await storage.getDashboardKPIs();
+      const kpis = const storage = await getStorage(); await storage.getDashboardKPIs();
       res.json(kpis);
     } catch (error) {
       console.error('[API] Error in /api/dashboard/kpis:', error);
@@ -221,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/conversion-canal", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const conversion = await storage.getConversionPorCanal();
+      const conversion = const storage = await getStorage(); await storage.getConversionPorCanal();
       res.json(conversion);
     } catch (error) {
       console.error('[API] Error in /api/dashboard/conversion-canal:', error);
@@ -233,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pacientes/en-riesgo", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const pacientes = await storage.getPacientesEnRiesgo();
+      const pacientes = const storage = await getStorage(); await storage.getPacientesEnRiesgo();
       res.json(pacientes);
     } catch (error) {
       console.error('[API] Error in /api/pacientes/en-riesgo:', error);
@@ -249,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pacientes/listos-campana/:campanaId", async (req, res) => {
     try {
       const { campanaId } = req.params;
-      const pacientes = await storage.getPacientesListosParaCampana(campanaId);
+      const pacientes = const storage = await getStorage(); await storage.getPacientesListosParaCampana(campanaId);
       res.json(pacientes);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener pacientes listos para campaña" });
@@ -262,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversaciones", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const conversaciones = await storage.getConversaciones();
+      const conversaciones = const storage = await getStorage(); await storage.getConversaciones();
       res.json(conversaciones);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener conversaciones" });
@@ -273,14 +282,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversaciones/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const conversacion = await storage.getConversacion(id);
+      const conversacion = const storage = await getStorage(); await storage.getConversacion(id);
       
       if (!conversacion) {
         res.status(404).json({ error: "Conversación no encontrada" });
         return;
       }
       
-      const mensajes = await storage.getMensajes(id);
+      const mensajes = const storage = await getStorage(); await storage.getMensajes(id);
       res.json({ conversacion, mensajes });
     } catch (error) {
       res.status(500).json({ error: "Error al obtener conversación" });
@@ -296,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const { contenido } = schema.parse(req.body);
       
-      const mensaje = await storage.createMensaje({
+      const mensaje = const storage = await getStorage(); await storage.createMensaje({
         type: "mensaje",
         channel: "whatsapp",
         conversacionId: id,
@@ -320,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/conversaciones/:id/leer", async (req, res) => {
     try {
       const { id } = req.params;
-      await storage.marcarComoLeido(id);
+      const storage = await getStorage(); await storage.marcarComoLeido(id);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Error al marcar como leída" });
@@ -331,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/conversaciones/sin-leer/count", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const count = await storage.getConversacionesSinLeerCount();
+      const count = const storage = await getStorage(); await storage.getConversacionesSinLeerCount();
       res.json({ count });
     } catch (error) {
       res.status(500).json({ error: "Error al obtener conteo" });
@@ -344,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/citas", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const citas = await storage.getCitas();
+      const citas = const storage = await getStorage(); await storage.getCitas();
       res.json(citas);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener citas" });
@@ -360,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ error: "Se requieren las fechas inicio y fin" });
         return;
       }
-      const citas = await storage.getCitasPorSemana(new Date(inicio as string), new Date(fin as string));
+      const citas = const storage = await getStorage(); await storage.getCitasPorSemana(new Date(inicio as string), new Date(fin as string));
       res.json(citas);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener citas de la semana" });
@@ -391,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const duracion = duracionMinutos ? parseInt(duracionMinutos as string) : 30;
-      const huecos = await storage.detectarHuecosLibres(
+      const huecos = const storage = await getStorage(); await storage.detectarHuecosLibres(
         fechaInicio,
         fechaFin,
         duracion
@@ -414,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ error: "Se requieren fecha, horaInicio y horaFin" });
         return;
       }
-      const sugerencias = await storage.sugerirPacientesParaHueco(
+      const sugerencias = const storage = await getStorage(); await storage.sugerirPacientesParaHueco(
         new Date(fecha as string),
         parseInt(horaInicio as string),
         parseInt(horaFin as string),
@@ -443,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { generateMessageIA } = await import("./lib/openai");
 
       for (const pacienteId of pacienteIds) {
-        const paciente = await storage.getPaciente(pacienteId);
+        const paciente = const storage = await getStorage(); await storage.getPaciente(pacienteId);
         if (!paciente) continue;
 
         // Generar mensaje personalizado con IA
@@ -468,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Crear acción de contacto
-        await storage.createAccion({
+        const storage = await getStorage(); await storage.createAccion({
           tipo: "contacto_hueco_libre",
           estado: "ejecutada",
           titulo: `Contacto para hueco libre - ${paciente.nombre}`,
@@ -512,7 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { id } = req.params;
-      const cita = await storage.getCita(id);
+      const cita = const storage = await getStorage(); await storage.getCita(id);
       
       if (!cita) {
         res.status(404).json({ error: "Cita no encontrada" });
@@ -538,11 +547,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let cita: Cita | undefined;
       
       if (data.estado) {
-        cita = await storage.updateCitaEstado(id, data.estado);
+        cita = const storage = await getStorage(); await storage.updateCitaEstado(id, data.estado);
       }
       
       if (data.fechaHora) {
-        cita = await storage.updateCitaFechaHora(id, new Date(data.fechaHora));
+        cita = const storage = await getStorage(); await storage.updateCitaFechaHora(id, new Date(data.fechaHora));
       }
       
       if (!cita) {
@@ -566,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/recordatorios", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const recordatorios = await storage.getRecordatorios();
+      const recordatorios = const storage = await getStorage(); await storage.getRecordatorios();
       res.json(recordatorios);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener recordatorios" });
@@ -577,7 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/recordatorios", async (req, res) => {
     try {
       const recordatorioData = insertRecordatorioSchema.parse(req.body);
-      const recordatorio = await storage.createRecordatorio(recordatorioData);
+      const recordatorio = const storage = await getStorage(); await storage.createRecordatorio(recordatorioData);
       res.status(201).json(recordatorio);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -592,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/recordatorios/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const recordatorio = await storage.updateRecordatorio(id, req.body);
+      const recordatorio = const storage = await getStorage(); await storage.updateRecordatorio(id, req.body);
       
       if (!recordatorio) {
         res.status(404).json({ error: "Recordatorio no encontrado" });
@@ -609,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/recordatorios/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteRecordatorio(id);
+      const deleted = const storage = await getStorage(); await storage.deleteRecordatorio(id);
       
       if (!deleted) {
         res.status(404).json({ error: "Recordatorio no encontrado" });
@@ -629,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('[API] /api/budgets called');
       await storage.ensureInitialized();
-      const budgets = await storage.getBudgets();
+      const budgets = const storage = await getStorage(); await storage.getBudgets();
       console.log('[API] /api/budgets returning', budgets.length, 'budgets');
       res.json(budgets);
     } catch (error) {
@@ -649,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const budget = await storage.getBudget(id);
+      const budget = const storage = await getStorage(); await storage.getBudget(id);
       
       if (!budget) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
@@ -666,14 +675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets/:id/secuencia", async (req, res) => {
     try {
       const { id } = req.params;
-      const secuencia = await storage.getSecuenciaComunicacionPorBudget(id);
+      const secuencia = const storage = await getStorage(); await storage.getSecuenciaComunicacionPorBudget(id);
       if (!secuencia) {
         res.status(404).json({ error: "Secuencia no encontrada" });
         return;
       }
       
       // Obtener la regla asociada para tener los pasos completos
-      const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+      const regla = const storage = await getStorage(); await storage.getReglaComunicacion(secuencia.reglaId);
       res.json({
         secuencia,
         regla,
@@ -687,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/budgets/:id/touchpoints", async (req, res) => {
     try {
       const { id } = req.params;
-      const acciones = await storage.getAcciones({ tipo: "relance", limit: 100 });
+      const acciones = const storage = await getStorage(); await storage.getAcciones({ tipo: "relance", limit: 100 });
       const touchpoints = acciones.filter(a => a.budgetId === id);
       res.json(touchpoints);
     } catch (error) {
@@ -707,11 +716,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = schema.parse(req.body);
       
       // Get clinic ID from patient or use default
-      const pacientes = await storage.getPacientes();
+      const pacientes = const storage = await getStorage(); await storage.getPacientes();
       const patient = pacientes.find(p => p.id === data.patientId);
       const clinicId = data.clinicId || patient?.clinicId || "default-clinic";
       
-      const budget = await storage.createBudget({
+      const budget = const storage = await getStorage(); await storage.createBudget({
         patientId: data.patientId,
         clinicId,
         amount: data.amount,
@@ -738,7 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const { status } = schema.parse(req.body);
       
-      const budget = await storage.updateBudgetStatus(id, status);
+      const budget = const storage = await getStorage(); await storage.updateBudgetStatus(id, status);
       
       if (!budget) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
@@ -764,13 +773,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const { channel } = schema.parse(req.body);
       
-      const budget = await storage.getBudget(id);
+      const budget = const storage = await getStorage(); await storage.getBudget(id);
       if (!budget) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
         return;
       }
 
-      const pacientes = await storage.getPacientes();
+      const pacientes = const storage = await getStorage(); await storage.getPacientes();
       const patient = pacientes.find(p => p.id === budget.patientId);
       if (!patient) {
         res.status(404).json({ error: "Paciente no encontrado" });
@@ -813,14 +822,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const { message, channel } = schema.parse(req.body);
       
-      const budget = await storage.getBudget(id);
+      const budget = const storage = await getStorage(); await storage.getBudget(id);
       if (!budget) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
         return;
       }
 
       // Create message record (simulated sending)
-      const mensajes = await storage.getMensajes(""); // Get all messages to find next ID
+      const mensajes = const storage = await getStorage(); await storage.getMensajes(""); // Get all messages to find next ID
       const messageId = `msg-${Date.now()}`;
       
       // In a real implementation, you would integrate with Twilio, EmailJS, etc.
@@ -842,13 +851,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/budgets/:id/generate-post-visit", async (req, res) => {
     try {
       const { id } = req.params;
-      const budget = await storage.getBudget(id);
+      const budget = const storage = await getStorage(); await storage.getBudget(id);
       if (!budget) {
         res.status(404).json({ error: "Presupuesto no encontrado" });
         return;
       }
 
-      const pacientes = await storage.getPacientes();
+      const pacientes = const storage = await getStorage(); await storage.getPacientes();
       const patient = pacientes.find(p => p.id === budget.patientId);
       if (!patient) {
         res.status(404).json({ error: "Paciente no encontrado" });
@@ -905,13 +914,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       const { channel } = schema.parse(req.body);
       
-      const cita = await storage.getCita(id);
+      const cita = const storage = await getStorage(); await storage.getCita(id);
       if (!cita) {
         res.status(404).json({ error: "Cita no encontrada" });
         return;
       }
 
-      const pacientes = await storage.getPacientes();
+      const pacientes = const storage = await getStorage(); await storage.getPacientes();
       const patient = pacientes.find(p => p.id === cita.pacienteId);
       if (!patient) {
         res.status(404).json({ error: "Paciente no encontrado" });
@@ -956,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { date, channel } = schema.parse(req.body);
       
       const targetDate = new Date(date);
-      const citas = await storage.getCitas();
+      const citas = const storage = await getStorage(); await storage.getCitas();
       const citasDelDia = citas.filter(c => {
         const fechaCita = new Date(c.fechaHora);
         return (
@@ -985,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await storage.ensureInitialized();
       const pacienteId = req.query.pacienteId as string | undefined;
-      const tratamientos = await storage.getTratamientosPreventivos({ pacienteId });
+      const tratamientos = const storage = await getStorage(); await storage.getTratamientosPreventivos({ pacienteId });
       res.json(tratamientos);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener tratamientos preventivos" });
@@ -1010,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const proximaFecha = new Date(fechaRealizacion);
       proximaFecha.setMonth(proximaFecha.getMonth() + data.frecuenciaMeses);
       
-      const tratamiento = await storage.createTratamientoPreventivo({
+      const tratamiento = const storage = await getStorage(); await storage.createTratamientoPreventivo({
         pacienteId: data.pacienteId,
         clinicId: data.clinicId,
         tipoTratamiento: data.tipoTratamiento,
@@ -1036,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tratamientos-preventivos/pendientes", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const recordatorios = await storage.getRecordatoriosPreventivosPendientes();
+      const recordatorios = const storage = await getStorage(); await storage.getRecordatoriosPreventivosPendientes();
       res.json(recordatorios);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener recordatorios preventivos pendientes" });
@@ -1048,7 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reglas-comunicacion", async (req, res) => {
     try {
       await storage.ensureInitialized();
-      const reglas = await storage.getReglasComunicacion();
+      const reglas = const storage = await getStorage(); await storage.getReglasComunicacion();
       res.json(reglas);
     } catch (error) {
       console.error('[API] Error in /api/reglas-comunicacion:', error);
@@ -1058,7 +1067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/reglas-comunicacion/:id", async (req, res) => {
     try {
-      const regla = await storage.getReglaComunicacion(req.params.id);
+      const regla = const storage = await getStorage(); await storage.getReglaComunicacion(req.params.id);
       if (!regla) {
         res.status(404).json({ error: "Regla no encontrada" });
         return;
@@ -1086,7 +1095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         criterios: z.any().optional(),
       });
       const data = schema.parse(req.body);
-      const regla = await storage.createReglaComunicacion(data);
+      const regla = const storage = await getStorage(); await storage.createReglaComunicacion(data);
       res.status(201).json(regla);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1114,7 +1123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         criterios: z.any().optional(),
       });
       const data = schema.parse(req.body);
-      const regla = await storage.updateReglaComunicacion(req.params.id, data);
+      const regla = const storage = await getStorage(); await storage.updateReglaComunicacion(req.params.id, data);
       if (!regla) {
         res.status(404).json({ error: "Regla no encontrada" });
         return;
@@ -1131,7 +1140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/reglas-comunicacion/:id", async (req, res) => {
     try {
-      const deleted = await storage.deleteReglaComunicacion(req.params.id);
+      const deleted = const storage = await getStorage(); await storage.deleteReglaComunicacion(req.params.id);
       if (!deleted) {
         res.status(404).json({ error: "Regla no encontrada" });
         return;
@@ -1150,7 +1159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.ensureInitialized();
       const tipo = req.query.tipo as string | undefined;
       const estado = req.query.estado as string | undefined;
-      const secuencias = await storage.getSecuenciasComunicacion({ tipo, estado });
+      const secuencias = const storage = await getStorage(); await storage.getSecuenciasComunicacion({ tipo, estado });
       console.log('[API] /api/secuencias-comunicacion returning', secuencias.length, 'secuencias');
       res.json(secuencias);
     } catch (error) {
@@ -1166,7 +1175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/secuencias-comunicacion/:id", async (req, res) => {
     try {
-      const secuencia = await storage.getSecuenciaComunicacion(req.params.id);
+      const secuencia = const storage = await getStorage(); await storage.getSecuenciaComunicacion(req.params.id);
       if (!secuencia) {
         res.status(404).json({ error: "Secuencia no encontrada" });
         return;
@@ -1186,7 +1195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tipo = req.query.tipo as string | undefined;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       
-      const acciones = await storage.getAcciones({ estado, tipo, limit });
+      const acciones = const storage = await getStorage(); await storage.getAcciones({ estado, tipo, limit });
       res.json(acciones);
     } catch (error) {
       res.status(500).json({ error: "Error al obtener acciones" });
@@ -1196,7 +1205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/acciones/:id/confirmar", async (req, res) => {
     try {
       const { id } = req.params;
-      const accion = await storage.confirmarAccion(id);
+      const accion = const storage = await getStorage(); await storage.confirmarAccion(id);
       
       if (!accion) {
         res.status(404).json({ error: "Acción no encontrada" });
@@ -1212,7 +1221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/acciones/:id/rechazar", async (req, res) => {
     try {
       const { id } = req.params;
-      const accion = await storage.updateAccionEstado(id, "rechazada");
+      const accion = const storage = await getStorage(); await storage.updateAccionEstado(id, "rechazada");
       
       if (!accion) {
         res.status(404).json({ error: "Acción no encontrada" });
@@ -1231,9 +1240,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('[API] /api/dashboard/dentaliq-kpis called');
       await storage.ensureInitialized();
-      const budgets = await storage.getBudgets();
+      const budgets = const storage = await getStorage(); await storage.getBudgets();
       console.log('[API] Budgets count:', budgets.length);
-      const kpis = await storage.getDentalIQKPIs();
+      const kpis = const storage = await getStorage(); await storage.getDentalIQKPIs();
       console.log('[API] KPIs returned:', JSON.stringify(kpis));
       res.json(kpis);
     } catch (error) {
@@ -1257,7 +1266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       mañana.setDate(mañana.getDate() + 1);
       
       // Obtener secuencias activas de relance con próxima acción hoy
-      const secuencias = await storage.getSecuenciasComunicacion({ 
+      const secuencias = const storage = await getStorage(); await storage.getSecuenciasComunicacion({ 
         tipo: "relance_presupuesto", 
         estado: "activa" 
       });
@@ -1272,10 +1281,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Si la próxima acción es hoy
         if (fechaProxima.getTime() === hoy.getTime() || fechaProxima.getTime() < hoy.getTime()) {
-          const budget = await storage.getBudget(secuencia.budgetId || "");
+          const budget = const storage = await getStorage(); await storage.getBudget(secuencia.budgetId || "");
           if (!budget || budget.status !== "pending") continue;
           
-          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          const regla = const storage = await getStorage(); await storage.getReglaComunicacion(secuencia.reglaId);
           if (!regla) continue;
           
           const pasos = regla.secuencia as any[];
@@ -1312,7 +1321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accionesHoy = [];
 
       // 1. Acciones automáticas de IA - Recordatorios de citas
-      const citas = await storage.getCitas();
+      const citas = const storage = await getStorage(); await storage.getCitas();
       const citasRecordatorio = citas.filter(c => {
         if (c.estado !== "programada") return false;
         const fechaCita = new Date(c.fechaHora);
@@ -1321,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       for (const cita of citasRecordatorio) {
-        const paciente = await storage.getPaciente(cita.pacienteId);
+        const paciente = const storage = await getStorage(); await storage.getPaciente(cita.pacienteId);
         if (!paciente) continue;
         
         const fechaCita = new Date(cita.fechaHora);
@@ -1341,7 +1350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 2. Acciones automáticas - Mensajes post-visita
-      const secuenciasPostVisita = await storage.getSecuenciasComunicacion({
+      const secuenciasPostVisita = const storage = await getStorage(); await storage.getSecuenciasComunicacion({
         tipo: "post_visita",
         estado: "activa"
       });
@@ -1350,9 +1359,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const proximaAccion = new Date(secuencia.proximaAccion);
         proximaAccion.setHours(0, 0, 0, 0);
         if (proximaAccion.getTime() >= hoy.getTime() && proximaAccion.getTime() < mañana.getTime()) {
-          const paciente = await storage.getPaciente(secuencia.pacienteId!);
+          const paciente = const storage = await getStorage(); await storage.getPaciente(secuencia.pacienteId!);
           if (!paciente) continue;
-          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          const regla = const storage = await getStorage(); await storage.getReglaComunicacion(secuencia.reglaId);
           if (!regla) continue;
           const pasos = regla.secuencia as any[];
           const pasoActual = pasos[secuencia.pasoActual || 0];
@@ -1371,7 +1380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 3. Acciones automáticas - Touchpoints de presupuestos
-      const secuenciasPresupuestos = await storage.getSecuenciasComunicacion({
+      const secuenciasPresupuestos = const storage = await getStorage(); await storage.getSecuenciasComunicacion({
         tipo: "relance_presupuesto",
         estado: "activa"
       });
@@ -1380,9 +1389,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const proximaAccion = new Date(secuencia.proximaAccion);
         proximaAccion.setHours(0, 0, 0, 0);
         if (proximaAccion.getTime() >= hoy.getTime() && proximaAccion.getTime() < mañana.getTime()) {
-          const budget = await storage.getBudget(secuencia.budgetId!);
+          const budget = const storage = await getStorage(); await storage.getBudget(secuencia.budgetId!);
           if (!budget) continue;
-          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          const regla = const storage = await getStorage(); await storage.getReglaComunicacion(secuencia.reglaId);
           if (!regla) continue;
           const pasos = regla.secuencia as any[];
           const pasoActual = pasos[secuencia.pasoActual || 0];
@@ -1401,7 +1410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 4. Acciones automáticas - Touchpoints a pacientes perdidos (recall)
-      const secuenciasRecall = await storage.getSecuenciasComunicacion({
+      const secuenciasRecall = const storage = await getStorage(); await storage.getSecuenciasComunicacion({
         tipo: "recall_paciente",
         estado: "activa"
       });
@@ -1410,9 +1419,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const proximaAccion = new Date(secuencia.proximaAccion);
         proximaAccion.setHours(0, 0, 0, 0);
         if (proximaAccion.getTime() >= hoy.getTime() && proximaAccion.getTime() < mañana.getTime()) {
-          const paciente = await storage.getPaciente(secuencia.pacienteId!);
+          const paciente = const storage = await getStorage(); await storage.getPaciente(secuencia.pacienteId!);
           if (!paciente) continue;
-          const regla = await storage.getReglaComunicacion(secuencia.reglaId);
+          const regla = const storage = await getStorage(); await storage.getReglaComunicacion(secuencia.reglaId);
           if (!regla) continue;
           const pasos = regla.secuencia as any[];
           const pasoActual = pasos[secuencia.pasoActual || 0];
@@ -1431,7 +1440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 5. Acciones manuales - Llamadas del staff
-      const tareasLlamadas = await storage.getTareas();
+      const tareasLlamadas = const storage = await getStorage(); await storage.getTareas();
       const tareasHoy = tareasLlamadas.filter(t => {
         if (t.estado !== "pendiente") return false;
         if (!t.fechaProgramada) return false;
@@ -1441,7 +1450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       for (const tarea of tareasHoy) {
-        const paciente = await storage.getPaciente(tarea.pacienteId);
+        const paciente = const storage = await getStorage(); await storage.getPaciente(tarea.pacienteId);
         if (!paciente) continue;
         
         accionesHoy.push({
@@ -1491,7 +1500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accionesHoy = [];
       
       // 1. Recordatorios de citas (citas programadas para hoy o mañana)
-      const citas = await storage.getCitas();
+      const citas = const storage = await getStorage(); await storage.getCitas();
       const citasRecordatorio = citas.filter(c => {
         if (c.estado !== "programada") return false;
         const fechaCita = new Date(c.fechaHora);
@@ -1501,7 +1510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       for (const cita of citasRecordatorio) {
-        const paciente = await storage.getPaciente(cita.pacienteId);
+        const paciente = const storage = await getStorage(); await storage.getPaciente(cita.pacienteId);
         if (!paciente) continue;
         
         const fechaCita = new Date(cita.fechaHora);
@@ -1519,9 +1528,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // 2. Salud preventiva - recordatorios pendientes
-      const recordatoriosPreventivos = await storage.getRecordatoriosPreventivosPendientes();
+      const recordatoriosPreventivos = const storage = await getStorage(); await storage.getRecordatoriosPreventivosPendientes();
       for (const recordatorio of recordatoriosPreventivos) {
-        const paciente = await storage.getPaciente(recordatorio.pacienteId);
+        const paciente = const storage = await getStorage(); await storage.getPaciente(recordatorio.pacienteId);
         if (!paciente) continue;
         
         accionesHoy.push({
@@ -1533,10 +1542,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // 3. Pacientes dormidos que necesitan recuperación
-      const pacientesDormidos = await storage.getPacientesPerdidos();
+      const pacientesDormidos = const storage = await getStorage(); await storage.getPacientesPerdidos();
       for (const paciente of pacientesDormidos.slice(0, 10)) { // Limitar a 10 para no sobrecargar
         // Verificar si ya hay una secuencia activa
-        const secuencias = await storage.getSecuenciasComunicacion({ 
+        const secuencias = const storage = await getStorage(); await storage.getSecuenciasComunicacion({ 
           tipo: "recuperacion_paciente",
           estado: "activa"
         });
