@@ -32,10 +32,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('[API] Error message:', error.message);
         console.error('[API] Error stack:', error.stack);
       }
+      const storage = await getStorage().catch(() => null);
+      const pacientesCount = storage ? (await storage.getPacientes().catch(() => [])).length : 0;
       res.status(500).json({ 
         error: "Error al obtener pacientes", 
         details: error instanceof Error ? error.message : String(error),
-        pacientesCount: (const storage = await getStorage(); await storage.getPacientes()).length
+        pacientesCount
       });
     }
   });
