@@ -67,11 +67,14 @@ async function getStorage() {
   }
   
   // Intentar importación dinámica con diferentes extensiones y rutas
+  // Primero intentar desde api/server/ (copiado durante build)
   const importPaths = [
+    './server/storage.js',   // Desde api/server/ (copiado en build)
+    './server/storage',      // Desde api/server/
     '../server/storage.js',  // Con extensión .js (después de transpilación)
     '../server/storage',     // Sin extensión
-    './server/storage.js',
-    './server/storage',
+    '/var/task/api/server/storage.js',  // Ruta absoluta en Vercel
+    '/var/task/api/server/storage',
     '/var/task/server/storage.js',
     '/var/task/server/storage',
   ];
@@ -147,11 +150,14 @@ async function registerRoutesOnce() {
       registerRoutes = routesModule.registerRoutes;
     } else {
       // Si no, intentar importación dinámica con diferentes extensiones
+      // Primero intentar desde api/server/ (copiado durante build)
       const routesImportPaths = [
-        '../server/routes.js',  // Con extensión .js
-        '../server/routes',     // Sin extensión
-        './server/routes.js',
-        './server/routes',
+        './server/routes.js',   // Desde api/server/ (copiado en build)
+        './server/routes',     // Desde api/server/
+        '../server/routes.js', // Ruta relativa estándar
+        '../server/routes',    // Sin extensión
+        '/var/task/api/server/routes.js',  // Ruta absoluta en Vercel
+        '/var/task/api/server/routes',
         '/var/task/server/routes.js',
         '/var/task/server/routes',
       ];
