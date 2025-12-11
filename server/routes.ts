@@ -12,10 +12,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todos los pacientes
   app.get("/api/pacientes", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const pacientes = await storage.getPacientes();
       res.json(pacientes);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener pacientes" });
+      console.error('[API] Error in /api/pacientes:', error);
+      if (error instanceof Error) {
+        console.error('[API] Error message:', error.message);
+        console.error('[API] Error stack:', error.stack);
+      }
+      res.status(500).json({ error: "Error al obtener pacientes", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -191,30 +197,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener KPIs del dashboard
   app.get("/api/dashboard/kpis", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const kpis = await storage.getDashboardKPIs();
       res.json(kpis);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener KPIs" });
+      console.error('[API] Error in /api/dashboard/kpis:', error);
+      res.status(500).json({ error: "Error al obtener KPIs", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
   // Obtener conversión por canal
   app.get("/api/dashboard/conversion-canal", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const conversion = await storage.getConversionPorCanal();
       res.json(conversion);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener conversión por canal" });
+      console.error('[API] Error in /api/dashboard/conversion-canal:', error);
+      res.status(500).json({ error: "Error al obtener conversión por canal", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
   // Obtener pacientes en riesgo (cerca de estar dormidos)
   app.get("/api/pacientes/en-riesgo", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const pacientes = await storage.getPacientesEnRiesgo();
       res.json(pacientes);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener pacientes en riesgo" });
+      console.error('[API] Error in /api/pacientes/en-riesgo:', error);
+      if (error instanceof Error) {
+        console.error('[API] Error message:', error.message);
+        console.error('[API] Error stack:', error.stack);
+      }
+      res.status(500).json({ error: "Error al obtener pacientes en riesgo", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1002,10 +1018,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/reglas-comunicacion", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const reglas = await storage.getReglasComunicacion();
       res.json(reglas);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener reglas de comunicación" });
+      console.error('[API] Error in /api/reglas-comunicacion:', error);
+      res.status(500).json({ error: "Error al obtener reglas de comunicación", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1099,12 +1117,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/secuencias-comunicacion", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const tipo = req.query.tipo as string | undefined;
       const estado = req.query.estado as string | undefined;
       const secuencias = await storage.getSecuenciasComunicacion({ tipo, estado });
       res.json(secuencias);
     } catch (error) {
-      res.status(500).json({ error: "Error al obtener secuencias" });
+      console.error('[API] Error in /api/secuencias-comunicacion:', error);
+      res.status(500).json({ error: "Error al obtener secuencias", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -1173,6 +1193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/dentaliq-kpis", async (req, res) => {
     try {
       console.log('[API] /api/dashboard/dentaliq-kpis called');
+      await storage.ensureInitialized();
       const budgets = await storage.getBudgets();
       console.log('[API] Budgets count:', budgets.length);
       const kpis = await storage.getDentalIQKPIs();
@@ -1245,6 +1266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Obtener todas las acciones del día (combinadas)
   app.get("/api/acciones-del-dia", async (req, res) => {
     try {
+      await storage.ensureInitialized();
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const mañana = new Date(hoy);

@@ -57,9 +57,11 @@ async function initialize() {
     console.log(`[Vercel]   - Citas: ${citas.length} (expected: ~60)`);
     
     if (pacientes.length === 0 || budgets.length === 0) {
-      console.error('[Vercel] ERROR: Storage appears to be empty after initialization!');
+      console.error('[Vercel] WARNING: Storage appears to be empty after initialization!');
       console.error('[Vercel] This indicates a serious initialization problem.');
-      throw new Error(`Storage initialization failed: pacientes=${pacientes.length}, budgets=${budgets.length}`);
+      console.error('[Vercel] Continuing anyway - endpoints will handle empty data gracefully');
+      // No lanzar error - permitir que el servidor continúe
+      // Los endpoints devolverán arrays vacíos en lugar de fallar
     }
     
     // Importar registerRoutes dinámicamente

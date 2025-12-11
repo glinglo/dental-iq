@@ -212,23 +212,34 @@ export class MemStorage implements IStorage {
 
   // Método para asegurar que la inicialización esté completa
   async ensureInitialized(): Promise<void> {
-    // Verificar que hay datos básicos
-    if (this.pacientes.size === 0 || this.budgets.size === 0) {
-      console.log('[Storage] ensureInitialized: No data found, reinitializing...');
-      this.inicializarMockData();
-    }
-    
-    if (this.initializationPromise) {
-      await this.initializationPromise;
-    }
-    
-    // Verificación final
-    const pacientesCount = this.pacientes.size;
-    const budgetsCount = this.budgets.size;
-    console.log(`[Storage] ensureInitialized completed - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
-    
-    if (pacientesCount === 0 || budgetsCount === 0) {
-      throw new Error(`Storage initialization failed: pacientes=${pacientesCount}, budgets=${budgetsCount}`);
+    try {
+      // Verificar que hay datos básicos
+      if (this.pacientes.size === 0 || this.budgets.size === 0) {
+        console.log('[Storage] ensureInitialized: No data found, reinitializing...');
+        this.inicializarMockData();
+        // Esperar un momento para que se carguen los datos
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      if (this.initializationPromise) {
+        await this.initializationPromise;
+      }
+      
+      // Verificación final
+      const pacientesCount = this.pacientes.size;
+      const budgetsCount = this.budgets.size;
+      console.log(`[Storage] ensureInitialized completed - pacientes: ${pacientesCount}, budgets: ${budgetsCount}`);
+      
+      if (pacientesCount === 0 || budgetsCount === 0) {
+        console.error(`[Storage] WARNING: Storage appears empty but continuing anyway`);
+        console.error(`[Storage] This may cause API errors but won't crash the server`);
+        // No lanzar error, solo loguear - permitir que el servidor continúe
+        // Los endpoints manejarán el caso de datos vacíos
+      }
+    } catch (error) {
+      console.error('[Storage] Error in ensureInitialized:', error);
+      // No lanzar error para evitar que el servidor falle completamente
+      // Los endpoints manejarán el caso de datos vacíos
     }
   }
   
