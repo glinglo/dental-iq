@@ -45,7 +45,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calcular pacientes perdidos
   app.post("/api/pacientes/calcular-perdidos", async (req, res) => {
     try {
-      const storage = await getStorage();
       await storage.ensureInitialized();
       const resultado = await storage.calcularPacientesPerdidos();
       res.json(resultado);
