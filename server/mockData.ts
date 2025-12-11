@@ -536,10 +536,14 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   let citaIndex = 0;
   
   // Generar citas para el rango completo (semanasAtras + semanasAdelante semanas)
+  // Incluir TODOS los días de la semana (0-6 = lunes a domingo) para coincidir con date-fns
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
-    for (let dia = 0; dia < 6; dia++) { // Lunes a sábado
+    for (let dia = 0; dia < 7; dia++) { // Lunes a domingo (0-6 días desde el lunes)
       const fechaDia = new Date(inicioSemana);
       fechaDia.setDate(inicioSemana.getDate() + dia + (semana * 7));
+      
+      // No generar citas los domingos (dia === 6)
+      if (dia === 6) continue;
       
       // Generar 4-8 citas por día
       const citasPorDia = 4 + Math.floor(Math.random() * 5);
