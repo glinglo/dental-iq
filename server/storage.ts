@@ -302,25 +302,52 @@ export class MemStorage implements IStorage {
     console.log(`[Storage] ✓ Loaded ${clinics.length} clinics`);
     
     // Generar y cargar pacientes
-    const pacientes = generarPacientesMock();
-    pacientes.forEach((paciente: Paciente) => {
-      this.pacientes.set(paciente.id, paciente);
-    });
-    console.log(`[Storage] ✓ Loaded ${pacientes.length} pacientes`);
+    let pacientes: Paciente[];
+    try {
+      pacientes = generarPacientesMock();
+      if (!pacientes || pacientes.length === 0) {
+        throw new Error('generarPacientesMock returned empty array');
+      }
+      pacientes.forEach((paciente: Paciente) => {
+        this.pacientes.set(paciente.id, paciente);
+      });
+      console.log(`[Storage] ✓ Loaded ${pacientes.length} pacientes`);
+    } catch (error) {
+      console.error('[Storage] ERROR generating pacientes:', error);
+      throw new Error(`Failed to generate pacientes: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Generar y cargar budgets (50 budgets)
-    const budgets = generarBudgetsMock(pacientes);
-    budgets.forEach((budget: Budget) => {
-      this.budgets.set(budget.id, budget);
-    });
-    console.log(`[Storage] ✓ Loaded ${budgets.length} budgets`);
+    let budgets: Budget[];
+    try {
+      budgets = generarBudgetsMock(pacientes);
+      if (!budgets || budgets.length === 0) {
+        throw new Error('generarBudgetsMock returned empty array');
+      }
+      budgets.forEach((budget: Budget) => {
+        this.budgets.set(budget.id, budget);
+      });
+      console.log(`[Storage] ✓ Loaded ${budgets.length} budgets`);
+    } catch (error) {
+      console.error('[Storage] ERROR generating budgets:', error);
+      throw new Error(`Failed to generate budgets: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Generar y cargar citas primero (necesario para tratamientos preventivos)
-    const citas = generarCitasMock(pacientes);
-    citas.forEach((cita: Cita) => {
-      this.citas.set(cita.id, cita);
-    });
-    console.log(`[Storage] ✓ Loaded ${citas.length} citas`);
+    let citas: Cita[];
+    try {
+      citas = generarCitasMock(pacientes);
+      if (!citas || citas.length === 0) {
+        throw new Error('generarCitasMock returned empty array');
+      }
+      citas.forEach((cita: Cita) => {
+        this.citas.set(cita.id, cita);
+      });
+      console.log(`[Storage] ✓ Loaded ${citas.length} citas`);
+    } catch (error) {
+      console.error('[Storage] ERROR generating citas:', error);
+      throw new Error(`Failed to generate citas: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Generar y cargar tratamientos preventivos
     const tratamientosPreventivos = generarTratamientosPreventivosMock(pacientes, citas, budgets);
@@ -330,11 +357,20 @@ export class MemStorage implements IStorage {
     console.log(`[Storage] ✓ Loaded ${tratamientosPreventivos.length} tratamientos preventivos`);
     
     // Generar y cargar campañas
-    const campanas = generarCampanasMock();
-    campanas.forEach((campana: Campana) => {
-      this.campanas.set(campana.id, campana);
-    });
-    console.log(`[Storage] ✓ Loaded ${campanas.length} campanas`);
+    let campanas: Campana[];
+    try {
+      campanas = generarCampanasMock();
+      if (!campanas || campanas.length === 0) {
+        throw new Error('generarCampanasMock returned empty array');
+      }
+      campanas.forEach((campana: Campana) => {
+        this.campanas.set(campana.id, campana);
+      });
+      console.log(`[Storage] ✓ Loaded ${campanas.length} campanas`);
+    } catch (error) {
+      console.error('[Storage] ERROR generating campanas:', error);
+      throw new Error(`Failed to generate campanas: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Generar y cargar tareas
     const tareas = generarTareasLlamadasMock(pacientes);
