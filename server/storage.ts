@@ -2653,9 +2653,8 @@ export const storage = new MemStorage();
     console.log(`[Storage]   - Tareas: ${tareasCount}`);
     
     if (pacientesCount === 0 || budgetsCount === 0) {
-      console.error('[Storage] ERROR: Storage appears to be empty! Reinitializing...');
-      // Forzar reinicialización si está vacío
-      storage.inicializarMockData();
+      console.error('[Storage] ERROR: Storage appears to be empty!');
+      console.error('[Storage] This should not happen - storage should initialize in constructor.');
     }
   } catch (error) {
     console.error('[Storage] Error verifying initialization:', error);
