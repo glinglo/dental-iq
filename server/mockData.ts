@@ -1,4 +1,5 @@
 import type { Paciente, Campana, TareaLlamada, Conversacion, Mensaje, Cita, Budget, Clinic, TratamientoPreventivo } from "@shared/schema";
+import { startOfWeek } from "date-fns";
 
 // Nombres y apellidos españoles/latinoamericanos
 const nombres = [
@@ -510,7 +511,6 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   // Obtener inicio de la semana actual (lunes)
   // Usar date-fns startOfWeek para que coincida exactamente con el frontend
-  const { startOfWeek } = await import('date-fns');
   const inicioSemana = startOfWeek(ahora, { weekStartsOn: 1 });
   inicioSemana.setHours(0, 0, 0, 0);
   
