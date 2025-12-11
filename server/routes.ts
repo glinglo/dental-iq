@@ -400,11 +400,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const fechaInicio = new Date(inicio as string);
       const fechaFin = new Date(fin as string);
+      
+      // Asegurar que las fechas estén en UTC para comparación correcta
+      fechaInicio.setHours(0, 0, 0, 0);
+      fechaFin.setHours(23, 59, 59, 999);
+      
       console.log('[API] Date range - inicio:', fechaInicio.toISOString(), 'fin:', fechaFin.toISOString());
+      console.log('[API] Date range timestamps - inicio:', fechaInicio.getTime(), 'fin:', fechaFin.getTime());
       
       // Verificar cuántas citas hay en total
       const todasLasCitas = await storage.getCitas();
       console.log('[API] Total citas en storage:', todasLasCitas.length);
+      
+      if (todasLasCitas.length > 0) {
+        const primeraCita = todasLasCitas[0];
+        const ultimaCita = todasLasCitas[todasLasCitas.length - 1];
+        console.log('[API] Primera cita en storage:', primeraCita.fechaHora.toISOString(), 'timestamp:', primeraCita.fechaHora.getTime());
+        console.log('[API] Última cita en storage:', ultimaCita.fechaHora.toISOString(), 'timestamp:', ultimaCita.fechaHora.getTime());
+      }
       
       const citas = await storage.getCitasPorSemana(fechaInicio, fechaFin);
       console.log('[API] Citas encontradas en rango:', citas.length);
