@@ -558,8 +558,9 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 7; dia++) { // Lunes a domingo (0-6 días desde el lunes)
       // Calcular fecha en UTC para evitar problemas de zona horaria
-      const fechaDia = new Date(inicioSemanaUTC);
-      fechaDia.setUTCDate(inicioSemanaUTC.getUTCDate() + dia + (semana * 7));
+      // Usar getTime() y sumar milisegundos para evitar problemas de zona horaria
+      const diasOffset = dia + (semana * 7);
+      const fechaDia = new Date(inicioSemanaUTC.getTime() + (diasOffset * 24 * 60 * 60 * 1000));
       
       // No generar citas los domingos (dia === 6)
       if (dia === 6) continue;
@@ -572,9 +573,9 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
         if (citaIndex >= pacientesSeleccionados.length) return;
         
         const paciente = pacientesSeleccionados[citaIndex];
-        // Crear fecha en UTC para evitar problemas de zona horaria
-        const fechaHora = new Date(fechaDia);
-        fechaHora.setUTCHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
+        // Crear fecha en UTC usando milisegundos para evitar problemas de zona horaria
+        const minutos = Math.random() < 0.5 ? 0 : 30;
+        const fechaHora = new Date(fechaDia.getTime() + (hora * 60 * 60 * 1000) + (minutos * 60 * 1000));
         
         // Log para debug: verificar citas de la semana actual (semana 0)
         if (semana === 0 && dia === 0 && citaIndex === 0) {
