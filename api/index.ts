@@ -1,8 +1,59 @@
 // Vercel serverless function wrapper
-import { app } from '../server/app';
+// Importar express directamente aquí para evitar problemas de paths
+import express, {
+  type Express,
+  type Request,
+  Response,
+  NextFunction,
+} from "express";
 
 let routesRegistered = false;
-let storageInitialized = false;
+let appInstance: Express | null = null;
+
+// Crear instancia de Express
+function getApp(): Express {
+  if (!appInstance) {
+    appInstance = express();
+    
+    // Configurar middleware
+    appInstance.use(express.json({
+      verify: (req, _res, buf) => {
+        (req as any).rawBody = buf;
+      }
+    }));
+    appInstance.use(express.urlencoded({ extended: false }));
+    
+    // Middleware de logging
+    appInstance.use((req, res, next) => {
+      const start = Date.now();
+      const path = req.path;
+      let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+      const originalResJson = res.json;
+      res.json = function (bodyJson, ...args) {
+        capturedJsonResponse = bodyJson;
+        return originalResJson.apply(res, [bodyJson, ...args]);
+      };
+
+      res.on("finish", () => {
+        const duration = Date.now() - start;
+        if (path.startsWith("/api")) {
+          let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+          if (capturedJsonResponse) {
+            logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+          }
+          if (logLine.length > 80) {
+            logLine = logLine.slice(0, 79) + "…";
+          }
+          console.log(logLine);
+        }
+      });
+
+      next();
+    });
+  }
+  return appInstance;
+}
 
 // Función para obtener storage de forma lazy
 async function getStorage() {
@@ -11,7 +62,6 @@ async function getStorage() {
 }
 
 // Función para inicializar datos de forma robusta
-// En serverless, cada instancia puede ser nueva, así que siempre verificamos
 async function initializeStorage() {
   try {
     const storage = await getStorage();
@@ -44,7 +94,7 @@ async function initializeStorage() {
       console.error('[Vercel] Error message:', error.message);
       console.error('[Vercel] Error stack:', error.stack);
     }
-    throw error; // Re-lanzar para que se capture arriba
+    throw error;
   }
 }
 
@@ -54,9 +104,14 @@ async function registerRoutesOnce() {
   
   try {
     console.log('[Vercel] Registering routes...');
+    const app = getApp();
     
-    // Importar routes dinámicamente para evitar inicialización temprana del storage
+    // Importar routes dinámicamente
     const { registerRoutes } = await import('../server/routes');
+    
+    // Crear un servidor HTTP mock para registerRoutes (no se usará en serverless)
+    const { createServer } = await import('http');
+    const mockServer = createServer(app);
     
     // Registrar rutas en el app
     await registerRoutes(app);
@@ -74,13 +129,12 @@ async function registerRoutesOnce() {
 }
 
 export default async function handler(req: any, res: any) {
-  // Timeout para evitar que la función se quede colgada
   const timeout = setTimeout(() => {
     if (!res.headersSent) {
       console.error('[Vercel] Request timeout');
       res.status(504).json({ error: 'Request timeout' });
     }
-  }, 30000); // 30 segundos
+  }, 30000);
   
   try {
     console.log(`[Vercel] ${req.method} ${req.url || req.path}`);
@@ -117,6 +171,7 @@ export default async function handler(req: any, res: any) {
     }
     
     // Paso 3: Manejar la request con Express
+    const app = getApp();
     app(req, res, (err: any) => {
       clearTimeout(timeout);
       if (err) {
