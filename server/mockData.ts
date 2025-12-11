@@ -512,9 +512,16 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   // Obtener inicio de la semana actual (lunes)
   // Usar date-fns startOfWeek para que coincida exactamente con el frontend
   const inicioSemana = startOfWeek(ahora, { weekStartsOn: 1 });
-  inicioSemana.setHours(0, 0, 0, 0);
+  // Normalizar a UTC para evitar problemas de zona horaria
+  const inicioSemanaUTC = new Date(Date.UTC(
+    inicioSemana.getUTCFullYear(),
+    inicioSemana.getUTCMonth(),
+    inicioSemana.getUTCDate(),
+    0, 0, 0, 0
+  ));
   
-  console.log('[MockData] Inicio semana (lunes):', inicioSemana.toISOString());
+  console.log('[MockData] Inicio semana (lunes) local:', inicioSemana.toISOString());
+  console.log('[MockData] Inicio semana (lunes) UTC:', inicioSemanaUTC.toISOString());
   
   // Generar citas para las últimas 2 semanas, esta semana y las próximas 6 semanas
   // Esto asegura que siempre haya citas visibles independientemente de cuándo se inicialice
@@ -535,11 +542,12 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   // Generar citas para el rango completo (semanasAtras + semanasAdelante semanas)
   // Incluir TODOS los días de la semana (0-6 = lunes a domingo) para coincidir con date-fns
   // IMPORTANTE: Generar desde el lunes de la semana más antigua hasta el domingo de la semana más futura
-  const fechaInicioRango = new Date(inicioSemana);
-  fechaInicioRango.setDate(inicioSemana.getDate() - (semanasAtras * 7));
+  // Usar UTC para consistencia
+  const fechaInicioRango = new Date(inicioSemanaUTC);
+  fechaInicioRango.setUTCDate(inicioSemanaUTC.getUTCDate() - (semanasAtras * 7));
   
-  const fechaFinRango = new Date(inicioSemana);
-  fechaFinRango.setDate(inicioSemana.getDate() + (semanasAdelante * 7) + 6); // +6 para llegar al domingo de la última semana
+  const fechaFinRango = new Date(inicioSemanaUTC);
+  fechaFinRango.setUTCDate(inicioSemanaUTC.getUTCDate() + (semanasAdelante * 7) + 6); // +6 para llegar al domingo de la última semana
   
   console.log('[MockData] Rango de fechas para citas - inicio:', fechaInicioRango.toISOString(), 'fin:', fechaFinRango.toISOString());
   
@@ -549,8 +557,9 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   for (let semana = -semanasAtras; semana <= semanasAdelante; semana++) {
     for (let dia = 0; dia < 7; dia++) { // Lunes a domingo (0-6 días desde el lunes)
-      const fechaDia = new Date(inicioSemana);
-      fechaDia.setDate(inicioSemana.getDate() + dia + (semana * 7));
+      // Calcular fecha en UTC para evitar problemas de zona horaria
+      const fechaDia = new Date(inicioSemanaUTC);
+      fechaDia.setUTCDate(inicioSemanaUTC.getUTCDate() + dia + (semana * 7));
       
       // No generar citas los domingos (dia === 6)
       if (dia === 6) continue;
@@ -563,12 +572,13 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
         if (citaIndex >= pacientesSeleccionados.length) return;
         
         const paciente = pacientesSeleccionados[citaIndex];
+        // Crear fecha en UTC para evitar problemas de zona horaria
         const fechaHora = new Date(fechaDia);
-        fechaHora.setHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
+        fechaHora.setUTCHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
         
         // Log para debug: verificar citas de la semana actual (semana 0)
-        if (semana === 0 && dia === 0 && hora === horariosDisponibles[0]) {
-          console.log('[MockData] Ejemplo cita semana actual (semana=0, dia=0):', fechaHora.toISOString());
+        if (semana === 0 && dia === 0 && citaIndex === 0) {
+          console.log('[MockData] Primera cita semana actual (semana=0, dia=0):', fechaHora.toISOString(), 'timestamp:', fechaHora.getTime());
         }
         
         const tipo = tiposCita[Math.floor(Math.random() * tiposCita.length)];
