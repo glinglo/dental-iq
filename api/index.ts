@@ -57,8 +57,25 @@ function getApp(): Express {
 
 // Función para obtener storage de forma lazy
 async function getStorage() {
-  const { storage } = await import('../server/storage');
-  return storage;
+  try {
+    // Intentar importar desde la ruta relativa
+    const { storage } = await import('../server/storage');
+    return storage;
+  } catch (error) {
+    // Si falla, intentar desde la ruta absoluta
+    console.error('[Vercel] Error importing storage from relative path, trying absolute:', error);
+    try {
+      const storageModule = await import('/var/task/server/storage');
+      return storageModule.storage;
+    } catch (absError) {
+      console.error('[Vercel] Error importing storage from absolute path:', absError);
+      // Último intento: usar process.cwd()
+      const path = await import('path');
+      const storagePath = path.join(process.cwd(), 'server', 'storage');
+      const storageModule = await import(storagePath);
+      return storageModule.storage;
+    }
+  }
 }
 
 // Función para inicializar datos de forma robusta
@@ -107,7 +124,24 @@ async function registerRoutesOnce() {
     const app = getApp();
     
     // Importar routes dinámicamente
-    const { registerRoutes } = await import('../server/routes');
+    let registerRoutes;
+    try {
+      const routesModule = await import('../server/routes');
+      registerRoutes = routesModule.registerRoutes;
+    } catch (error) {
+      console.error('[Vercel] Error importing routes from relative path:', error);
+      // Intentar desde ruta absoluta
+      try {
+        const routesModule = await import('/var/task/server/routes');
+        registerRoutes = routesModule.registerRoutes;
+      } catch (absError) {
+        console.error('[Vercel] Error importing routes from absolute path:', absError);
+        const path = await import('path');
+        const routesPath = path.join(process.cwd(), 'server', 'routes');
+        const routesModule = await import(routesPath);
+        registerRoutes = routesModule.registerRoutes;
+      }
+    }
     
     // Crear un servidor HTTP mock para registerRoutes (no se usará en serverless)
     const { createServer } = await import('http');
