@@ -399,23 +399,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Parsear las fechas ISO que vienen del frontend
-      // El frontend envía fechas en UTC, pero necesitamos convertirlas a hora local
-      // para que coincidan con cómo se generaron las citas (en hora local)
+      // El frontend calcula fechas en hora local y luego las convierte a ISO (UTC)
+      // Necesitamos interpretar la fecha ISO como si fuera la fecha local original
+      // Ejemplo: si el frontend envía "2025-12-07T23:00:00.000Z" (UTC), 
+      // eso significa que en hora local es "2025-12-08T00:00:00" (UTC+1)
+      // Entonces necesitamos extraer el año/mes/día de la fecha local equivalente
       const fechaInicioISO = new Date(inicio as string);
       const fechaFinISO = new Date(fin as string);
       
-      // Extraer componentes UTC de la fecha ISO y crear nueva fecha en hora local
-      // Esto asegura que el día/mes/año coincidan con lo que el frontend envió
+      // La fecha ISO recibida representa una fecha local convertida a UTC
+      // Para obtener la fecha local original, usamos getFullYear/getMonth/getDate
+      // que devuelven los componentes en hora local
       const fechaInicio = new Date(
-        fechaInicioISO.getUTCFullYear(),
-        fechaInicioISO.getUTCMonth(),
-        fechaInicioISO.getUTCDate(),
+        fechaInicioISO.getFullYear(),
+        fechaInicioISO.getMonth(),
+        fechaInicioISO.getDate(),
         0, 0, 0, 0
       );
       const fechaFin = new Date(
-        fechaFinISO.getUTCFullYear(),
-        fechaFinISO.getUTCMonth(),
-        fechaFinISO.getUTCDate(),
+        fechaFinISO.getFullYear(),
+        fechaFinISO.getMonth(),
+        fechaFinISO.getDate(),
         23, 59, 59, 999
       );
       
