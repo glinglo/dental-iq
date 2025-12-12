@@ -607,6 +607,11 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
         });
         
         citaIndex++;
+        
+        // Log para verificar que se están generando citas futuras
+        if (semana >= 0 && citaIndex % 20 === 0) {
+          console.log(`[MockData] Generadas ${citaIndex} citas hasta ahora. Última: semana=${semana}, dia=${dia}, fecha=${fechaHora.toISOString()}`);
+        }
       });
     }
   }
