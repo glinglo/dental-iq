@@ -518,19 +518,20 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   
   console.log('[MockData] Inicio semana (lunes):', inicioSemana.toISOString(), 'timestamp:', inicioSemana.getTime());
   
-  // Generar citas para las últimas 2 semanas, esta semana y las próximas 6 semanas
+  // Generar citas para las últimas 2 semanas, esta semana y las próximas 10 semanas
   // Esto asegura que siempre haya citas visibles independientemente de cuándo se inicialice
-  // Aumentado a 6 semanas adelante para cubrir más rango futuro
+  // Aumentado a 10 semanas adelante para cubrir cualquier semana que el usuario pueda ver
   const semanasAtras = 2;
-  const semanasAdelante = 6;
+  const semanasAdelante = 10;
   
   // Horarios de trabajo: 9:00 a 20:00
   const horariosDisponibles = [9, 10, 11, 12, 13, 16, 17, 18, 19];
   
   // Generar citas para un rango amplio
+  // Aumentar el número de pacientes para cubrir más semanas
   const pacientesSeleccionados = pacientes
     .sort(() => Math.random() - 0.5)
-    .slice(0, 60);
+    .slice(0, Math.min(200, pacientes.length)); // Usar hasta 200 pacientes para generar más citas
   
   let citaIndex = 0;
   
@@ -554,7 +555,10 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
       const horariosDelDia = [...horariosDisponibles].sort(() => Math.random() - 0.5).slice(0, citasPorDia);
       
       horariosDelDia.forEach(hora => {
-        if (citaIndex >= pacientesSeleccionados.length) return;
+        // Si se agotan los pacientes, reiniciar el índice para reutilizar pacientes
+        if (citaIndex >= pacientesSeleccionados.length) {
+          citaIndex = 0;
+        }
         
         const paciente = pacientesSeleccionados[citaIndex];
         // Crear fecha usando setHours (hora local) para coincidir con el frontend
