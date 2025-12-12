@@ -66,7 +66,6 @@ import PresupuestosDashboard from "@/pages/presupuestos-dashboard";
 import Presupuestos from "@/pages/presupuestos";
 import Acciones from "@/pages/acciones";
 import PacientesRelances from "@/pages/pacientes-relances";
-import PacientesSeguimiento from "@/pages/pacientes-seguimiento";
 import CampanasRecalls from "@/pages/campanas-recalls";
 import CampanasRecallsEditar from "@/pages/campanas-recalls-editar";
 import CampanasAccionesHoy from "@/pages/campanas-acciones-hoy";
@@ -85,7 +84,6 @@ function Router() {
       <Route path="/presupuestos" component={PresupuestosAccionesHoy} />
       <Route path="/presupuestos/seguimiento" component={PacientesRelances} />
       <Route path="/presupuestos/seguimiento/:id" component={PresupuestoRelanceDetalle} />
-      <Route path="/presupuestos/analiticas" component={PacientesSeguimiento} />
       <Route path="/acciones" component={Acciones} />
       <Route path="/campañas" component={CampanasAccionesHoy} />
       <Route path="/pacientes" component={Pacientes} />

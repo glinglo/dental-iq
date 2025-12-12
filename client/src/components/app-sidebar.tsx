@@ -52,11 +52,6 @@ const menuItems = [
         url: "/presupuestos/seguimiento",
         icon: Send,
       },
-      {
-        title: "Analíticas",
-        url: "/presupuestos/analiticas",
-        icon: TrendingUp,
-      },
     ],
   },
   {
