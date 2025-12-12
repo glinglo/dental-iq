@@ -559,11 +559,18 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
         const paciente = pacientesSeleccionados[citaIndex];
         // Crear fecha usando setHours (hora local) para coincidir con el frontend
         const fechaHora = new Date(fechaDia);
-        fechaHora.setHours(hora, Math.random() < 0.5 ? 0 : 30, 0, 0);
+        const minutos = Math.random() < 0.5 ? 0 : 30;
+        fechaHora.setHours(hora, minutos, 0, 0);
         
         // Log para debug: verificar citas de la semana actual (semana 0)
         if (semana === 0 && dia === 0 && citaIndex === 0) {
           console.log('[MockData] Primera cita semana actual (semana=0, dia=0):', fechaHora.toISOString(), 'timestamp:', fechaHora.getTime());
+          console.log('[MockData] fechaDia base:', fechaDia.toISOString(), 'timestamp:', fechaDia.getTime());
+        }
+        
+        // Log todas las citas de la semana actual para debug
+        if (semana === 0) {
+          console.log(`[MockData] Cita semana actual - semana=${semana}, dia=${dia}, hora=${hora}:${minutos}, fecha: ${fechaHora.toISOString()}, timestamp: ${fechaHora.getTime()}`);
         }
         
         const tipo = tiposCita[Math.floor(Math.random() * tiposCita.length)];
