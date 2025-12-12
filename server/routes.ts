@@ -404,18 +404,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fechaInicioISO = new Date(inicio as string);
       const fechaFinISO = new Date(fin as string);
       
-      // Convertir a hora local: extraer año, mes, día de la fecha ISO
-      // y crear una nueva fecha en hora local
+      // Extraer componentes UTC de la fecha ISO y crear nueva fecha en hora local
+      // Esto asegura que el día/mes/año coincidan con lo que el frontend envió
       const fechaInicio = new Date(
-        fechaInicioISO.getFullYear(),
-        fechaInicioISO.getMonth(),
-        fechaInicioISO.getDate(),
+        fechaInicioISO.getUTCFullYear(),
+        fechaInicioISO.getUTCMonth(),
+        fechaInicioISO.getUTCDate(),
         0, 0, 0, 0
       );
       const fechaFin = new Date(
-        fechaFinISO.getFullYear(),
-        fechaFinISO.getMonth(),
-        fechaFinISO.getDate(),
+        fechaFinISO.getUTCFullYear(),
+        fechaFinISO.getUTCMonth(),
+        fechaFinISO.getUTCDate(),
         23, 59, 59, 999
       );
       
