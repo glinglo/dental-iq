@@ -621,6 +621,30 @@ export function generarCitasMock(pacientes: Paciente[]): Cita[] {
   if (citasOrdenadas.length > 0) {
     console.log(`[MockData] Primera cita: ${citasOrdenadas[0].fechaHora.toISOString()}`);
     console.log(`[MockData] Última cita: ${citasOrdenadas[citasOrdenadas.length - 1].fechaHora.toISOString()}`);
+    
+    // Verificar cuántas citas hay en semana 0 y semana 1
+    const citasSemana0 = citasOrdenadas.filter(c => {
+      const fechaCita = c.fechaHora.getTime();
+      const inicioSemana0 = inicioSemana.getTime();
+      const finSemana0 = inicioSemana.getTime() + (6 * 24 * 60 * 60 * 1000);
+      return fechaCita >= inicioSemana0 && fechaCita <= finSemana0;
+    });
+    const citasSemana1 = citasOrdenadas.filter(c => {
+      const fechaCita = c.fechaHora.getTime();
+      const inicioSemana1 = inicioSemana.getTime() + (7 * 24 * 60 * 60 * 1000);
+      const finSemana1 = inicioSemana.getTime() + (13 * 24 * 60 * 60 * 1000);
+      return fechaCita >= inicioSemana1 && fechaCita <= finSemana1;
+    });
+    console.log(`[MockData] Citas en semana 0 (actual): ${citasSemana0.length}`);
+    console.log(`[MockData] Citas en semana 1 (siguiente): ${citasSemana1.length}`);
+    if (citasSemana0.length > 0) {
+      console.log(`[MockData] Primera cita semana 0: ${citasSemana0[0].fechaHora.toISOString()}`);
+      console.log(`[MockData] Última cita semana 0: ${citasSemana0[citasSemana0.length - 1].fechaHora.toISOString()}`);
+    }
+    if (citasSemana1.length > 0) {
+      console.log(`[MockData] Primera cita semana 1: ${citasSemana1[0].fechaHora.toISOString()}`);
+      console.log(`[MockData] Última cita semana 1: ${citasSemana1[citasSemana1.length - 1].fechaHora.toISOString()}`);
+    }
   }
   return citasOrdenadas;
 }
