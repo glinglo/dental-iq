@@ -398,12 +398,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
       
-      const fechaInicio = new Date(inicio as string);
-      const fechaFin = new Date(fin as string);
+      // Parsear las fechas ISO que vienen del frontend
+      // El frontend envía fechas en UTC, pero necesitamos convertirlas a hora local
+      // para que coincidan con cómo se generaron las citas (en hora local)
+      const fechaInicioISO = new Date(inicio as string);
+      const fechaFinISO = new Date(fin as string);
       
-      // Asegurar que las fechas estén en UTC para comparación correcta
-      fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(23, 59, 59, 999);
+      // Convertir a hora local: extraer año, mes, día de la fecha ISO
+      // y crear una nueva fecha en hora local
+      const fechaInicio = new Date(
+        fechaInicioISO.getFullYear(),
+        fechaInicioISO.getMonth(),
+        fechaInicioISO.getDate(),
+        0, 0, 0, 0
+      );
+      const fechaFin = new Date(
+        fechaFinISO.getFullYear(),
+        fechaFinISO.getMonth(),
+        fechaFinISO.getDate(),
+        23, 59, 59, 999
+      );
       
       console.log('[API] Date range - inicio:', fechaInicio.toISOString(), 'fin:', fechaFin.toISOString());
       console.log('[API] Date range timestamps - inicio:', fechaInicio.getTime(), 'fin:', fechaFin.getTime());
